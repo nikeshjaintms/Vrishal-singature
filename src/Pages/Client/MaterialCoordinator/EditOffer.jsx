@@ -1,0 +1,784 @@
+import React, { useEffect, useRef, useState } from "react";
+import Header from "../Include/Header";
+import Sidebar from "../Include/Sidebar";
+import Footer from "../Include/Footer";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import moment from "moment";
+import { useDispatch, useSelector } from "react-redux";
+import { getParty } from "../../../Store/Store/Party/Party";
+import Top from "../Include/Top";
+import axios from "axios";
+import { V_URL } from "../../../BaseUrl";
+import toast from "react-hot-toast";
+import { getUnit } from "../../../Store/Store/StoreMaster/Unit/Unit";
+
+const EditOffer = () => {
+  const location = useLocation();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const data = location.state;
+  const formRefs = useRef([]);
+  const [errors, setErrors] = useState({});
+  const [offerDate, setOfferDate] = useState("");
+  const [invoiceNo, setInvoiceNo] = useState("");
+  const [disable, setDisable] = useState(false);
+  const [itemsData, setItemsData] = useState([]);
+  const [formValues, setFormValues] = useState([]);
+  const [entity, setEntity] = useState([]);
+  const stockData = useSelector((state) => state?.getItemStock?.user?.data);
+  const unitData = useSelector((state) => state.getUnit?.user?.data);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const partyList = useSelector((state) => state.getParty?.user?.data || []);
+  const [requestData, setRequestData] = useState({});
+
+  const handleOpen = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  useEffect(() => {
+    dispatch(getParty({ storeType: "" }));
+    dispatch(getUnit());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (data?.requestId?._id) {
+      getRequestEdit(data.requestId._id);
+    }
+  }, [data?.requestId?._id]);
+
+  useEffect(() => {
+    if (data?._id) {
+      const filterItems = data?.items?.filter(
+        (i) => i?.balance_qty > 0 || i?.offeredQty
+      );
+      setItemsData(filterItems);
+
+      const initialFormValues = filterItems.map((elem) => ({
+        
+        manufacture: elem?.manufacture?._id || "",
+        offeredQty: elem?.offeredQty || "",
+        challan_qty: elem?.challan_qty || "",
+        offer_uom: elem?.offer_uom?._id || "",
+        offerNos: elem?.offerNos || "",
+        offerLength: elem?.offerLength || "",
+        offerWidth: elem?.offerWidth || "",
+        lotNo: elem?.lotNo || "",
+        remarks: elem?.remarks || "",
+        offer_topbottom_thickness: elem?.offer_topbottom_thickness || "",
+        offer_width_thickness: elem?.offer_width_thickness || "",
+        offer_normal_thickness: elem?.offer_normal_thickness || "",
+      }));
+
+      setFormValues(initialFormValues);
+
+      if (data?.received_date) {
+        setOfferDate(moment(data.received_date).format("YYYY-MM-DD"));
+      }
+
+      if (data?.invoice_no) {
+        setInvoiceNo(data.invoice_no);
+      }
+    }
+  }, [data?._id]);
+
+  const getRequestEdit = (requestId) => {
+    const myurl = `${V_URL}/user/get-request-edit`;
+    const bodyFormData = new URLSearchParams();
+    bodyFormData.append("tag", "1");
+    bodyFormData.append("requestId", requestId);
+    axios({
+      method: "post",
+      url: myurl,
+      data: bodyFormData,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: "Barrer " + localStorage.getItem("PAY_USER_TOKEN"),
+      },
+    })
+      .then((response) => {
+        if (response.data.success === true) {
+          const data = response.data?.data;
+          setRequestData(data);
+          const filteredData = response.data?.data.items;
+          setItemsData(filteredData);
+          setEntity(filteredData);
+          setDisable(false);
+        }
+      })
+      .catch((error) => {
+        console.log(error, "!!");
+        setDisable(false);
+      });
+  };
+
+  const handleInputChange = (index, e) => {
+    const { name, value } = e.target;
+    const updatedFormValues = [...formValues];
+    updatedFormValues[index][name] = value;
+    setFormValues(updatedFormValues);
+  };
+
+  const handleSubmit = () => {
+    const newErrors = {};
+    let isValid = true;
+
+    const hasValidOfferedQty = formRefs.current.some((form) => {
+      const formData = new FormData(form);
+      const offerQty = formData.get("offeredQty");
+      return offerQty && parseFloat(offerQty) > 0;
+    });
+
+    if (!hasValidOfferedQty) {
+      newErrors["offeredQty_all"] =
+        "At least one offer quantity must be provided.";
+      isValid = false;
+    }
+
+    const newItems = formRefs.current
+      .map((form, index) => {
+        const formData = new FormData(form);
+        const offerQty = formData.get("offeredQty");
+        const manufactureCheck = formData.get("manufacture");
+        const offerUom = formData.get("offer_uom");
+
+        if (offerQty) {
+          if (parseFloat(offerQty) <= 0) {
+            isValid = false;
+            newErrors[`offeredQty_${index}`] =
+              "Offer quantity must be greater than 0";
+          }
+          if (!manufactureCheck) {
+            isValid = false;
+            newErrors[`manufacture_${index}`] = "Please select manufacturer";
+          }
+          if (!offerUom) {
+            isValid = false;
+            newErrors[`offer_uom_${index}`] = "Please select offer UOM";
+          }
+        } else {
+          return null;
+        }
+
+        if (!offerDate) {
+          isValid = false;
+          newErrors["receive_date"] = "Please select receive date";
+        }
+        if (!invoiceNo) {
+          isValid = false;
+          newErrors["invoice_no"] = "Please enter invoice number";
+        }
+
+        return {
+          transactionId: itemsData[index]._id,
+          manufacture: manufactureCheck,
+          offeredQty: offerQty,
+          challan_qty: formData.get("challan_qty"),
+          offerNos: formData.get("offerNos"),
+          offer_uom: offerUom,
+          offerLength: formData.get("offerLength"),
+          offerWidth: formData.get("offerWidth"),
+          offer_topbottom_thickness: formData.get("offer_topbottom_thickness"),
+          offer_width_thickness: formData.get("offer_width_thickness"),
+          offer_normal_thickness: formData.get("offer_normal_thickness"),
+          lotNo: formData.get("lotNo"),
+          remarks: formData.get("remarks"),
+        };
+      })
+      .filter((item) => item !== null);
+
+    setErrors(newErrors);
+
+    if (isValid) {
+      setDisable(true);
+
+      // ✅ Send to update API
+      axios
+        .put(
+          `${V_URL}/user/update-purchase-offer`,
+          {
+            offerId: data?._id,
+            updateData: {
+              requestId: data.requestId,
+              received_date: offerDate,
+              invoice_no: invoiceNo,
+              items: newItems,
+              offeredBy: localStorage.getItem("PAY_USER_ID"),
+              project: localStorage.getItem("PAY_USER_PROJECT_NAME"),
+            },
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("PAY_USER_TOKEN")}`,
+            },
+          }
+        )
+        .then((response) => {
+          if (response.data.success) {
+            toast.success(response.data.message);
+          
+            navigate("/user/project-store/offer-item-management", {
+              state: {
+                ...data, 
+                ...data.requestId, 
+                requestId: data.requestId?._id || data.requestId,
+                project: data.requestId?.project,
+                storeLocation: data.requestId?.storeLocation,
+                department: data.requestId?.department,
+                preparedBy: data.requestId?.preparedBy,
+                approvedBy: data.requestId?.approvedBy,
+                material_po_no: data.requestId?.material_po_no,
+                admin_approval_time: data.requestId?.admin_approval_time,
+                requestNo: data.requestId?.requestNo,
+              },
+            });
+          }
+          setDisable(false);
+        })
+        .catch((error) => {
+          console.error(error);
+          toast.error(error?.response?.data?.message || "Error occurred");
+          setDisable(false);
+        });
+    }
+  };
+
+  const InputField = ({ label, value }) => (
+    <div className="col-12 col-md-4 col-xl-4">
+      <div className="input-block local-forms">
+        <label>{label}</label>
+        <input className="form-control" value={value} readOnly />
+      </div>
+    </div>
+  );
+
+  return (
+    <div className={`main-wrapper ${isSidebarOpen ? "slide-nav" : ""}`}>
+      <Header handleOpen={handleOpen} />
+      <Sidebar />
+
+      <div className="page-wrapper">
+        <div className="content">
+          <div className="page-header">
+            <div className="row">
+              <div className="col-sm-12">
+                <ul className="breadcrumb">
+                  <li className="breadcrumb-item">
+                    <Link to="/user/project-store/dashboard">Dashboard</Link>
+                  </li>
+                  <li className="breadcrumb-item">
+                    <i className="feather-chevron-right"></i>
+                  </li>
+                  <li className="breadcrumb-item">
+                    <Link to="/user/project-store/offer-item-management">
+                      Offered Request List
+                    </Link>
+                  </li>
+                  <li className="breadcrumb-item">
+                    <i className="feather-chevron-right"></i>
+                  </li>
+                  <li className="breadcrumb-item active">
+                    Edit Offered Request List
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="row">
+            <div className="col-sm-12">
+              <div className="card">
+                <div className="card-body">
+                  <div className="col-12">
+                    <div className="form-heading">
+                      <h4>View Request Details</h4>
+                    </div>
+                  </div>
+                  <div className="row">
+                    {[
+                      { label: "Request No.", value: requestData?.requestNo },
+                      { label: "Project", value: requestData?.project?.name },
+                      {
+                        label: "Project Location",
+                        value: requestData?.storeLocation?.name,
+                      },
+                      {
+                        label: "PO Date",
+                        value: moment(requestData?.admin_approval_time).format(
+                          "YYYY-MM-DD"
+                        ),
+                      },
+                      {
+                        label: "Material PO No.",
+                        value: requestData?.material_po_no,
+                      },
+                      {
+                        label: "Department",
+                        value: requestData?.department?.name,
+                      },
+                      {
+                        label: "Approved By",
+                        value: requestData?.approvedBy?.name,
+                      },
+                      {
+                        label: "Prepared By",
+                        value: requestData?.preparedBy?.user_name,
+                      },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="col-12 col-md-4 col-xl-4">
+                        <div className="input-block local-forms">
+                          <label>{label}</label>
+                          <input
+                            className="form-control"
+                            value={value}
+                            readOnly
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    <div className="col-12 col-md-4 col-xl-4">
+                      <div className="input-block local-forms">
+                        <p className="m-0" style={{ fontSize: "12px" }}>
+                          Status
+                        </p>
+                        <span
+                          className={`custom-badge ${
+                            data.status === 1
+                              ? "status-orange"
+                              : data.status === 2
+                              ? "status-blue"
+                              : data.status === 3
+                              ? "status-pink"
+                              : data.status === 4
+                              ? "status-green"
+                              : ""
+                          }`}
+                        >
+                          {data.status === 1
+                            ? "Pending"
+                            : data.status === 2
+                            ? "Approved By Admin"
+                            : data.status === 3
+                            ? "Rejected By Admin"
+                            : data.status === 6
+                            ? "Completed"
+                            : ""}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="row">
+                    <InputField
+                      label="Client"
+                      value={requestData?.project?.party?.name}
+                    />
+                    <InputField
+                      label="PO / WO No."
+                      value={requestData?.project?.work_order_no}
+                    />
+                    <InputField
+                      label="Project PO No."
+                      value={requestData?.project?.work_order_no}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="row">
+            <div className="col-sm-12">
+              <div className="card">
+                <div className="card-body">
+                  <div className="row">
+                    <div className="col-12">
+                      <div className="form-heading">
+                        <h4>View Section Details</h4>
+                      </div>
+                    </div>
+                    <div className="col-12 col-md-4 col-xl-4">
+                      <div className="input-block local-forms">
+                        <label>
+                          Received Date <span className="login-danger">*</span>
+                        </label>
+                        <input
+                          type="date"
+                          className="form-control"
+                          value={offerDate}
+                          max={moment(data?.admin_approval_time).format(
+                            "YYYY-MM-DD"
+                          )}
+                          onChange={(e) => setOfferDate(e.target.value)}
+                        />
+                        <div className="error">{errors["receive_date"]}</div>
+                      </div>
+                    </div>
+                    <div className="col-12 col-md-4 col-xl-4">
+                      <div className="input-block local-forms">
+                        <label>
+                          Invoice No. <span className="login-danger">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={invoiceNo}
+                          onChange={(e) => setInvoiceNo(e.target.value)}
+                        />
+                        <div className="error">{errors["invoice_no"]}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="row">
+            <div className="col-sm-12">
+              <div className="card">
+                <div className="card-body">
+                  {itemsData?.map((elem, i) => (
+                    <form ref={(el) => (formRefs.current[i] = el)} key={i}>
+                      <div className="col-12">
+                        <div className="form-heading">
+                          <h4>
+                            ({i + 1}) {elem?.itemName?.name}{" "}
+                            {errors["offeredQty_all"] && (
+                              <div className="error">
+                                {errors["offeredQty_all"]}
+                              </div>
+                            )}
+                          </h4>
+                        </div>
+                      </div>
+
+                      <div className="row">
+                        <div className="col-12 col-md-4 col-xl-4">
+                          <div className="input-block local-forms">
+                            <label>Section Details</label>
+                            <input
+                              className="form-control"
+                              defaultValue={elem?.itemName?.name}
+                              readOnly
+                              disabled
+                            />
+                          </div>
+                        </div>
+                        <div className="col-12 col-md-4 col-xl-4">
+                          <div className="input-block local-forms">
+                            <label>Material Grade</label>
+                            <input
+                              className="form-control"
+                              defaultValue={elem?.mcode}
+                              readOnly
+                              disabled
+                            />
+                          </div>
+                        </div>
+                        <div className="col-12 col-md-4 col-xl-4">
+                          <div className="input-block local-forms">
+                            <label>Unit</label>
+                            <input
+                              className="form-control"
+                              defaultValue={elem?.itemName?.unit?.name}
+                              readOnly
+                              disabled
+                            />
+                          </div>
+                        </div>
+                        <div className="col-12 col-md-4 col-xl-4">
+                          <div className="input-block local-forms">
+                            <label>Stock Qty.</label>
+                            <input
+                              className="form-control"
+                              name="stock_qty"
+                              defaultValue={
+                                stockData?.find(
+                                  (st) =>
+                                    st?.item?._id === elem?.itemName?._id &&
+                                    st?.store_type === elem?.store_type
+                                )?.quantity || 0
+                              }
+                              readOnly
+                              disabled
+                            />
+                          </div>
+                        </div>
+                        <div className="col-12 col-md-4 col-xl-4">
+                          <div className="input-block local-forms">
+                            <label>Request Qty.</label>
+                            <input
+                              className="form-control"
+                              defaultValue={elem?.quantity}
+                              readOnly
+                              disabled
+                            />
+                          </div>
+                        </div>
+                        <div className="col-12 col-md-4 col-xl-4">
+                          <div className="input-block local-forms">
+                            <label>Req. Balance Qty.</label>
+                            <input
+                              className="form-control"
+                              name="balance_qty"
+                              defaultValue={elem?.balance_qty}
+                              readOnly
+                              disabled
+                            />
+                          </div>
+                        </div>
+                        <div className="col-12 col-md-4 col-xl-4">
+                          <div className="input-block local-forms">
+                            <label>Supplier</label>
+                            <input
+                              className="form-control"
+                              name="main_supplier"
+                              defaultValue={elem?.main_supplier?.name}
+                              readOnly
+                              disabled
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="row">
+                        <div className="col-12 col-md-4 col-xl-4">
+                          <div className="input-block local-forms">
+                            <label>
+                              Manufacturer{" "}
+                              <span className="login-danger">*</span>
+                            </label>
+                  
+                            {/* <select
+                              className="form-control form-select"
+                              name="manufacture"
+                              value={formValues[i]?.manufacture || ""}
+                              onChange={(e) => handleInputChange(i, e)}
+                            >
+                              <option value="">Select Manufacturer</option>
+                              {elem?.preffered_supplier?.map((e, idx) => (
+                                <option value={e?.supId?._id} key={idx}>
+                                  {e?.supId?.name}
+                                </option>
+                              ))}
+                            </select> */}
+
+
+                            <select
+  className="form-control form-select"
+  name="manufacture"
+  value={formValues[i]?.manufacture?.toString() || ""}
+  onChange={(e) => handleInputChange(i, e)}
+>
+  <option value="">Select Manufacturer</option>
+  {elem?.preffered_supplier?.map((e, idx) => (
+    <option value={e?.supId?._id?.toString()} key={idx}>
+      {e?.supId?.name}
+    </option>
+  ))}
+  
+</select>
+
+
+                            <div className="error">
+                              {errors[`manufacture_${i}`]}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="col-12 col-md-4 col-xl-4">
+                          <div className="input-block local-forms">
+                            <label>
+                              Received Qty.(kg)
+                              <span className="login-danger">*</span>
+                            </label>
+                            <input
+                              type="number"
+                              className="form-control"
+                              name="offeredQty"
+                              value={formValues[i]?.offeredQty || ""}
+                              onChange={(e) => handleInputChange(i, e)}
+                            />
+                            <div className="error">
+                              {errors[`offeredQty_${i}`]}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="col-12 col-md-4 col-xl-4">
+                          <div className="input-block local-forms">
+                            <label>Challan Qty.</label>
+                            <input
+                              type="number"
+                              className="form-control"
+                              name="challan_qty"
+                              value={formValues[i]?.challan_qty || ""}
+                              onChange={(e) => handleInputChange(i, e)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="col-12 col-md-4 col-xl-4">
+                          <div className="input-block local-forms">
+                            <label>Inspection Offer NOS</label>
+                            <input
+                              type="number"
+                              className="form-control"
+                              name="offerNos"
+                              value={formValues[i]?.offerNos || ""}
+                              onChange={(e) => handleInputChange(i, e)}
+                            />
+                          </div>
+                        </div>
+                        
+
+                        <div className="col-12 col-md-4 col-xl-4">
+                          <div className="input-block local-forms">
+                            <label>
+                              Inspection Offer UOM{" "}
+                              <span className="login-danger">*</span>
+                            </label>
+
+                            <select
+                              className="form-control form-select"
+                              name="offer_uom"
+                              value={formValues[i]?.offer_uom || ""} // This will now receive the _id
+                              onChange={(e) => handleInputChange(i, e)}
+                            >
+                              <option value="">Select UOM</option>
+                              {unitData?.map((e) => (
+                                <option value={e?._id} key={e?._id}>
+                                  {e?.name}
+                                </option>
+                              ))}
+                            </select>
+
+                            <div className="error">
+                              {errors[`offer_uom_${i}`]}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="col-12 col-md-4 col-xl-4">
+                          <div className="input-block local-forms">
+                            <label>Inspection Offer Length(mm)</label>
+                            <input
+                              type="number"
+                              className="form-control"
+                              name="offerLength"
+                              value={formValues[i]?.offerLength || ""}
+                              onChange={(e) => handleInputChange(i, e)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="col-12 col-md-4 col-xl-4">
+                          <div className="input-block local-forms">
+                            <label>Inspection Offer Width(mm)</label>
+                            <input
+                              type="number"
+                              className="form-control"
+                              name="offerWidth"
+                              value={formValues[i]?.offerWidth || ""}
+                              onChange={(e) => handleInputChange(i, e)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="col-12 col-md-4 col-xl-4">
+                          <div className="input-block local-forms">
+                            <label>Heat / Lot No.</label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="lotNo"
+                              value={formValues[i]?.lotNo || ""}
+                              onChange={(e) => handleInputChange(i, e)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="col-12 col-md-4 col-xl-4">
+                          <div className="input-block local-forms">
+                            <label>Inspection Offer Thickness(T/B)</label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="offer_topbottom_thickness"
+                              value={
+                                formValues[i]?.offer_topbottom_thickness || ""
+                              }
+                              onChange={(e) => handleInputChange(i, e)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="col-12 col-md-4 col-xl-4">
+                          <div className="input-block local-forms">
+                            <label>Inspection Offer Thickness(W)</label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="offer_width_thickness"
+                              value={formValues[i]?.offer_width_thickness || ""}
+                              onChange={(e) => handleInputChange(i, e)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="col-12 col-md-4 col-xl-4">
+                          <div className="input-block local-forms">
+                            <label>Inspection Offer Thickness(N)</label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="offer_normal_thickness"
+                              value={
+                                formValues[i]?.offer_normal_thickness || ""
+                              }
+                              onChange={(e) => handleInputChange(i, e)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="col-12">
+                          <div className="input-block local-forms">
+                            <label>Remark</label>
+                            <textarea
+                              className="form-control"
+                              name="remarks"
+                              value={formValues[i]?.remarks || ""}
+                              onChange={(e) => handleInputChange(i, e)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+                  ))}
+
+                  <div className="col-12 text-end">
+                    <div className="doctor-submit text-end">
+                      <button
+                        type="button"
+                        className="btn btn-primary submit-form me-2"
+                        onClick={handleSubmit}
+                        disabled={disable}
+                      >
+                        {" "}
+                        {disable ? "Processing..." : "Update"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Top />
+        </div>
+        <Footer />
+      </div>
+    </div>
+  );
+};
+
+export default EditOffer;
