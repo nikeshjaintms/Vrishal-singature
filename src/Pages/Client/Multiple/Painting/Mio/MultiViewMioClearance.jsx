@@ -174,8 +174,8 @@ const MultiViewMioClearance = () => {
                 <div className="page-wrapper">
                     <div className="content">
                         <PageHeader breadcrumbs={[
-                            { name: "Dashboard", link: "/user/project-store/dashboard", active: false },
-                            { name: "MIO Offer List", link: "/user/project-store/mio-clearance-management", active: false },
+                            { name: "Dashboard", link: "/party/project-store/dashboard", active: false },
+                            { name: "MIO Offer List", link: "/party/project-store/mio-clearance-management", active: false },
                             { name: `${data?._id ? 'Edit' : 'Add'} MIO Offer`, active: true }
                         ]} />
 
@@ -248,7 +248,7 @@ const MultiViewMioClearance = () => {
                         )
                         }
 
-                        <SubmitButton finalReq={data?.items} link='/user/project-store/mio-clearance-management'
+                        <SubmitButton finalReq={data?.items} link='/party/project-store/mio-clearance-management'
                             disable={disable} buttonName={'Generate Surface Offer'} />
                     </div>
                 </div>

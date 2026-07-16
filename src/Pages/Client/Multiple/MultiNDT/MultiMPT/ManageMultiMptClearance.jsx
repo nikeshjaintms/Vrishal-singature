@@ -184,7 +184,7 @@ const ManageMultiMptClearance = () => {
             }));
 
             setDisable(true);
-            const myurl = `${V_URL}/user/manage-multi-mpt-report`;
+            const myurl = `${V_URL}/party/manage-multi-mpt-report`;
             const bodyFormData = new URLSearchParams();
             bodyFormData.append('ndt_offer_no', data?._id);
 
@@ -219,7 +219,7 @@ const ManageMultiMptClearance = () => {
             }).then((response) => {
                 if (response.data.success === true) {
                     toast.success(response.data.message);
-                    navigate('/user/project-store/mpt-clearance-management');
+                    navigate('/party/project-store/mpt-clearance-management');
                 }
                 setDisable(false);
             }).catch((error) => {
@@ -254,8 +254,8 @@ const ManageMultiMptClearance = () => {
                 <div className="content">
 
                     <PageHeader breadcrumbs={[
-                        { name: "Dashboard", link: "/user/project-store/dashboard", active: false },
-                        { name: "Magnetic Particle Testing Clearance List", link: "/user/project-store/mpt-clearance-management", active: false },
+                        { name: "Dashboard", link: "/party/project-store/dashboard", active: false },
+                        { name: "Magnetic Particle Testing Clearance List", link: "/party/project-store/mpt-clearance-management", active: false },
                         { name: `${data?._id ? 'Edit' : 'Add'} Magnetic Particle Testing Clearance`, active: true }
                     ]} />
 
@@ -437,7 +437,7 @@ const ManageMultiMptClearance = () => {
                         </div>
                     </div>
 
-                    <SubmitButton disable={disable} handleSubmit={handleSubmit} link={'/user/project-store/mpt-clearance-management'}
+                    <SubmitButton disable={disable} handleSubmit={handleSubmit} link={'/party/project-store/mpt-clearance-management'}
                         buttonName={'Generate MPT Report'} finalReq={data?.status !== 2 ? data?.items : []} />
                 </div>
             </div>

@@ -140,7 +140,7 @@ const clearanceList = useMemo(() => {
                         <div className="row">
                             <div className="col-sm-12">
                                 <ul className="breadcrumb">
-                                    <li className="breadcrumb-item"><Link to="/user/project-store/dashboard">Dashboard </Link></li>
+                                    <li className="breadcrumb-item"><Link to="/party/project-store/dashboard">Dashboard </Link></li>
                                     <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
                                     <li className="breadcrumb-item active">Surface Acceptance</li>
                                 </ul>
@@ -244,7 +244,7 @@ const clearanceList = useMemo(() => {
                                                             {localStorage.getItem('ERP_ROLE') === QC && (
                                                                 <td>
                                                                     {elem?.status === 1 ? (
-                                                                        <span style={{ cursor: 'pointer' }} onClick={() => navigate('/user/project-store/manage-surface-clearance', { state: elem })}>
+                                                                        <span style={{ cursor: 'pointer' }} onClick={() => navigate('/party/project-store/manage-surface-clearance', { state: elem })}>
                                                                             <BadgeCheck />
                                                                         </span>
                                                                     ) : <X />}
@@ -394,7 +394,7 @@ const clearanceList = useMemo(() => {
                                                                         data-bs-toggle="dropdown" aria-expanded="false"><i
                                                                             className="fa fa-ellipsis-v"></i></a>
                                                                     <div className="dropdown-menu dropdown-menu-end">
-                                                                        <button type='button' className="dropdown-item" onClick={() => navigate('/user/project-store/view-surface-clearance', { state: elem })}>
+                                                                        <button type='button' className="dropdown-item" onClick={() => navigate('/party/project-store/view-surface-clearance', { state: elem })}>
                                                                             <i className="fa-solid fa-eye m-r-5"></i> View</button>
                                                                         <button type='button' className="dropdown-item" onClick={() => handleDownloadIns(elem)} >
                                                                             <i className="fa-solid fa-download  m-r-5"></i> Download PDF</button>

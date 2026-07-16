@@ -16,14 +16,12 @@ export const getUserMptClearance = createAsyncThunk('/issue/getUserMptClearance'
             });
 
             const data = response.data;
-            // console.log(data, "getUserMptClearance response");
             if (data.success === true) {
                 return data;
             } else {
                 throw new Error(data);
             }
         } catch (error) {
-            
             toast.error(error.response.data.message);
             return error
         }

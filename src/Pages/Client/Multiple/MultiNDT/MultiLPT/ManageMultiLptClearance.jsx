@@ -218,7 +218,7 @@ const ManageMultiLptClearance = () => {
             }));
 
             setDisable(true);
-            const myurl = `${V_URL}/user/manage-multi-lpt-report`;
+            const myurl = `${V_URL}/party/manage-multi-lpt-report`;
             const bodyFormData = new URLSearchParams();
             bodyFormData.append('ndt_offer_no', data?._id);
 
@@ -250,7 +250,7 @@ const ManageMultiLptClearance = () => {
             }).then((response) => {
                 if (response.data.success === true) {
                     toast.success(response.data.message);
-                    navigate('/user/project-store/lpt-clearance-management');
+                    navigate('/party/project-store/lpt-clearance-management');
                 }
                 setDisable(false);
             }).catch((error) => {
@@ -294,8 +294,8 @@ const ManageMultiLptClearance = () => {
                 <div className="content">
 
                     <PageHeader breadcrumbs={[
-                        { name: "Dashboard", link: "/user/project-store/dashboard", active: false },
-                        { name: "Liquid Penetrant Testing Clearance List", link: "/user/project-store/lpt-clearance-management", active: false },
+                        { name: "Dashboard", link: "/party/project-store/dashboard", active: false },
+                        { name: "Liquid Penetrant Testing Clearance List", link: "/party/project-store/lpt-clearance-management", active: false },
                         { name: `${data?._id ? 'Edit' : 'Add'} Liquid Penetrant Testing Clearance`, active: true }
                     ]} />
 
@@ -549,7 +549,7 @@ const ManageMultiLptClearance = () => {
                         </div>
                     </div>
 
-                    <SubmitButton disable={disable} handleSubmit={handleSubmit} link={'/user/project-store/lpt-clearance-management'}
+                    <SubmitButton disable={disable} handleSubmit={handleSubmit} link={'/party/project-store/lpt-clearance-management'}
                         buttonName={'Generate LPT Report'} finalReq={data?.status !== 2 ? data?.items : []} />
 
                 </div>

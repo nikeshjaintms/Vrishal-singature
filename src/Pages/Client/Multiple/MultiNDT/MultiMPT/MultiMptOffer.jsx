@@ -151,7 +151,7 @@ const MultiMptOffer = () => {
                     <SubmitButton
                         disable={loading}
                         handleSubmit={handleSubmit}
-                        link={'/user/project-store/mpt-offer-management'}
+                        link={'/party/project-store/mpt-offer-management'}
                         buttonName={'Generate MPT Offer'}
                     />
 

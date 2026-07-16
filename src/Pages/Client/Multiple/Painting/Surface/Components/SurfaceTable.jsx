@@ -138,7 +138,7 @@ const SurfaceTable = ({ setSubmitArr, paintNo, data, dispatch_site, report_no, o
         bodyFormData.append('item_detail_id', updatedItem.item_detail_id);
 
         try {
-            const myurl = `${V_URL}/user/update-multi-surface-offer`;
+            const myurl = `${V_URL}/party/update-multi-surface-offer`;
             const response = await axios.post(myurl, bodyFormData, {
                 headers: {
                     Authorization: "Bearer " + localStorage.getItem("PAY_USER_TOKEN"),
@@ -161,7 +161,7 @@ const SurfaceTable = ({ setSubmitArr, paintNo, data, dispatch_site, report_no, o
         const removeItem = new URLSearchParams();
         removeItem.append('id', elem._id);
         try {
-            const myurl = `${V_URL}/user/delete-multi-surface-offer`;
+            const myurl = `${V_URL}/party/delete-multi-surface-offer`;
             const response = await axios({
                 method: 'post',
                 url: myurl,
@@ -198,7 +198,7 @@ const SurfaceTable = ({ setSubmitArr, paintNo, data, dispatch_site, report_no, o
                 bodyFormData.append('items', JSON.stringify(balanceData));
                 bodyFormData.append('is_delete', true)
                 try {
-                    const myurl = `${V_URL}/user/dnp-grid-balance-update`;
+                    const myurl = `${V_URL}/party/dnp-grid-balance-update`;
                     const response = await axios({
                         method: "post",
                         url: myurl,

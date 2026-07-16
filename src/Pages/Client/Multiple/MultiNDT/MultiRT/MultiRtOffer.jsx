@@ -154,7 +154,7 @@ const MultiRtOffer = () => {
                         <SubmitButton
                             disable={loading}
                             handleSubmit={handleSubmit}
-                            link={'/user/project-store/rt-offer-management'}
+                            link={'/party/project-store/rt-offer-management'}
                             buttonName={'Generate RT Offer'}
                         />
 

@@ -351,7 +351,7 @@ const MultiLptClearance = () => {
           <div className="page-header">
             <ul className="breadcrumb">
               <li className="breadcrumb-item">
-                <Link to="/user/project-store/dashboard">Dashboard</Link>
+                <Link to="/party/project-store/dashboard">Dashboard</Link>
               </li>
               <li className="breadcrumb-item active">
                 Liquid Penetrant Testing Clearance List

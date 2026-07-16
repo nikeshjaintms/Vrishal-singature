@@ -46,7 +46,7 @@ const MultiFinalCoat = () => {
       setLoading(true);
 
       const res = await axios.post(
-        `${V_URL}/user/get-multi-final-coat-view-page`,
+        `${V_URL}/party/get-multi-final-coat-view-page`,
         {
           project_id: projectId,
           page,
@@ -121,7 +121,7 @@ const MultiFinalCoat = () => {
           <div className="page-header">
             <ul className="breadcrumb">
               <li className="breadcrumb-item">
-                <Link to="/user/project-store/dashboard">Dashboard</Link>
+                <Link to="/party/project-store/dashboard">Dashboard</Link>
               </li>
               <li className="breadcrumb-item active">Final / Top Coating Offer List</li>
             </ul>

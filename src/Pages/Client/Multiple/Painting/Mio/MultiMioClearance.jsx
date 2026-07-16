@@ -138,8 +138,8 @@ const commentsData = useMemo(() => {
         <div className="page-wrapper">
           <div className="content">
             <PageHeader breadcrumbs={[
-              { name: "Dashboard", link: "/user/project-store/dashboard", active: false },
-              { name: "MIO Clearance List", link: "/user/project-store/mio-clearance-management", active: false },
+              { name: "Dashboard", link: "/party/project-store/dashboard", active: false },
+              { name: "MIO Clearance List", link: "/party/project-store/mio-clearance-management", active: false },
             ]} />
 
             {disable === false ? (
@@ -218,7 +218,7 @@ const commentsData = useMemo(() => {
                                 {ERP_ROLE === QC && (
                                   <td>
                                     {elem?.status === 1 ? (
-                                      <span style={{ cursor: 'pointer' }} onClick={() => navigate('/user/project-store/manage-mio-clearance', { state: elem })}>
+                                      <span style={{ cursor: 'pointer' }} onClick={() => navigate('/party/project-store/manage-mio-clearance', { state: elem })}>
                                         <BadgeCheck />
                                       </span>
                                     ) : <X />}
@@ -365,7 +365,7 @@ const commentsData = useMemo(() => {
                                       data-bs-toggle="dropdown" aria-expanded="false"><i
                                         className="fa fa-ellipsis-v"></i></a>
                                     <div className="dropdown-menu dropdown-menu-end">
-                                      <button type='button' className="dropdown-item" onClick={() => navigate('/user/project-store/view-mio-clearance', { state: elem })}>
+                                      <button type='button' className="dropdown-item" onClick={() => navigate('/party/project-store/view-mio-clearance', { state: elem })}>
                                         <i className="fa-solid fa-eye m-r-5"></i> View</button>
                                       <button type='button' className="dropdown-item" onClick={() => handleDownloadIns(elem)} >
                                         <i className="fa-solid fa-download  m-r-5"></i> Download PDF</button>

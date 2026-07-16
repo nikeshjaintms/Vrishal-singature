@@ -12,6 +12,9 @@ export const PdfDownloadErp = ({ apiMethod, url, body, is_admin = false, is_supe
     } else if (is_super_admin) {
         myurl = `${V_URL}/super_admin/${url}`;
         token = localStorage.getItem('VE_SUPER_TOKEN');
+    } else if (localStorage.getItem('PARTY_TOKEN')) {
+        myurl = `${V_URL}/party/${url}`;
+        token = localStorage.getItem('PARTY_TOKEN');
     } else {
         myurl = `${V_URL}/user/${url}`;
         token = localStorage.getItem('PAY_USER_TOKEN');

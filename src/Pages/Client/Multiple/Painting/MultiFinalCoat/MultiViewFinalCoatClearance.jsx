@@ -178,8 +178,8 @@ const MultiViewFinalCoatClearance = () => {
                 <div className="page-wrapper">
                     <div className="content">
                         <PageHeader breadcrumbs={[
-                            { name: "Dashboard", link: "/user/project-store/dashboard", active: false },
-                            { name: "Final/Top Coat List", link: "/user/project-store/final-coat-clearance-management", active: false },
+                            { name: "Dashboard", link: "/party/project-store/dashboard", active: false },
+                            { name: "Final/Top Coat List", link: "/party/project-store/final-coat-clearance-management", active: false },
                             { name: `${data?._id ? 'Edit' : 'Add'} Final/Top Coat`, active: true }
                         ]} />
 
@@ -251,7 +251,7 @@ const MultiViewFinalCoatClearance = () => {
                         )
                         }
 
-                        <SubmitButton finalReq={data?.items} link='/user/project-store/final-coat-clearance-management'
+                        <SubmitButton finalReq={data?.items} link='/party/project-store/final-coat-clearance-management'
                             disable={disable} buttonName={'Generate Surface Offer'} />
                     </div>
                 </div>

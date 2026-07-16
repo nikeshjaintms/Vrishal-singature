@@ -362,7 +362,7 @@ console.log("commentsData",commentsData);
 });
 
             setDisable(true);
-            const myurl = `${V_URL}/user/add-multi-mio-offer`;
+            const myurl = `${V_URL}/party/add-multi-mio-offer`;
             const formData = new URLSearchParams();
             formData.append('items', JSON.stringify(filteredData));
             formData.append('weather_condition', JSON.stringify(weatherData))
@@ -390,7 +390,7 @@ console.log("commentsData",commentsData);
             }).then((response) => {
                 if (response.data?.success === true) {
                     toast.success(response.data.message);
-                    navigate('/user/project-store/mio-offer-management');
+                    navigate('/party/project-store/mio-offer-management');
                 } else {
                     toast.error(response.data.message);
                 }
@@ -473,9 +473,9 @@ console.log("commentsData",commentsData);
             <div className="page-wrapper">
                 <div className="content">
                     <PageHeader breadcrumbs={[
-                        { name: "Dashboard", link: "/user/project-store/dashboard", active: false },
-                        { name: "MIO Offer List", link: "/user/project-store/mio-offer-management", active: false },
-                        { name: `${data?._id ? 'Edit' : 'Add'} MIO Offer`, link: "/user/project-store/mio-offer-management", active: false },
+                        { name: "Dashboard", link: "/party/project-store/dashboard", active: false },
+                        { name: "MIO Offer List", link: "/party/project-store/mio-offer-management", active: false },
+                        { name: `${data?._id ? 'Edit' : 'Add'} MIO Offer`, link: "/party/project-store/mio-offer-management", active: false },
                     ]} />
 
                     {!data?._id && (
@@ -638,7 +638,7 @@ console.log("commentsData",commentsData);
                             />
                         </>
                     )}
-                    <SubmitButton finalReq={data?.items} link='/user/project-store/mio-offer-management'
+                    <SubmitButton finalReq={data?.items} link='/party/project-store/mio-offer-management'
                         disable={disable} handleSubmit={handleSubmit} buttonName={'Generate MIO Offer'} />
                 </div>
             </div>

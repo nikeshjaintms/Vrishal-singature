@@ -267,7 +267,7 @@ const ManageMultiFinalCoat = () => {
 });
 
             setDisable(true);
-            const myurl = `${V_URL}/user/add-multi-final-coat-offer`;
+            const myurl = `${V_URL}/party/add-multi-final-coat-offer`;
             const formData = new URLSearchParams();
             formData.append('items', JSON.stringify(filteredData));
             formData.append('weather_condition', JSON.stringify(weatherData))
@@ -295,7 +295,7 @@ const ManageMultiFinalCoat = () => {
             }).then((response) => {
                 if (response.data?.success === true) {
                     toast.success(response.data.message);
-                    navigate('/user/project-store/final-coat-management');
+                    navigate('/party/project-store/final-coat-management');
                 } else {
                     toast.error(response.data.message);
                 }
@@ -396,8 +396,8 @@ const ManageMultiFinalCoat = () => {
             <div className="page-wrapper">
                 <div className="content">
                     <PageHeader breadcrumbs={[
-                        { name: "Dashboard", link: "/user/project-store/dashboard", active: false },
-                        { name: "Final / Top Coating Offer List", link: "/user/project-store/final-coat-management", active: false },
+                        { name: "Dashboard", link: "/party/project-store/dashboard", active: false },
+                        { name: "Final / Top Coating Offer List", link: "/party/project-store/final-coat-management", active: false },
                         { name: `${data?._id ? 'Edit' : 'Add'} Final / Top Coating Offer `, active: false },
                     ]} />
 
@@ -551,7 +551,7 @@ const ManageMultiFinalCoat = () => {
                             </>
                         )
                     }
-                    <SubmitButton finalReq={data?.items} link='/user/project-store/final-coat-management'
+                    <SubmitButton finalReq={data?.items} link='/party/project-store/final-coat-management'
                         disable={disable} handleSubmit={handleSubmit} buttonName={'Generate Final Coat'} />
                 </div>
             </div>

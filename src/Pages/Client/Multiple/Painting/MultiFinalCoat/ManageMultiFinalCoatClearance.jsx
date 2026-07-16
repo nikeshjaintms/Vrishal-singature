@@ -124,7 +124,7 @@ const ManageMultiFinalCoatClearance = () => {
             }))
 
             setDisable(true);
-            const myurl = `${V_URL}/user/verify-multi-final_coat`;
+            const myurl = `${V_URL}/party/verify-multi-final_coat`;
             const formData = new URLSearchParams();
             formData.append('id', data._id);
             formData.append('project', localStorage.getItem('PAY_USER_PROJECT_NAME'));
@@ -139,7 +139,7 @@ const ManageMultiFinalCoatClearance = () => {
             }).then((response) => {
                 if (response.data?.success === true) {
                     toast.success(response.data.message);
-                    navigate('/user/project-store/final-coat-clearance-management');
+                    navigate('/party/project-store/final-coat-clearance-management');
                 } else {
                     toast.error(response.data.message);
                 }
@@ -168,8 +168,8 @@ const ManageMultiFinalCoatClearance = () => {
                     <div className="content">
 
                         <PageHeader breadcrumbs={[
-                            { name: "Dashboard", link: "/user/project-store/dashboard", active: false },
-                            { name: "Final/Top Coat Clearance List", link: "/user/project-store/final-coat-clearance-management", active: false },
+                            { name: "Dashboard", link: "/party/project-store/dashboard", active: false },
+                            { name: "Final/Top Coat Clearance List", link: "/party/project-store/final-coat-clearance-management", active: false },
                             { name: `${data?._id ? 'Edit' : 'Add'} Final/Top Coat Details`, active: true },
                         ]} />
 
@@ -233,7 +233,7 @@ const ManageMultiFinalCoatClearance = () => {
                             setTableData={setTableData}
                         />
                         <SubmitButton disable={disable} handleSubmit={handleSubmit}
-                            link={'/user/project-store/'} buttonName={'Generate Final/Top Coat Clearance'} />
+                            link={'/party/project-store/'} buttonName={'Generate Final/Top Coat Clearance'} />
 
                     </div>
                 </div>

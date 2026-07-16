@@ -153,7 +153,7 @@ const MultiLptOffer = () => {
                     <SubmitButton
                         disable={loading}
                         handleSubmit={handleSubmit}
-                        link={'/user/project-store/lpt-offer-management'}
+                        link={'/party/project-store/lpt-offer-management'}
                         buttonName={'Generate LPT Offer'}
                     />
                     {showBtn && <LptCompletedList />}

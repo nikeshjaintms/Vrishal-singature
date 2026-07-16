@@ -39,7 +39,7 @@ const MptItemModal = ({ title, tableObj, modalOpen, handleCloseModal }) => {
     const stockData = useSelector((state) => state?.getStockReportList?.user?.data);
 
     const fetchMPTTable = () => {
-        const url = `${V_URL}/user/get-ndt-generated-offer?project=${localStorage.getItem('U_PROJECT_ID')}&type=${tableObj?.ndt_type_id?._id}`
+        const url = `${V_URL}/party/get-ndt-generated-offer?project=${localStorage.getItem('U_PROJECT_ID')}&type=${tableObj?.ndt_type_id?._id}`
         axios({
             method: "get",
             url: url,

@@ -325,7 +325,7 @@ const MultiMio = () => {
     try {
       setLoading(true);
       const res = await axios.post(
-        `${V_URL}/user/get-multi-mio-view-page`,
+        `${V_URL}/party/get-multi-mio-view-page`,
         {
           project_id: projectId,
           page,
@@ -388,7 +388,7 @@ const MultiMio = () => {
           <div className="page-header">
             <ul className="breadcrumb">
               <li className="breadcrumb-item">
-                <Link to="/user/project-store/dashboard">Dashboard</Link>
+                <Link to="/party/project-store/dashboard">Dashboard</Link>
               </li>
               <li className="breadcrumb-item active">MIO Offer List</li>
             </ul>

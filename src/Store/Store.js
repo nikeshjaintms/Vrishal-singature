@@ -890,7 +890,6 @@ export default configureStore({
 
     getUserMptClearance: getUserMptClearanceSlice,
     getUserLptClearance: getUserLptClearanceSlice,
-
     getUserFinalDimension: getUserFinalDimensionSlice,
     getUserInspectionSummary: getUserInspectionSummarySlice,
     getUserGenInspectionSummary: getUserGenInspectionSummarySlice,

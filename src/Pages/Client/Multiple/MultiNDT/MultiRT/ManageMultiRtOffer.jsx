@@ -125,7 +125,7 @@ const ManageMultiRtOffer = () => {
         }));
 
         setDisable(true);
-        const myurl = `${V_URL}/user/manage-ndt-typewise-offer`;
+        const myurl = `${V_URL}/party/manage-ndt-typewise-offer`;
         const bodyFormData = new URLSearchParams();
         bodyFormData.append('offeredBy', localStorage.getItem('PAY_USER_ID'));
         bodyFormData.append('project', localStorage.getItem('PAY_USER_PROJECT_NAME'))
@@ -140,7 +140,7 @@ const ManageMultiRtOffer = () => {
         }).then((response) => {
             if (response.data.success === true) {
                 toast.success(response.data.message);
-                navigate('/user/project-store/rt-offer-management');
+                navigate('/party/project-store/rt-offer-management');
             }
             setDisable(false);
         }).catch((error) => {
@@ -163,8 +163,8 @@ const ManageMultiRtOffer = () => {
                 <div className="content">
 
                     <PageHeader breadcrumbs={[
-                        { name: "Dashboard", link: "/user/project-store/dashboard", active: false },
-                        { name: "Radiography Offer List", link: "/user/project-store/rt-offer-management", active: false },
+                        { name: "Dashboard", link: "/party/project-store/dashboard", active: false },
+                        { name: "Radiography Offer List", link: "/party/project-store/rt-offer-management", active: false },
                         { name: `${data?._id ? 'Edit' : 'Add'} Radiography Offer`, active: true }
                     ]} />
 
@@ -322,7 +322,7 @@ const ManageMultiRtOffer = () => {
                         </div>
                     </div>
 
-                    <SubmitButton disable={disable} handleSubmit={handleSubmit} link={'/user/project-store/rt-offer-management'} buttonName={'Generate RT Offer'} finalReq={data?.status !== 1 ? data?.items : []} />
+                    <SubmitButton disable={disable} handleSubmit={handleSubmit} link={'/party/project-store/rt-offer-management'} buttonName={'Generate RT Offer'} finalReq={data?.status !== 1 ? data?.items : []} />
 
                 </div>
             </div>

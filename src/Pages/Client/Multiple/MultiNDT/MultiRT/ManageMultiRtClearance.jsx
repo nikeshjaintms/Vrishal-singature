@@ -213,7 +213,7 @@ const ManageMultiRtClearance = () => {
             });
 
             setDisable(true);
-            const myurl = `${V_URL}/user/manage-multi-rt-report`;
+            const myurl = `${V_URL}/party/manage-multi-rt-report`;
             const bodyFormData = new URLSearchParams();
             bodyFormData.append('ndt_offer_no', data?._id);
 
@@ -240,7 +240,7 @@ const ManageMultiRtClearance = () => {
             }).then((response) => {
                 if (response.data.success === true) {
                     toast.success(response.data.message);
-                    navigate('/user/project-store/rt-clearance-management');
+                    navigate('/party/project-store/rt-clearance-management');
                 }
             }).catch((error) => {
                 toast.error("Something went wrong." || error.response.data?.message);
@@ -276,8 +276,8 @@ const ManageMultiRtClearance = () => {
             <div className="page-wrapper">
                 <div className="content">
                     <PageHeader breadcrumbs={[
-                        { name: "Dashboard", link: "/user/project-store/dashboard", active: false },
-                        { name: "Radiography Test Clearance List", link: "/user/project-store/rt-clearance-management", active: false },
+                        { name: "Dashboard", link: "/party/project-store/dashboard", active: false },
+                        { name: "Radiography Test Clearance List", link: "/party/project-store/rt-clearance-management", active: false },
                         { name: `${data?._id ? 'Edit' : 'Add'} Radiography Test Clearance`, active: true }
                     ]} />
 
@@ -481,7 +481,7 @@ const ManageMultiRtClearance = () => {
                         </div>
                     </div>
 
-                    <SubmitButton disable={disable} handleSubmit={handleSubmit} link={'/user/project-store/rt-clearance-management'}
+                    <SubmitButton disable={disable} handleSubmit={handleSubmit} link={'/party/project-store/rt-clearance-management'}
                         buttonName={'Generate RT Report'} finalReq={data?.status !== 2 ? data?.items : []} />
 
                 </div>

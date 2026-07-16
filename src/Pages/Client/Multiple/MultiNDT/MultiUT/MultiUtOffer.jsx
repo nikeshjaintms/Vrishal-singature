@@ -158,7 +158,7 @@ const MultiUtOffer = () => {
                         <SubmitButton
                             disable={loading}
                             handleSubmit={handleSubmit}
-                            link={'/user/project-store/ut-offer-management'}
+                            link={'/party/project-store/ut-offer-management'}
                             buttonName={'Generate UT Offer'}
                         />
                         {showBtn && <UTOfferCompletedList />}

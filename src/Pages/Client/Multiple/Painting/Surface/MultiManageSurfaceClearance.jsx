@@ -143,7 +143,7 @@ const MultiManageSurfaceClearance = () => {
                 is_accepted: item.is_accepted ? 2 : 3
             }))
 
-            const myurl = `${V_URL}/user/verify-multi-surface`;
+            const myurl = `${V_URL}/party/verify-multi-surface`;
             const bodyFormData = new URLSearchParams();
             bodyFormData.append('id', data?._id);
             bodyFormData.append('qc_name', localStorage.getItem('PAY_USER_ID'));
@@ -160,7 +160,7 @@ const MultiManageSurfaceClearance = () => {
             }).then((response) => {
                 if (response.data?.success === true) {
                     toast.success(response.data.message);
-                    navigate('/user/project-store/surface-clearance-management');
+                    navigate('/party/project-store/surface-clearance-management');
                 } else {
                     toast.error(response.data.message);
                 }
@@ -182,8 +182,8 @@ const MultiManageSurfaceClearance = () => {
             <div className="page-wrapper">
                 <div className="content">
                     <PageHeader breadcrumbs={[
-                        { name: "Dashboard", link: "/user/project-store/dashboard", active: false },
-                        { name: "Surface & Primer Clearance List", link: "/user/project-store/surface-clearance-management", active: false },
+                        { name: "Dashboard", link: "/party/project-store/dashboard", active: false },
+                        { name: "Surface & Primer Clearance List", link: "/party/project-store/surface-clearance-management", active: false },
                         { name: `${data?._id ? 'Edit' : 'Add'} Surface & Primer Clearance List`, active: true }
                     ]} />
 
@@ -279,7 +279,7 @@ const MultiManageSurfaceClearance = () => {
                     />
 
                     <SubmitButton disable={disable} handleSubmit={handleSubmit}
-                        link={'/user/project-store/surface-clearance-management'} buttonName={'Generate Surface & Primer Clearance'} />
+                        link={'/party/project-store/surface-clearance-management'} buttonName={'Generate Surface & Primer Clearance'} />
 
                 </div>
             </div>

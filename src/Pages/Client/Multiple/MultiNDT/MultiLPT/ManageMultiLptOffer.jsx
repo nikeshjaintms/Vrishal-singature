@@ -124,7 +124,7 @@ const ManageMultiLptOffer = () => {
         }));
 
         setDisable(true);
-        const myurl = `${V_URL}/user/manage-ndt-typewise-offer`;
+        const myurl = `${V_URL}/party/manage-ndt-typewise-offer`;
         const bodyFormData = new URLSearchParams();
         bodyFormData.append('offeredBy', localStorage.getItem('PAY_USER_ID'));
         bodyFormData.append('project', localStorage.getItem('PAY_USER_PROJECT_NAME'))
@@ -139,7 +139,7 @@ const ManageMultiLptOffer = () => {
         }).then((response) => {
             if (response.data.success === true) {
                 toast.success(response.data.message);
-                navigate('/user/project-store/lpt-offer-management');
+                navigate('/party/project-store/lpt-offer-management');
             }
             setDisable(false);
         }).catch((error) => {
@@ -162,8 +162,8 @@ const ManageMultiLptOffer = () => {
                 <div className="content">
 
                     <PageHeader breadcrumbs={[
-                        { name: "Dashboard", link: "/user/project-store/dashboard", active: false },
-                        { name: "Liquid Penetrant Testing Offer List", link: "/user/project-store/lpt-offer-management", active: false },
+                        { name: "Dashboard", link: "/party/project-store/dashboard", active: false },
+                        { name: "Liquid Penetrant Testing Offer List", link: "/party/project-store/lpt-offer-management", active: false },
                         { name: `${data?._id ? 'Edit' : 'Add'} Liquid Penetrant Testing`, active: true }
                     ]} />
 
@@ -320,7 +320,7 @@ const ManageMultiLptOffer = () => {
                         </div>
                     </div>
 
-                    <SubmitButton disable={disable} handleSubmit={handleSubmit} link={'/user/project-store/lpt-offer-management'} buttonName={'Generate LPT Offer'} finalReq={data?.status !== 1 ? data?.items : []} />
+                    <SubmitButton disable={disable} handleSubmit={handleSubmit} link={'/party/project-store/lpt-offer-management'} buttonName={'Generate LPT Offer'} finalReq={data?.status !== 1 ? data?.items : []} />
 
                 </div>
             </div>

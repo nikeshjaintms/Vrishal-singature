@@ -131,7 +131,7 @@ const MioTable = ({
     bodyFormData.append("item_detail_id", updatedItem.item_detail_id);
 
     try {
-      const myurl = `${V_URL}/user/update-multi-mio-offer`;
+      const myurl = `${V_URL}/party/update-multi-mio-offer`;
       const response = await axios.post(myurl, bodyFormData, {
         headers: {
           Authorization: "Bearer " + localStorage.getItem("PAY_USER_TOKEN"),
@@ -154,7 +154,7 @@ const MioTable = ({
     const removeItem = new URLSearchParams();
     removeItem.append("id", elem._id);
     try {
-      const myurl = `${V_URL}/user/delete-multi-mio-offer`;
+      const myurl = `${V_URL}/party/delete-multi-mio-offer`;
       const response = await axios({
         method: "post",
         url: myurl,
@@ -192,7 +192,7 @@ const MioTable = ({
         bodyFormData.append("items", JSON.stringify(balanceData));
         bodyFormData.append("is_delete", true);
         try {
-          const myurl = `${V_URL}/user/surface-grid-balance-update`;
+          const myurl = `${V_URL}/party/surface-grid-balance-update`;
           const response = await axios({
             method: "post",
             url: myurl,

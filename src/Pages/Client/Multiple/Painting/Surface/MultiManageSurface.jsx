@@ -416,7 +416,7 @@ const filteredData = updatedData.map((item) => {
             formData.append('start_time', weatherTime.startTime);
             formData.append('end_time', weatherTime.endTime);
 
-            const myurl = `${V_URL}/user/add-multi-surface-offer`;
+            const myurl = `${V_URL}/party/add-multi-surface-offer`;
             axios({
                 method: "post",
                 url: myurl,
@@ -425,7 +425,7 @@ const filteredData = updatedData.map((item) => {
             }).then((response) => {
                 if (response?.data?.success === true) {
                     toast.success(response?.data?.message);
-                    navigate('/user/project-store/surface-primer-management');
+                    navigate('/party/project-store/surface-primer-management');
                 } else {
                     toast.error(response.data.message);
                 }
@@ -444,8 +444,8 @@ const filteredData = updatedData.map((item) => {
                 <div className="page-wrapper">
                     <div className="content">
                         <PageHeader breadcrumbs={[
-                            { name: "Dashboard", link: "/user/project-store/dashboard", active: false },
-                            { name: "Surface & Primer Offer List", link: "/user/project-store/surface-primer-management", active: false },
+                            { name: "Dashboard", link: "/party/project-store/dashboard", active: false },
+                            { name: "Surface & Primer Offer List", link: "/party/project-store/surface-primer-management", active: false },
                             { name: `${data?._id ? 'Edit' : 'Add'} Surface & Primer Offer`, active: true }
                         ]} />
                         {!data?._id && (
@@ -601,7 +601,7 @@ const filteredData = updatedData.map((item) => {
                             </>
                         )}
 
-                        <SubmitButton finalReq={data?.items} link='/user/project-store/surface-primer-management'
+                        <SubmitButton finalReq={data?.items} link='/party/project-store/surface-primer-management'
                             disable={disable} handleSubmit={handleSubmit} buttonName={'Generate Surface Offer'} />
                     </div>
                 </div>

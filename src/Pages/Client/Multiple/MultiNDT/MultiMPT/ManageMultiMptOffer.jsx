@@ -124,7 +124,7 @@ const ManageMultiMptOffer = () => {
     }));
 
     setDisable(true);
-    const myurl = `${V_URL}/user/manage-ndt-typewise-offer`;
+    const myurl = `${V_URL}/party/manage-ndt-typewise-offer`;
     const bodyFormData = new URLSearchParams();
     bodyFormData.append('offeredBy', localStorage.getItem('PAY_USER_ID'));
     bodyFormData.append('project', localStorage.getItem('PAY_USER_PROJECT_NAME'))
@@ -139,7 +139,7 @@ const ManageMultiMptOffer = () => {
     }).then((response) => {
       if (response.data.success === true) {
         toast.success(response.data.message);
-        navigate('/user/project-store/mpt-offer-management');
+        navigate('/party/project-store/mpt-offer-management');
       }
       setDisable(false);
     }).catch((error) => {
@@ -162,8 +162,8 @@ const ManageMultiMptOffer = () => {
         <div className="content">
 
           <PageHeader breadcrumbs={[
-            { name: "Dashboard", link: "/user/project-store/dashboard", active: false },
-            { name: "Magnetic Particle Testing Offer List", link: "/user/project-store/mpt-offer-management", active: false },
+            { name: "Dashboard", link: "/party/project-store/dashboard", active: false },
+            { name: "Magnetic Particle Testing Offer List", link: "/party/project-store/mpt-offer-management", active: false },
             { name: `${data?._id ? 'Edit' : 'Add'} Magnetic Particle Testing`, active: true }
           ]} />
 
@@ -320,7 +320,7 @@ const ManageMultiMptOffer = () => {
             </div>
           </div>
 
-          <SubmitButton disable={disable} handleSubmit={handleSubmit} link={'/user/project-store/mpt-offer-management'} buttonName={'Generate MPT Offer'} finalReq={data?.status !== 1 ? data?.items : []} />
+          <SubmitButton disable={disable} handleSubmit={handleSubmit} link={'/party/project-store/mpt-offer-management'} buttonName={'Generate MPT Offer'} finalReq={data?.status !== 1 ? data?.items : []} />
 
         </div>
       </div>

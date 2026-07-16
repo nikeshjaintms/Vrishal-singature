@@ -133,7 +133,7 @@ const MultiManageMioClearance = () => {
         is_accepted: item.is_accepted ? 2 : 3
       }))
 
-      const myurl = `${V_URL}/user/verify-multi-mio`;
+      const myurl = `${V_URL}/party/verify-multi-mio`;
       const formData = new URLSearchParams();
       formData.append('id', data._id);
       formData.append('project', localStorage.getItem('PAY_USER_PROJECT_NAME'));
@@ -149,7 +149,7 @@ const MultiManageMioClearance = () => {
       }).then((response) => {
         if (response.data?.success === true) {
           toast.success(response.data.message);
-          navigate('/user/project-store/mio-clearance-management');
+          navigate('/party/project-store/mio-clearance-management');
         } else {
           toast.error(response.data.message);
         }
@@ -178,8 +178,8 @@ const MultiManageMioClearance = () => {
         <div className="page-wrapper">
           <div className="content">
             <PageHeader breadcrumbs={[
-              { name: "Dashboard", link: "/user/project-store/dashboard", active: false },
-              { name: "MIO Clearance List", link: "/user/project-store/mio-clearance-management", active: false },
+              { name: "Dashboard", link: "/party/project-store/dashboard", active: false },
+              { name: "MIO Clearance List", link: "/party/project-store/mio-clearance-management", active: false },
               { name: `${data?._id ? 'Edit' : 'Add'} MIO Details`, active: true }
             ]} />
 
@@ -245,7 +245,7 @@ const MultiManageMioClearance = () => {
             />
 
             <SubmitButton disable={disable} handleSubmit={handleSubmit}
-              link={'/user/project-store/mio-clearance-management'} buttonName={'Generate MIO Clearance'} />
+              link={'/party/project-store/mio-clearance-management'} buttonName={'Generate MIO Clearance'} />
 
           </div>
         </div>

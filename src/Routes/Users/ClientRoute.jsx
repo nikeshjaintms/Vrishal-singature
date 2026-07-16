@@ -128,6 +128,10 @@ import ManageMultiClearWeld from '../../Pages/Client/Multiple/MultiClearance/Cle
 import ManageMultiFd from '../../Pages/Client/Multiple/MultiExecution/MultiFinalDimension/ManageMultiFd';
 import ManageMultiClearFd from '../../Pages/Client/Multiple/MultiClearance/ClearanceMultiFd/ManageMultiClearFd';
 import ManageMultiNDT from '../../Pages/Client/Multiple/MultiExecution/MultiNDT/ManageMultiNDT';
+import ViewMultiUtClearance from '../../Pages/Client/Multiple/MultiNDT/MultiUT/ViewMultiUtClearance';
+import ViewMultiRtClearance from '../../Pages/Client/Multiple/MultiNDT/MultiRT/ViewMultiRtClearance';
+import ViewMultiMptClearance from '../../Pages/Client/Multiple/MultiNDT/MultiMPT/ViewMultiMptClearance';
+import ViewMultiLptClearance from '../../Pages/Client/Multiple/MultiNDT/MultiLPT/ViewMultiLptClearance';
 import MultiUtOffer from '../../Pages/Client/Multiple/MultiNDT/MultiUT/MultiUtOffer';
 import ManageMultiUtOffer from '../../Pages/Client/Multiple/MultiNDT/MultiUT/ManageMultiUtOffer';
 import MultiUtClearance from '../../Pages/Client/Multiple/MultiNDT/MultiUT/MultiUtClearance';
@@ -230,128 +234,110 @@ const ClientRoutes = () => {
                     <Route path='quality-clearance-final-dimension-management' element={<ManageMultiClearFd />} />
                        
 
-                    {hasAccess('NDT_DROP') && (
-                        <>
-                            {hasAccess('NDT_MASTER') && (
-                                <>
-                                    <Route path='ndt-management' element={<Ndt />} />
-                                    <Route path='manage-ndt' element={<ManageMultiNDT />} />
-                                </>
-                            )}
+                    <Route path='ndt-management' element={<Ndt />} />
+                    <Route path='manage-ndt' element={<ManageMultiNDT />} />
 
-                            {hasAccess('NDT_PROCESS') && (
-                                <>
-                                    {/* <Route path='ut-offer-management' element={<UtOffer />} /> */}
-                                    {/* <Route path='manage-ut-offer' element={<ManageUtOffer />} /> */}
-                                    {/* <Route path='ut-clearance-management' element={<GetUtClearance />} /> */}
-                                    {/* <Route path='manage-ut-clearance' element={<UtClearance />} /> */}
+                    {/* <Route path='ut-offer-management' element={<UtOffer />} /> */}
+                    {/* <Route path='manage-ut-offer' element={<ManageUtOffer />} /> */}
+                    {/* <Route path='ut-clearance-management' element={<GetUtClearance />} /> */}
+                    {/* <Route path='manage-ut-clearance' element={<UtClearance />} /> */}
 
-                                    {/* new */}
-                                    <Route path='ut-offer-management' element={<MultiUtOffer />} />
-                                    <Route path='manage-ut-offer' element={<ManageMultiUtOffer />} />
-                                    <Route path='ut-clearance-management' element={<MultiUtClearance />} />
-                                    <Route path='manage-ut-clearance' element={<ManageMultiUtClearance />} />
+                    {/* new */}
+                    <Route path='ut-offer-management' element={<MultiUtOffer />} />
+                    <Route path='manage-ut-offer' element={<ManageMultiUtOffer />} />
+                    <Route path='ut-clearance-management' element={<MultiUtClearance />} />
+                    <Route path='manage-ut-clearance' element={<ManageMultiUtClearance />} />
 
-                                    {/* <Route path='rt-offer-management' element={<RtOffer />} /> */}
-                                    {/* <Route path='manage-rt-offer' element={<ManageRtOffer />} /> */}
-                                    {/* <Route path='rt-clearance-management' element={<RtClearance />} /> */}
-                                    {/* <Route path='manage-rt-clearance' element={<ManageRtClearance />} /> */}
+                    {/* <Route path='rt-offer-management' element={<RtOffer />} /> */}
+                    {/* <Route path='manage-rt-offer' element={<ManageRtOffer />} /> */}
+                    {/* <Route path='rt-clearance-management' element={<RtClearance />} /> */}
+                    {/* <Route path='manage-rt-clearance' element={<ManageRtClearance />} /> */}
 
-                                    {/* new */}
-                                    <Route path='rt-offer-management' element={<MultiRtOffer />} />
-                                    <Route path='manage-rt-offer' element={<ManageMultiRtOffer />} />
-                                    <Route path='rt-clearance-management' element={<MultiRtClearance />} />
-                                    <Route path='manage-rt-clearance' element={<ManageMultiRtClearance />} />
+                    {/* new */}
+                    <Route path='rt-offer-management' element={<MultiRtOffer />} />
+                    <Route path='manage-rt-offer' element={<ManageMultiRtOffer />} />
+                    <Route path='rt-clearance-management' element={<MultiRtClearance />} />
+                    <Route path='manage-rt-clearance' element={<ManageMultiRtClearance />} />
 
-                                    {/* <Route path='mpt-offer-management' element={<MptOffer />} />
-                                    <Route path='manage-mpt-offer' element={<ManageMptOffer />} /> */}
-                                    {/* <Route path='mpt-clearance-management' element={<MptClearance />} /> */}
-                                    {/* <Route path='manage-mpt-clearance' element={<ManageMptClearance />} /> */}
+                    {/* <Route path='mpt-offer-management' element={<MptOffer />} />
+                    <Route path='manage-mpt-offer' element={<ManageMptOffer />} /> */}
+                    {/* <Route path='mpt-clearance-management' element={<MptClearance />} /> */}
+                    {/* <Route path='manage-mpt-clearance' element={<ManageMptClearance />} /> */}
 
-                                    {/* new */}
-                                    <Route path='mpt-offer-management' element={<MultiMptOffer />} />
-                                    <Route path='manage-mpt-offer' element={<ManageMultiMptOffer />} />
-                                    <Route path='mpt-clearance-management' element={<MultiMptClearance />} />
-                                    <Route path='manage-mpt-clearance' element={<ManageMultiMptClearance />} />
+                    {/* new */}
+                    <Route path='mpt-offer-management' element={<MultiMptOffer />} />
+                    <Route path='manage-mpt-offer' element={<ManageMultiMptOffer />} />
+                    <Route path='mpt-clearance-management' element={<MultiMptClearance />} />
+                    <Route path='manage-mpt-clearance' element={<ManageMultiMptClearance />} />
 
-                                    {/* <Route path='lpt-offer-management' element={<LptOffer />} />
-                                    <Route path='manage-lpt-offer' element={<ManageLptOffer />} /> */}
-                                    {/* <Route path='lpt-clearance-management' element={<LptClearance />} /> */}
-                                    {/* <Route path='manage-lpt-clearance' element={<ManageLptClearance />} /> */}
-
-                                    {/* new */}
-                                    <Route path='lpt-offer-management' element={<MultiLptOffer />} />
-                                    <Route path='manage-lpt-offer' element={<ManageMultiLptOffer />} />
-                                    <Route path='lpt-clearance-management' element={<MultiLptClearance />} />
-                                    <Route path='manage-lpt-clearance' element={<ManageMultiLptClearance />} />
-                                </>
-                            )}
-                        </>
-                    )}
-
-
+                    {/* <Route path='lpt-offer-management' element={<LptOffer />} />
+                    <Route path='manage-lpt-offer' element={<ManageLptOffer />} /> */}
+                    {/* <Route path='lpt-clearance-management' element={<LptClearance />} /> */}
+                    {/* <Route path='manage-lpt-clearance' element={<ManageLptClearance />} /> */}
+                    
+                    {/* new */}
+                    <Route path='lpt-offer-management' element={<MultiLptOffer />} />
+                    <Route path='manage-lpt-offer' element={<ManageMultiLptOffer />} />
+                    <Route path='lpt-clearance-management' element={<MultiLptClearance />} />
+                    <Route path='manage-lpt-clearance' element={<ManageMultiLptClearance />} />
+                    <Route path='view-ut-clearance-summary' element={<ViewMultiUtClearance />} />
+                    <Route path='view-rt-clearance-summary' element={<ViewMultiRtClearance />} />
+                    <Route path='view-mpt-clearance-summary' element={<ViewMultiMptClearance />} />
+                    <Route path='view-lpt-clearance-summary' element={<ViewMultiLptClearance />} />
                     <Route path='inspection-summary-management' element={<InspectionSummary />} />
                     <Route path='view-inspection-summary' element={<ViewMultiSummary />} />
                     <Route path='view-geninspection-summary' element={<ViewGenMultiSummary />} />
 
-
                     {/* Painting System */}
-                    {hasAccess('PAINT_MASTER') && (
-                        <>
-                            {/* Old */}
-                            {/* <Route path='surface-primer-management' element={<SurfacePrimerOffer />} /> */}
-                            {/* <Route path='manage-surface-primer' element={<ManageSurfaceOffer />} /> */}
-                            {/* <Route path='surface-clearance-management' element={<SurfacePrimerClearance />} /> */}
-                            {/* <Route path='manage-surface-clearance' element={<ManageSurfaceClearance />} /> */}
+                    {/* Old */}
+                    {/* <Route path='surface-primer-management' element={<SurfacePrimerOffer />} /> */}
+                    {/* <Route path='manage-surface-primer' element={<ManageSurfaceOffer />} /> */}
+                    {/* <Route path='surface-clearance-management' element={<SurfacePrimerClearance />} /> */}
+                    {/* <Route path='manage-surface-clearance' element={<ManageSurfaceClearance />} /> */}
 
-                            {/* New */}
-                            <Route path='surface-primer-management' element={<MultiSurface />} />
-                            <Route path='manage-surface-primer' element={<MultiManageSurface />} />
-                            <Route path='surface-clearance-management' element={<MultiSurfaceClearance />} />
-                            <Route path='manage-surface-clearance' element={<MultiManageSurfaceClearance />} />
-                            <Route path='view-surface-clearance' element={<MultiViewSurfaceClearanc />} />
+                    {/* New */}
+                    <Route path='surface-primer-management' element={<MultiSurface />} />
+                    <Route path='manage-surface-primer' element={<MultiManageSurface />} />
+                    <Route path='surface-clearance-management' element={<MultiSurfaceClearance />} />
+                    <Route path='manage-surface-clearance' element={<MultiManageSurfaceClearance />} />
+                    <Route path='view-surface-clearance' element={<MultiViewSurfaceClearanc />} />
 
-                            {/* Old */}
-                            {/* <Route path='mio-offer-management' element={<MioPaint />} />
-                            <Route path='manage-mio-offer' element={<ManageMioPaint />} />
-                            <Route path='mio-clearance-management' element={<MioPaintClearance />} />
-                            <Route path='manage-mio-clearance' element={<ManageMioPaintClearance />} /> */}
+                    {/* Old */}
+                    {/* <Route path='mio-offer-management' element={<MioPaint />} />
+                    <Route path='manage-mio-offer' element={<ManageMioPaint />} />
+                    <Route path='mio-clearance-management' element={<MioPaintClearance />} />
+                    <Route path='manage-mio-clearance' element={<ManageMioPaintClearance />} /> */}
 
-                            {/* New */}
-                            <Route path='mio-offer-management' element={<MultiMio />} />
-                            <Route path='manage-mio-offer' element={<MultiManageMio />} />
-                            <Route path='mio-clearance-management' element={<MultiMioClearance />} />
-                            <Route path='manage-mio-clearance' element={<MultiManageMioClearance />} />
-                            <Route path='view-mio-clearance' element={<MultiViewMioClearance />} />
+                    {/* New */}
+                    <Route path='mio-offer-management' element={<MultiMio />} />
+                    <Route path='manage-mio-offer' element={<MultiManageMio />} />
+                    <Route path='mio-clearance-management' element={<MultiMioClearance />} />
+                    <Route path='manage-mio-clearance' element={<MultiManageMioClearance />} />
+                    <Route path='view-mio-clearance' element={<MultiViewMioClearance />} />
 
-                            {/* old */}
-                            {/* <Route path='final-coat-management' element={<FinalCoatPaint />} />
-                            <Route path='manage-final-coat' element={<ManageFinalCoatPaint />} />
-                            <Route path='final-coat-clearance-management' element={<FinalCoatClearance />} />
-                            <Route path='manage-final-coat-clearance' element={<ManageFinalCoatClearance />} /> */}
+                    {/* old */}
+                    {/* <Route path='final-coat-management' element={<FinalCoatPaint />} />
+                    <Route path='manage-final-coat' element={<ManageFinalCoatPaint />} />
+                    <Route path='final-coat-clearance-management' element={<FinalCoatClearance />} />
+                    <Route path='manage-final-coat-clearance' element={<ManageFinalCoatClearance />} /> */}
 
-                            {/* new */}
-                            <Route path='final-coat-management' element={<MultiFinalCoat />} />
-                            <Route path='manage-final-coat' element={<ManageMultiFinalCoat />} />
-                            <Route path='final-coat-clearance-management' element={<MultiFinalCoatClearance />} />
-                            <Route path='manage-final-coat-clearance' element={<ManageMultiFinalCoatClearance />} />
-                            <Route path='view-final-coat-clearance' element={<MultiViewFinalCoatClearance />} />
-                        </>
-                    )}
+                    {/* new */}
+                    <Route path='final-coat-management' element={<MultiFinalCoat />} />
+                    <Route path='manage-final-coat' element={<ManageMultiFinalCoat />} />
+                    <Route path='final-coat-clearance-management' element={<MultiFinalCoatClearance />} />
+                    <Route path='manage-final-coat-clearance' element={<ManageMultiFinalCoatClearance />} />
+                    <Route path='view-final-coat-clearance' element={<MultiViewFinalCoatClearance />} />
 
                     {/* {hasAccess('IRN_AFTER') && ( */}
-                        <>
-                            {/* old */}
-                            {/* <Route path='release-note-management' element={<ReleaseNote />} />
-                            <Route path='management-release-note' element={<ViewReleaseNote />} /> */}
+                    {/* old */}
+                    {/* <Route path='release-note-management' element={<ReleaseNote />} />
+                    <Route path='management-release-note' element={<ViewReleaseNote />} /> */}
 
-                            {/* new */}
-                            <Route path='release-note-management' element={<MultiReleaseNote />} />
-                            <Route path='view-release-note' element={<ViewReleaseNote />} />
-                            <Route path='view-Genrelease-note' element={<ViewGenReleaseNote />} />
-                        </>
+                    {/* new */}
+                    <Route path='release-note-management' element={<MultiReleaseNote />} />
+                    <Route path='view-release-note' element={<ViewReleaseNote />} />
+                    <Route path='view-Genrelease-note' element={<ViewGenReleaseNote />} />
                     {/* )} */}
-
 
                     <Route path='*' element={<Navigate to='dashboard' />} />
                 </Route>

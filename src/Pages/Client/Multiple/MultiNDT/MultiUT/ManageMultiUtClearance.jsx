@@ -196,7 +196,7 @@ const ManageMultiUtClearance = () => {
             }))
 
             setDisable(true);
-            const myurl = `${V_URL}/user/manage-multi-ut-report`;
+            const myurl = `${V_URL}/party/manage-multi-ut-report`;
             console.log("myurl :", myurl);
             const bodyFormData = new URLSearchParams();
             bodyFormData.append('ndt_offer_no', data?._id);
@@ -238,7 +238,7 @@ const ManageMultiUtClearance = () => {
             }).then((response) => {
                 if (response.data.success === true) {
                     toast.success(response.data.message);
-                    navigate('/user/project-store/ut-clearance-management');
+                    navigate('/party/project-store/ut-clearance-management');
                 }
                 setDisable(false);
             }).catch((error) => {
@@ -271,8 +271,8 @@ const ManageMultiUtClearance = () => {
                 <div className="content">
 
                     <PageHeader breadcrumbs={[
-                        { name: "Dashboard", link: "/user/project-store/dashboard", active: false },
-                        { name: "Ultrasonic Test Clearance List", link: "/user/project-store/ut-clearance-management", active: false },
+                        { name: "Dashboard", link: "/party/project-store/dashboard", active: false },
+                        { name: "Ultrasonic Test Clearance List", link: "/party/project-store/ut-clearance-management", active: false },
                         { name: `${data?._id ? 'Edit' : 'Add'} Ultrasonic Test Clearance`, active: true }
                     ]} />
 
@@ -459,7 +459,7 @@ const ManageMultiUtClearance = () => {
                         </div>
                     </div>
 
-                    <SubmitButton disable={disable} handleSubmit={handleSubmit} link={'/user/project-store/ut-clearance-management'}
+                    <SubmitButton disable={disable} handleSubmit={handleSubmit} link={'/party/project-store/ut-clearance-management'}
                         buttonName={'Generate UT Report'} finalReq={data?.status !== 2 ? data?.items : []} />
                 </div>
 

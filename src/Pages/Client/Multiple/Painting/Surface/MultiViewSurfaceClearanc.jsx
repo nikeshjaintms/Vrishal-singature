@@ -182,8 +182,8 @@ const MultiViewSurfaceClearanc = () => {
                 <div className="page-wrapper">
                     <div className="content">
                         <PageHeader breadcrumbs={[
-                            { name: "Dashboard", link: "/user/project-store/dashboard", active: false },
-                            { name: "Surface & Primer Offer List", link: "/user/project-store/surface-clearance-management", active: false },
+                            { name: "Dashboard", link: "/party/project-store/dashboard", active: false },
+                            { name: "Surface & Primer Offer List", link: "/party/project-store/surface-clearance-management", active: false },
                             { name: `${data?._id ? 'Edit' : 'Add'} Surface & Primer Offer`, active: true }
                         ]} />
 
@@ -256,7 +256,7 @@ const MultiViewSurfaceClearanc = () => {
                         )
                         }
 
-                        <SubmitButton finalReq={data?.items} link='/user/project-store/surface-clearance-management'
+                        <SubmitButton finalReq={data?.items} link='/party/project-store/surface-clearance-management'
                             disable={disable} buttonName={'Generate Surface Offer'} />
                     </div>
                 </div>
