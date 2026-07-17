@@ -242,7 +242,7 @@ const MultiSurface = () => {
                                   className="dropdown-item"
                                   onClick={() =>
                                     navigate(
-                                      "/party/project-store/view-multi-surface-summary",
+                                      "/party/project-store/manage-surface-primer",
                                       { state: r }
                                     )
                                   }

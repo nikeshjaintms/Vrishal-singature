@@ -289,7 +289,7 @@ const MultiFinalCoat = () => {
                                      className="dropdown-item"
                                      onClick={() =>
                                        navigate(
-                                         "/party/project-store/view-final-coat-summary",
+                                         "/party/project-store/manage-final-coat",
                                          { state: item }
                                        )
                                       }

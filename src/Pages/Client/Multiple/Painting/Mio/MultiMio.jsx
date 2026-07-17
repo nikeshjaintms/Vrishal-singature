@@ -543,7 +543,7 @@ const MultiMio = () => {
                                     className="dropdown-item"
                                     onClick={() =>
                                       navigate(
-                                        "/party/project-store/view-multi-mio-summary",
+                                        "/party/project-store/manage-mio-offer",
                                         { state: r }
                                       )
                                     }
