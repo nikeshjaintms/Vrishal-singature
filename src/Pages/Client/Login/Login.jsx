@@ -1,29 +1,40 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link,useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import cryptojs from 'crypto-js';
 import Images from '../../../Images/Img';
-import { V_URL } from '../../../BaseUrl';
+import { M_STORE, PAY, PMS, V_URL, PIPING } from '../../../BaseUrl';
+import { useRoleAccess } from '../../../Context/RoleAccessContext';
+import { clearOldSession } from '../../../Components/LocalStorageData/PmsLocalStorage';
 
 const PartyLogin = () => {
   const [login, setLogin] = useState({
     email: "",
     password: "",
     pwdShow: true,
-    remember: false
+    remember: false,
   });
-
+ const [newData, setNewData] = useState({
+       
+        productList: [],
+        pipingRole: [],
+        structureRole: [],
+    });
   const [disable, setDisable] = useState(false);
   const [error, setError] = useState({});
-
+  const [erpData, setErpData] = useState([]);
+  const [errorTwo, setErrorTwo] = useState({});
   // STEP 2 states
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState("");
-
+  const [selectedProduct, setSelectedProduct] = useState('');
   const navigate = useNavigate();
+      const location = useLocation();
   const secretKey = 'Vishal Enterprise';
-
+      const { setUserRole } = useRoleAccess();
+  
+  
   // ----------------------------
   // Remember Me
   // ----------------------------
@@ -84,7 +95,23 @@ const PartyLogin = () => {
 
       if (res.data?.success) {
         const data = res.data.data;
+        console.log("data======>",data);
+   if (!data || data?.product?.length === 0) {
+                    toast.error('No products available for this user');
+                    setDisable(false);
+                    return;
+                }
 
+                // Store server data in state
+                setNewData({
+                  
+                    productList: data.product?.filter(p => 
+                        p.name?.toLowerCase().includes("fabrication")
+                    ) || [],
+                    pipingRole: data.pipingRole || [],
+                    structureRole: data.structureRole || [],
+                   
+                });
         // 🔐 Auth info
         localStorage.setItem("PARTY_TOKEN", data.token);
         localStorage.setItem("PARTY_ID", data.id);
@@ -141,9 +168,28 @@ const PartyLogin = () => {
     localStorage.setItem("PARTY_START_YEAR", project?.year_id?.start_year || "");
     localStorage.setItem("PARTY_END_YEAR", project?.year_id?.end_year || "");
 
-    navigate("/party/project-store/dashboard");
+     if (newData.product === PMS && location.state?.type !== true) {
+                setUserRole(newData.erp_role);
+
+                    navigate("/party/project-store/dashboard");
+            } else if (newData.product === PIPING && location.state?.type !== true) {
+                setUserRole(newData.erp_role);
+                navigate('/user/piping/project-store/dashboard');
+            }
+
+    // navigate("/party/project-store/dashboard");
   };
 
+      const handleProductChange = (e) => {
+        const product = e.target.value;
+        setSelectedProduct(product);
+        setNewData({ ...newData, product, erp_role: '' }); // <-- add product here
+        localStorage.setItem('VI_PRO', product);
+        // Assign roles dynamically based on selected product
+        if (product === 'Piping Fabrication') setErpData(newData.pipingRole || []);
+        else if (product === 'Structural Fabrication') setErpData(newData.structureRole || []);
+        else setErpData([]);
+    };
   return (
     <div className="main-wrapper login-body">
       <div className="container-fluid px-0">
@@ -230,9 +276,24 @@ const PartyLogin = () => {
                     {/* STEP 2 — PROJECT SELECT */}
                     {projects.length > 0 && (
                       <>
-                        <h2>Select Project</h2>
+                        <h2>Select Product</h2>
 
                         <form onSubmit={handleProjectSubmit}>
+
+                            <div className="input-block">
+                                                        <label>Product <span className="login-danger">*</span></label>
+                                                        <select className="form-control select"
+                                                            value={selectedProduct}
+                                                            onChange={handleProductChange}
+                                                        >
+                                                            <option value="">Select Product</option>
+                                                            {newData.productList?.map((p) => (
+                                                                <option key={p.name} value={p.name}>{p.name}</option>
+                                                            ))}
+                                                        </select>
+                                                        <div className='error'>{errorTwo.product_err}</div>
+                                                    </div>
+                                                    
                           <div className="input-block">
                             <label>Project <span className="login-danger">*</span></label>
                             <select
