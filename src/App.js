@@ -10,6 +10,7 @@ import PoTeam from './Routes/PoTeam/PoTeam'
 import SuperAdminRoutes from './Routes/SuperAdmin/SuperAdminRoutes'
 import PipingRoute from './Routes/Users/PipingRoute'
 import ClientRoutes from './Routes/Users/ClientRoute'
+import ClientPipingRoutes from './Routes/Users/ClientPipingRoute'
 const MaintenancePage = () => {
   useEffect(() => {
     const canvas = document.getElementById("gearCanvas");
@@ -161,6 +162,7 @@ const App = () => {
           <SuperAdminRoutes />
           <PipingRoute />
           <ClientRoutes />
+          <ClientPipingRoutes />
         </>
       </RoleAccessProvider>
     </>
