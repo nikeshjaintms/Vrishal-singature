@@ -5,7 +5,8 @@ import {
   LayoutDashboard,
   NotebookText,
   ScrollText,
-  SendHorizontal
+  SendHorizontal,
+  Wrench
 } from "lucide-react";
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -179,6 +180,19 @@ const PartySidebar = () => {
                   <SendHorizontal className="Dash-iCon" />
                 </span>
                 <span>IRN</span>
+              </Link>
+            </li>
+
+            {/* PIPING */}
+            <li>
+              <Link
+                to="/party/piping-store/dashboard"
+                className={location.pathname.includes("/party/piping-store") ? "active" : ""}
+              >
+                <span className="menu-side">
+                  <Wrench className="Dash-iCon" />
+                </span>
+                <span>Piping</span>
               </Link>
             </li>
 

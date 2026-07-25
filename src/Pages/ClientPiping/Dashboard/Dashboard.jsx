@@ -3,16 +3,17 @@ import Header from '../Include/Header';
 import Sidebar from '../Include/Sidebar';
 import Footer from '../Include/Footer';
 import { Link } from 'react-router-dom';
-import { greetingComponent } from '../../../Components/GreetingDash/GreetingComponent';
+
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good Morning';
+  if (hour < 17) return 'Good Afternoon';
+  return 'Good Evening';
+};
 
 /**
- * Client Piping Dashboard
- * ------------------------
- * Base landing page for the Client Piping module. Kept intentionally simple —
- * no KPI cards yet, since there's no piping-specific "PMS stock" style summary
- * endpoint built for the Party role. The ERP Client Dashboard (Pages/Client/Dashboard/Dashboard.jsx)
- * pulls its cards from getPmsStock(); once a piping equivalent exists on the backend,
- * an intern can wire up the same DashboardCard pattern here.
+ * Client Piping Dashboard — base landing page. Kept simple, no KPI cards
+ * (no piping-specific Party-facing stock/summary endpoint exists yet).
  */
 const Dashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -42,7 +43,7 @@ const Dashboard = () => {
             <div className="row">
               <div className="col-md-6">
                 <div className="morning-user">
-                  <h2>{greetingComponent()}, <span>{localStorage.getItem('PARTY_NAME')}</span></h2>
+                  <h2>{getGreeting()}, <span>{localStorage.getItem('PARTY_NAME')}</span></h2>
                   <p>Have a nice day at work</p>
                 </div>
               </div>

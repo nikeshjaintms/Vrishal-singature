@@ -11,16 +11,11 @@ import Footer from './Footer';
  * The routing, layout, auth guard, and sidebar navigation are all wired up
  * and working — this component is what currently renders at the destination.
  *
- * FOR INTERNS: When you build out a real module (e.g. "RT Clearance Management"),
- * replace the matching <Route path='...' element={<PlaceholderPage title="..." />} />
- * entry in ClientPipingRoute.jsx with your real page component. Use the equivalent
- * staff-facing page under Pages/Piping/... as your business-logic reference, and the
- * equivalent Party-facing page under Pages/Client/... as your reference for how this
- * codebase adapts a staff page into a Party-facing one (auth token, URL prefix, etc.
- * see the header comment in ClientPipingRoute.jsx for the specific conventions to follow).
- *
- * Do not remove the Header/Sidebar/Footer wrapper when you build the real page —
- * keep this same structure so the module fits the rest of the app.
+ * FOR INTERNS: replace the matching <Route path='...' element={<PlaceholderPage title="..." />} />
+ * entry in ClientPipingRoute.jsx with your real page component when you build it.
+ * Reference Pages/Piping/... for business logic, and Pages/Client/Multiple/... for
+ * how this codebase adapts a staff page into a Party-facing one (/party/ prefix,
+ * PARTY_TOKEN, no hasAccess() gates — see the header comment in ClientPipingRoute.jsx).
  */
 const PlaceholderPage = ({ title }) => {
   const location = useLocation();
