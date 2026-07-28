@@ -4,38 +4,26 @@ import PartyLayout from './ClientStoreLayout';
 import Dashboard from '../../Pages/ClientPiping/Dashboard/Dashboard';
 import PlaceholderPage from '../../Pages/ClientPiping/Include/PlaceholderPage';
 
+// Material Receiving (QC)
+import VerifyRequest from '../../Pages/ClientPiping/Qc/VerifyRequest/VerifyRequest';
+import ViewQcRequest from '../../Pages/ClientPiping/Qc/VerifyRequest/ViewQcRequest';
+import QcVerify from '../../Pages/ClientPiping/Qc/VerifyRequest/QcVerify';
+
+// FIM — list + detail view only (Manage/Verification are staff-only actions, out of scope)
+import FimPackingList from '../../Pages/ClientPiping/FIM/FimPackingList';
+import ViewFIM from '../../Pages/ClientPiping/FIM/ViewFIM';
+
 /**
- * ClientPipingRoute.jsx — PRUNED to approved scope
- * ==================================================
- * Base path: /party/piping-store/*
- * Reuses the existing Party login (PARTY_TOKEN via PartyLayout) — same as ClientRoute.jsx.
- *
- * SCOPE: This route file intentionally covers ONLY the 12 feature areas approved
- * for Client Piping (per the "EXTERNAL/CLIENT = Y" filtered stage list from the
- * project sheet), not the full 236-route staff Piping module:
- *   Material Receiving (QC), FIM, Fit-Up (Acceptance), Weld Visual (Acceptance),
- *   Final Dimension (Acceptance), NDT — RT/PWHT/FT/LPT/MPT/HT/PMI/Pickling & Passivation
- *   (Offering + Acc/Rej for each), LHS, Surface & Primer (Acceptance), MIO (Acceptance),
- *   Final Coat (Acceptance), IRN.
- * Note: items marked "- Acceptance" on the approved list include ONLY the
- * clearance/acceptance route (not the Offering side); NDT includes both since
- * it wasn't marked "- Acceptance" on the sheet. If that reading turns out wrong,
- * the Offering routes for Fitup/Weld Visual/FD/Surface/MIO/Final Coat are easy
- * to add back — see Pages/Piping/Include/Sidebar.jsx for their route names
- * (e.g. surface-primer-management / manage-surface-primer for Surface Offering).
- *
- * All 56 routes below currently render PlaceholderPage — real implementation
- * is intern work. See the equivalent path under Pages/Piping/ for business logic
- * reference, and Pages/Client/Multiple/ for the Party-adaptation conventions
- * (/party/ prefix not /user/, PARTY_TOKEN not PAY_USER_TOKEN, no hasAccess() gates
- * — Party sessions never have ERP_ROLE set, so any hasAccess() check here will
- * silently make that route unreachable, the same bug that took a long debugging
- * session to track down in the ERP Client module).
- *
- * If scope expands beyond these 12 areas later, do NOT copy the rest of
- * Pages/Piping/ wholesale — every one of those ~225 remaining routes uses
- * PAY_USER_TOKEN/user-prefixed calls/hasAccess gates and needs the same
- * adaptation work as these did, one area at a time.
+ * ClientPipingRoute.jsx — TRIMMED, TEMPORARY VERSION
+ * ====================================================
+ * Only Material Receiving (QC) and FIM are wired to real components right
+ * now, matching the files currently present in the project. Every other
+ * area (Fit-Up, Weld Visual, Final Dimension, all NDT types, Line History,
+ * Surface/MIO/Final Coat, IRN) is left as PlaceholderPage on purpose — those
+ * component files have not been added to the project yet. Adding more files
+ * later without also updating the imports/routes below will not make them
+ * appear; this file must be updated (or replaced with the full version) at
+ * the same time those files are added.
  */
 
 const ClientPipingRoutes = () => {
@@ -44,16 +32,19 @@ const ClientPipingRoutes = () => {
       <Route path='/party/piping-store' element={<PartyLayout />}>
         <Route path='dashboard' element={<Dashboard />} />
 
-          <Route path='verify-request-management' element={<PlaceholderPage title="Material Receiving (QC)" />} />
-          <Route path='view-qc-request' element={<PlaceholderPage title="View QC Request" />} />
-          <Route path='manage-verify-request' element={<PlaceholderPage title="Manage Verify Request" />} />
+          <Route path='verify-request-management' element={<VerifyRequest />} />
+          <Route path='view-qc-request' element={<ViewQcRequest />} />
+          <Route path='manage-verify-request' element={<QcVerify />} />
           <Route path='manage-fim-packing' element={<PlaceholderPage title="Manage FIM Packing" />} />
           <Route path='fim-packing-verification' element={<PlaceholderPage title="FIM Packing Verification" />} />
-          <Route path='fim-packing-list' element={<PlaceholderPage title="FIM Packing List" />} />
-          <Route path='fim-packing-details' element={<PlaceholderPage title="FIM Packing Details" />} />
+          <Route path='fim-packing-list' element={<FimPackingList />} />
+          <Route path='fim-packing-details' element={<ViewFIM />} />
           <Route path='fitup-clearance-management' element={<PlaceholderPage title="Fit-Up Acceptance" />} />
+          <Route path='view-quality-clearance-fitup' element={<PlaceholderPage title="View Fit-Up Clearance" />} />
           <Route path='weld-visual-clearance-management' element={<PlaceholderPage title="Weld Visual Acceptance" />} />
+          <Route path='view-quality-clearance-weld-visual' element={<PlaceholderPage title="View Weld Visual Clearance" />} />
           <Route path='final-dimension-clearance-management' element={<PlaceholderPage title="Final Dimension Acceptance" />} />
+          <Route path='view-quality-clearance-final-dimension' element={<PlaceholderPage title="View Final Dimension Clearance" />} />
           <Route path='rt-offer-management' element={<PlaceholderPage title="RT Offering" />} />
           <Route path='manage-rt-offer' element={<PlaceholderPage title="Manage RT Offer" />} />
           <Route path='rt-clearance-management' element={<PlaceholderPage title="RT Acc / Rej" />} />
