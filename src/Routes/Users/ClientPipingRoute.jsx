@@ -13,6 +13,40 @@ import QcVerify from '../../Pages/ClientPiping/Qc/VerifyRequest/QcVerify';
 import FimPackingList from '../../Pages/ClientPiping/FIM/FimPackingList';
 import ViewFIM from '../../Pages/ClientPiping/FIM/ViewFIM';
 
+// Fit-Up Acceptance
+import QFitUpList from '../../Pages/ClientPiping/QualityClearance/QFitup/QFitUpList';
+import ViewMultiClearFitup from '../../Pages/ClientPiping/QualityClearance/QFitup/ViewMultiClearFitup';
+
+// Weld Visual Acceptance
+import QWeldVisualList from '../../Pages/ClientPiping/QualityClearance/QWeldVisual/QWeldVisualList';
+import ViewMultiClearWeld from '../../Pages/ClientPiping/QualityClearance/QWeldVisual/ViewMultiClearWeld';
+
+// Final Dimension Acceptance
+import QFinalDimensionList from '../../Pages/ClientPiping/QualityClearance/FinalDimension/QFinalDimensionList';
+import ViewMultiClearFd from '../../Pages/ClientPiping/QualityClearance/FinalDimension/ViewMultiClearFd';
+
+// NDT — RT/MPT/LPT: Clearance (Acc/Rej) only. Offer creation is a staff-only
+// workflow (selecting drawing items to submit for testing), not client-facing,
+// so the *-offer-management routes stay as PlaceholderPage.
+// NOTE: UT is NOT part of the approved 12-area scope (no route slots exist for
+// it in this file), so it is intentionally not built or imported here.
+import MultiRtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiRT/MultiRtClearance';
+import ViewMultiRtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiRT/ViewMultiRtClearance';
+import MultiMptClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiMPT/MultiMptClearance';
+import ViewMultiMptClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiMPT/ViewMultiMptClearance';
+import MultiLptClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiLPT/MultiLptClearance';
+import ViewMultiLptClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiLPT/ViewMultiLptClearance';
+
+// NDT — PWHT/FT/HT/PMI/Pickling & Passivation: read-only (view + download).
+// These 5 NDT-type models don't yet have the client_status/status_type
+// fields the RT/MPT/LPT accept-reject action depends on, so there is no
+// accept/reject action here — see the note in party.routes.js.
+import MultiPwhtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPWHT/MultiPwhtClearance';
+import MultiFtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiFT/MultiFtClearance';
+import MultiHtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiHT/MultiHtClearance';
+import MultiPmiClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPMI/MultiPmiClearance';
+import MultiPicklingClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPickling/MultiPicklingClearance';
+
 /**
  * ClientPipingRoute.jsx — TRIMMED, TEMPORARY VERSION
  * ====================================================
@@ -39,43 +73,43 @@ const ClientPipingRoutes = () => {
           <Route path='fim-packing-verification' element={<PlaceholderPage title="FIM Packing Verification" />} />
           <Route path='fim-packing-list' element={<FimPackingList />} />
           <Route path='fim-packing-details' element={<ViewFIM />} />
-          <Route path='fitup-clearance-management' element={<PlaceholderPage title="Fit-Up Acceptance" />} />
-          <Route path='view-quality-clearance-fitup' element={<PlaceholderPage title="View Fit-Up Clearance" />} />
-          <Route path='weld-visual-clearance-management' element={<PlaceholderPage title="Weld Visual Acceptance" />} />
-          <Route path='view-quality-clearance-weld-visual' element={<PlaceholderPage title="View Weld Visual Clearance" />} />
-          <Route path='final-dimension-clearance-management' element={<PlaceholderPage title="Final Dimension Acceptance" />} />
-          <Route path='view-quality-clearance-final-dimension' element={<PlaceholderPage title="View Final Dimension Clearance" />} />
+          <Route path='fitup-clearance-management' element={<QFitUpList />} />
+          <Route path='view-quality-clearance-fitup' element={<ViewMultiClearFitup />} />
+          <Route path='weld-visual-clearance-management' element={<QWeldVisualList />} />
+          <Route path='view-quality-clearance-weld-visual' element={<ViewMultiClearWeld />} />
+          <Route path='final-dimension-clearance-management' element={<QFinalDimensionList />} />
+          <Route path='view-quality-clearance-final-dimension' element={<ViewMultiClearFd />} />
           <Route path='rt-offer-management' element={<PlaceholderPage title="RT Offering" />} />
           <Route path='manage-rt-offer' element={<PlaceholderPage title="Manage RT Offer" />} />
-          <Route path='rt-clearance-management' element={<PlaceholderPage title="RT Acc / Rej" />} />
-          <Route path='manage-rt-clearance' element={<PlaceholderPage title="Manage RT Clearance" />} />
+          <Route path='rt-clearance-management' element={<MultiRtClearance />} />
+          <Route path='manage-rt-clearance' element={<ViewMultiRtClearance />} />
           <Route path='pwht-offer-management' element={<PlaceholderPage title="PWHT Offering" />} />
           <Route path='manage-pwht-offer' element={<PlaceholderPage title="Manage PWHT Offer" />} />
-          <Route path='pwht-clearance-management' element={<PlaceholderPage title="PWHT Acc / Rej" />} />
+          <Route path='pwht-clearance-management' element={<MultiPwhtClearance />} />
           <Route path='manage-pwht-clearance' element={<PlaceholderPage title="Manage PWHT Clearance" />} />
           <Route path='ft-offer-management' element={<PlaceholderPage title="FT Offering" />} />
           <Route path='manage-ft-offer' element={<PlaceholderPage title="Manage FT Offer" />} />
-          <Route path='ft-clearance-management' element={<PlaceholderPage title="FT Acc / Rej" />} />
+          <Route path='ft-clearance-management' element={<MultiFtClearance />} />
           <Route path='manage-ft-clearance' element={<PlaceholderPage title="Manage FT Clearance" />} />
           <Route path='lpt-offer-management' element={<PlaceholderPage title="LPT Offering" />} />
           <Route path='manage-lpt-offer' element={<PlaceholderPage title="Manage LPT Offer" />} />
-          <Route path='lpt-clearance-management' element={<PlaceholderPage title="LPT Acc / Rej" />} />
-          <Route path='manage-lpt-clearance' element={<PlaceholderPage title="Manage LPT Clearance" />} />
+          <Route path='lpt-clearance-management' element={<MultiLptClearance />} />
+          <Route path='manage-lpt-clearance' element={<ViewMultiLptClearance />} />
           <Route path='mpt-offer-management' element={<PlaceholderPage title="MPT Offering" />} />
           <Route path='manage-mpt-offer' element={<PlaceholderPage title="Manage MPT Offer" />} />
-          <Route path='mpt-clearance-management' element={<PlaceholderPage title="MPT Acc / Rej" />} />
-          <Route path='manage-mpt-clearance' element={<PlaceholderPage title="Manage MPT Clearance" />} />
+          <Route path='mpt-clearance-management' element={<MultiMptClearance />} />
+          <Route path='manage-mpt-clearance' element={<ViewMultiMptClearance />} />
           <Route path='ht-offer-management' element={<PlaceholderPage title="Hardness Testing Offering" />} />
           <Route path='manage-ht-offer' element={<PlaceholderPage title="Manage Hardness Testing Offer" />} />
-          <Route path='ht-clearance-management' element={<PlaceholderPage title="Hardness Testing Acc / Rej" />} />
+          <Route path='ht-clearance-management' element={<MultiHtClearance />} />
           <Route path='manage-ht-clearance' element={<PlaceholderPage title="Manage Hardness Testing Clearance" />} />
           <Route path='pmi-offer-management' element={<PlaceholderPage title="PMI Offering" />} />
           <Route path='manage-pmi-offer' element={<PlaceholderPage title="Manage PMI Offer" />} />
-          <Route path='pmi-clearance-management' element={<PlaceholderPage title="PMI Acc / Rej" />} />
+          <Route path='pmi-clearance-management' element={<MultiPmiClearance />} />
           <Route path='manage-pmi-clearance' element={<PlaceholderPage title="Manage PMI Clearance" />} />
           <Route path='pickling-passivation-offer-management' element={<PlaceholderPage title="Pickling & Passivation Offering" />} />
           <Route path='manage-pickling-passivation-offer' element={<PlaceholderPage title="Manage Pickling & Passivation Offer" />} />
-          <Route path='pickling-passivation-clearance-management' element={<PlaceholderPage title="Pickling & Passivation Acc / Rej" />} />
+          <Route path='pickling-passivation-clearance-management' element={<MultiPicklingClearance />} />
           <Route path='manage-pickling-passivation-clearance' element={<PlaceholderPage title="Manage Pickling & Passivation Clearance" />} />
           <Route path='line-history-management' element={<PlaceholderPage title="Line History (LHS)" />} />
           <Route path='view-line-history' element={<PlaceholderPage title="View Line History" />} />

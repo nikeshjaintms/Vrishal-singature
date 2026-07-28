@@ -174,7 +174,7 @@ const PartyLogin = () => {
                     navigate("/party/project-store/dashboard");
             } else if (newData.product === PIPING && location.state?.type !== true) {
                 setUserRole(newData.erp_role);
-                navigate('/user/piping/project-store/dashboard');
+                navigate('/party/piping-store/dashboard');
             }
 
     // navigate("/party/project-store/dashboard");
