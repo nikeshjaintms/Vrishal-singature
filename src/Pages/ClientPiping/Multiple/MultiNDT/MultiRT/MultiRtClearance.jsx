@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Header from '../../../Include/Header';
 import Sidebar from '../../../Include/Sidebar';
 import Footer from '../../../Include/Footer';
@@ -11,9 +11,14 @@ import DropDown from '../../../../../Components/DropDown';
 import { V_URL } from '../../../../../BaseUrl';
 import { PdfDownloadErp } from '../../../../../Components/ErpPdf/PdfDownloadErp';
 
-// Read-only: PWHT does not yet have the client_status/status_type fields the
-// RT/MPT/LPT accept-reject action depends on, so there is no accept/reject
-// action here — view + download only (see note in party.routes.js).
+// Read-only, built against the getRtInspectionPiping endpoint added this
+// session — this is genuinely new backend code with no prior staff usage,
+// so treat this page as needing real QA before relying on it in production.
+//
+// IMPORTANT: this model's status enum is 0-based
+// (0:Pending 1:Accepted 2:Rejected 3:Partially), unlike every other NDT
+// type built earlier (which use 1-based). Do not copy the 1/2/3/4 badge
+// logic from those files here.
 const useDebounce = (value, delay = 600) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -23,8 +28,7 @@ const useDebounce = (value, delay = 600) => {
   return debouncedValue;
 };
 
-const MultiPwhtClearance = () => {
-  const navigate = useNavigate();
+const MultiRtClearance = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -41,20 +45,18 @@ const MultiPwhtClearance = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `${V_URL}/party/get-multi-pwht-clearance`,
-        {
-          params: {
-            page,
-            limit,
-            search: debouncedSearch,
-            project: projectId,
-          },
-          headers: {
-            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
-          },
-        }
-      );
+      const res = await axios.get(`${V_URL}/party/get-multi-rt-clearance`, {
+        params: {
+          project: projectId,
+          status: '1,2,3', // Accepted, Rejected, Partially (0-based enum)
+          page,
+          limit,
+          search: debouncedSearch,
+        },
+        headers: {
+          Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+        },
+      });
       setRows(res?.data?.data || []);
       setTotalItems(res?.data?.pagination?.totalItems || 0);
     } catch (err) {
@@ -81,11 +83,11 @@ const MultiPwhtClearance = () => {
 
   const downloadInspection = (elem) => {
     const bodyFormData = new URLSearchParams();
-    bodyFormData.append('report_no_two', elem.report_no_two);
+    bodyFormData.append('inspection_id', elem._id);
     bodyFormData.append('print_date', true);
     PdfDownloadErp({
       apiMethod: 'post',
-      url: 'download-pwht-inspection-pdf',
+      url: 'download-rt-inspection-pdf',
       body: bodyFormData,
     });
   };
@@ -107,7 +109,7 @@ const MultiPwhtClearance = () => {
                     <li className="breadcrumb-item">
                       <i className="feather-chevron-right"></i>
                     </li>
-                    <li className="breadcrumb-item active">PWHT Acc / Rej</li>
+                    <li className="breadcrumb-item active">RT Acc / Rej</li>
                   </ul>
                 </div>
               </div>
@@ -121,18 +123,13 @@ const MultiPwhtClearance = () => {
                       <div className="row align-items-center">
                         <div className="col">
                           <div className="doctor-table-blk">
-                            <h3>PWHT Clearance</h3>
+                            <h3>RT Clearance</h3>
                             <div className="doctor-search-blk">
                               <div className="top-nav-search table-search-blk">
                                 <form>
-                                  <Search
-                                    onSearch={(value) => setSearch(value)}
-                                  />
+                                  <Search onSearch={(value) => setSearch(value)} />
                                   <a className="btn">
-                                    <img
-                                      src="/assets/img/icons/search-normal.svg"
-                                      alt="search"
-                                    />
+                                    <img src="/assets/img/icons/search-normal.svg" alt="search" />
                                   </a>
                                 </form>
                               </div>
@@ -145,10 +142,7 @@ const MultiPwhtClearance = () => {
                                   data-placement="top"
                                   title="Refresh"
                                 >
-                                  <img
-                                    src="/assets/img/icons/re-fresh.svg"
-                                    alt="refresh"
-                                  />
+                                  <img src="/assets/img/icons/re-fresh.svg" alt="refresh" />
                                 </button>
                               </div>
                             </div>
@@ -170,7 +164,6 @@ const MultiPwhtClearance = () => {
                               <tr>
                                 <th>Sr.</th>
                                 <th>Report No.</th>
-                                <th>Off. Report No.</th>
                                 <th>Line No./Drawing No.</th>
                                 <th>Spool No.</th>
                                 <th>Qc. By</th>
@@ -182,7 +175,7 @@ const MultiPwhtClearance = () => {
                             <tbody>
                               {rows.length === 0 && (
                                 <tr>
-                                  <td colSpan="9">
+                                  <td colSpan="8">
                                     <div className="no-table-data">No Data Found!</div>
                                   </td>
                                 </tr>
@@ -191,11 +184,9 @@ const MultiPwhtClearance = () => {
                                 <tr key={elem._id}>
                                   <td>{(page - 1) * limit + i + 1}</td>
                                   <td>{elem?.report_no}</td>
-                                  <td>{elem?.report_no_two}</td>
                                   <td>
-                                    {elem?.items
-                                      ?.map((e) => e?.drawing_no)
-                                      .filter((value, index, self) => self.indexOf(value) === index)
+                                    {(elem?.drawing_no || [])
+                                      .filter((value, index, self) => value && self.indexOf(value) === index)
                                       .map((value, index) => (
                                         <span key={index}>
                                           {value}
@@ -204,9 +195,8 @@ const MultiPwhtClearance = () => {
                                       )) || '-'}
                                   </td>
                                   <td>
-                                    {elem?.items
-                                      ?.map((e) => e?.spool_no)
-                                      .filter((value, index, self) => self.indexOf(value) === index)
+                                    {(elem?.spool_no || [])
+                                      .filter((value, index, self) => value && self.indexOf(value) === index)
                                       .map((value, index) => (
                                         <span key={index}>
                                           {value}
@@ -214,18 +204,18 @@ const MultiPwhtClearance = () => {
                                         </span>
                                       )) || '-'}
                                   </td>
-                                  <td>{elem?.qc_name || '-'}</td>
+                                  <td>{elem?.qc_by?.name || '-'}</td>
                                   <td>
-                                    {elem.qc_time ? moment(elem.qc_time).format('DD-MM-YYYY') : '-'}
+                                    {elem.qc_date ? moment(elem.qc_date).format('DD-MM-YYYY') : '-'}
                                   </td>
                                   <td className="status-badge">
-                                    {elem.status === 1 ? (
+                                    {elem.status === 0 ? (
                                       <span className="custom-badge status-orange">Pending</span>
-                                    ) : elem.status === 2 ? (
+                                    ) : elem.status === 1 ? (
                                       <span className="custom-badge status-green">Accepted</span>
-                                    ) : elem.status === 3 ? (
+                                    ) : elem.status === 2 ? (
                                       <span className="custom-badge status-pink">Rejected</span>
-                                    ) : elem.status === 4 ? (
+                                    ) : elem.status === 3 ? (
                                       <span className="custom-badge status-purple">Partially</span>
                                     ) : null}
                                   </td>
@@ -286,4 +276,4 @@ const MultiPwhtClearance = () => {
   );
 };
 
-export default MultiPwhtClearance;
+export default MultiRtClearance;

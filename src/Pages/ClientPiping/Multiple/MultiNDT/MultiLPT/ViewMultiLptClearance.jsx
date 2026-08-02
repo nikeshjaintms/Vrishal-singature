@@ -8,13 +8,13 @@ import Sidebar from '../../../Include/Sidebar';
 import Footer from '../../../Include/Footer';
 import { V_URL } from '../../../../../BaseUrl';
 
-const ViewMultiMptClearance = () => {
+const ViewMultiLptClearance = () => {
   const location = useLocation();
-  const data = location.state;
+  const data = location.state; // ✅ MAIN SOURCE OF TRUTH
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [clientDate, setClientDate] = useState('');
-  const [pdfUrl, setPdfUrl] = useState('');
+  const [clientDate, setClientDate] = useState("");
+  const [pdfUrl, setPdfUrl] = useState("");
   const [loadingPdf, setLoadingPdf] = useState(false);
 
   const [randomItems, setRandomItems] = useState([]);
@@ -29,7 +29,7 @@ const ViewMultiMptClearance = () => {
         data?.client_status === 1 && data?.status !== 1 ? false : true;
       setShowButtons(show);
     }
-  }, [data?._id]);
+  }, [data]);
 
   const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -40,36 +40,34 @@ const ViewMultiMptClearance = () => {
 
       if (pdfUrl) {
         URL.revokeObjectURL(pdfUrl);
-        setPdfUrl('');
+        setPdfUrl("");
       }
 
-      const testInspectNo =
-        data?.report_no || data?.test_inspect_no;
-
-      if (!testInspectNo) {
+      const inspectNo = data?.report_no || data?.test_inspect_no;
+      if (!inspectNo) {
         toast.error("Report number not found");
         return;
       }
 
       const res = await axios.post(
-        `${V_URL}/party/get-mpt-clearance-report-item`,
+        `${V_URL}/party/get-lpt-clearance-report-item`,
         {
-          MPTId: data._id,
-          test_inspect_no: testInspectNo,
+          LPTId: data._id,
+          test_inspect_no: inspectNo,
           print_date: clientDate,
         },
         {
           headers: {
-            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+            Authorization: "Bearer " + localStorage.getItem("PARTY_TOKEN"),
           },
-          responseType: 'blob',
+          responseType: "blob",
         }
       );
 
-      const file = new Blob([res.data], { type: 'application/pdf' });
+      const file = new Blob([res.data], { type: "application/pdf" });
       setPdfUrl(URL.createObjectURL(file));
     } catch {
-      toast.error('Failed to load PDF');
+      toast.error("Failed to load PDF");
     } finally {
       setLoadingPdf(false);
     }
@@ -80,23 +78,30 @@ const ViewMultiMptClearance = () => {
     return () => {
       if (pdfUrl) URL.revokeObjectURL(pdfUrl);
     };
+    // eslint-disable-next-line
   }, []);
 
   /* ================= RANDOM WITNESSED ITEMS ================= */
   const prepareRandomWitnessedItems = () => {
-    const items =
-      data?.items?.map((item) => ({
-        _id: item._id,
+    if (!Array.isArray(data?.items) || data.items.length === 0) {
+      toast.error("No items found in inspection");
+      return;
+    }
 
-        drawing_no: item?.grid_item_id?.drawing_id?.drawing_no || '-',
-        rev_no: item?.grid_item_id?.drawing_id?.rev ?? '-',
-        assembly_no: item?.grid_item_id?.drawing_id?.assembly_no || '-',
-        grid_no: item?.grid_item_id?.grid_id?.grid_no || '-',
-        grid_qty: item?.grid_item_id?.grid_id?.grid_qty || 0,
+    const items = data.items.map((item) => ({
+      _id: item._id,
 
-        selected: false,
-        remark: item?.remarks || '',
-      })) || [];
+      // ✅ MATCHES PDF
+      drawing_no: item.assembly_no|| "-",
+      sheet_no: item?.drawing_id?.sheet_no || "-",
+      assembly_no: item?.drawing_id?.assembly_no || "-",
+
+      grid_no: item?.grid_item_id?.grid_no || "-",
+      grid_qty: item?.offer_used_grid_qty || 0,
+
+      selected: false,
+      remark: item?.remarks || "",
+    }));
 
     setRandomItems(items);
     setSelectAll(false);
@@ -109,7 +114,7 @@ const ViewMultiMptClearance = () => {
     updated[index][field] = value;
     setRandomItems(updated);
 
-    if (field === 'selected') {
+    if (field === "selected") {
       setSelectAll(updated.every((i) => i.selected));
     }
   };
@@ -120,27 +125,21 @@ const ViewMultiMptClearance = () => {
   };
 
   /* ================= UPDATE STATUS ================= */
-  const submitMptStatus = async (statusType) => {
+  const submitLptStatus = async (statusType) => {
     if (!clientDate) {
-      toast.error('Please select date');
+      toast.error("Please select date");
       return;
     }
 
     try {
       const payload = {
-        MPTId: data._id,
+        LPTId: data._id,
         status_type: statusType,
         client_date: clientDate,
-        client_user: localStorage.getItem('PARTY_ID'),
+        client_user: localStorage.getItem("PARTY_ID"),
       };
 
-      if (statusType === 'RANDOM WITNESSED') {
-        if (randomItems.length === 0) {
-          prepareRandomWitnessedItems();
-          toast.error('Please select items');
-          return;
-        }
-
+      if (statusType === "RANDOM WITNESSED") {
         payload.items = randomItems.map((i) => ({
           _id: i._id,
           selected: i.selected === true,
@@ -149,66 +148,74 @@ const ViewMultiMptClearance = () => {
       }
 
       const res = await axios.post(
-        `${V_URL}/party/mpt-clearance-report-review-update`,
+        `${V_URL}/party/lpt-clearance-report-review-update`,
         payload,
         {
           headers: {
-            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+            Authorization: "Bearer " + localStorage.getItem("PARTY_TOKEN"),
           },
         }
       );
 
       if (res.data.success) {
-        toast.success('MPT Clearance Report updated successfully');
+        toast.success("LPT Clearance updated successfully");
         setShowRandomItems(false);
         fetchPdf();
       } else {
-        toast.error(res.data.message || 'Update failed');
+        toast.error(res.data.message || "Update failed");
       }
     } catch {
-      toast.error('Something went wrong');
+      toast.error("Something went wrong");
     }
   };
 
   /* ================= UI ================= */
   return (
-    <div className={`main-wrapper ${isSidebarOpen ? 'slide-nav' : ''}`}>
+    <div className={`main-wrapper ${isSidebarOpen ? "slide-nav" : ""}`}>
       <Header handleOpen={handleOpen} />
       <Sidebar />
 
       <div className="page-wrapper">
         <div className="content">
-
           <div className="page-header">
             <ul className="breadcrumb">
               <li className="breadcrumb-item">
                 <Link to="/party/piping-store/dashboard">Dashboard</Link>
               </li>
               <li className="breadcrumb-item active">
-                View MPT Clearance Summary
+                View LPT Clearance Summary
               </li>
             </ul>
           </div>
 
+          {/* DETAILS */}
           <div className="card">
             <div className="card-body">
-              <h4 className="mb-3">MPT Clearance Details</h4>
+              <h4 className="mb-3">LPT Clearance Details</h4>
               <div className="row">
                 <div className="col-md-4">
                   <label>Report No</label>
-                  <input className="form-control" value={data?.test_inspect_no || '-'} readOnly />
+                  <input
+                    className="form-control"
+                    value={data?.test_inspect_no || "-"}
+                    readOnly
+                  />
                 </div>
 
                 <div className="col-md-4">
                   <label>Prepared By</label>
-                  <input className="form-control" value={data?.qc_name?.name || '-'} readOnly />
+                  <input
+                    className="form-control"
+                    value={data?.qc_name?.name || "-"}
+                    readOnly
+                  />
                 </div>
 
                 <div className="col-md-4">
                   <label>Created Date</label>
                   <input
                     className="form-control"
-                    value={moment(data?.createdAt).format('YYYY-MM-DD')}
+                    value={moment(data?.createdAt).format("YYYY-MM-DD")}
                     readOnly
                   />
                 </div>
@@ -216,6 +223,7 @@ const ViewMultiMptClearance = () => {
             </div>
           </div>
 
+          {/* CLIENT REVIEW */}
           <div className="card mt-3">
             <div className="card-body">
               <h4 className="mb-3">Client Review</h4>
@@ -223,9 +231,7 @@ const ViewMultiMptClearance = () => {
               {showButtons && (
                 <>
                   <div className="col-md-4 mb-3">
-                    <label>
-                      Date <span className="text-danger">*</span>
-                    </label>
+                    <label>Date *</label>
                     <input
                       type="date"
                       className="form-control"
@@ -237,14 +243,14 @@ const ViewMultiMptClearance = () => {
                   <div className="mt-3">
                     <button
                       className="btn btn-primary me-2"
-                      onClick={() => submitMptStatus('REVIEWED')}
+                      onClick={() => submitLptStatus("REVIEWED")}
                     >
                       REVIEWED
                     </button>
 
                     <button
                       className="btn btn-warning me-2"
-                      onClick={() => submitMptStatus('WITNESSED')}
+                      onClick={() => submitLptStatus("WITNESSED")}
                     >
                       WITNESSED
                     </button>
@@ -264,77 +270,81 @@ const ViewMultiMptClearance = () => {
               )}
 
               {pdfUrl && (
-                <div className="mt-4">
-                  <iframe
-                    src={pdfUrl}
-                    title="MPT Clearance PDF"
-                    width="100%"
-                    height="700px"
-                    style={{ border: '1px solid #ccc' }}
-                  />
-                </div>
+                <iframe
+                  src={pdfUrl}
+                  title="LPT PDF"
+                  width="100%"
+                  height="700"
+                  style={{ border: "1px solid #ccc", marginTop: 20 }}
+                />
               )}
 
               {showRandomItems && randomItems.length > 0 && (
-                <div className="mt-3">
-                  <div style={{ overflowX: 'auto' }}>
-                    <table className="table table-bordered">
-                      <thead>
-                        <tr>
-                          <th>
+                <div className="mt-4">
+                  <table className="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th>
+                          <input
+                            type="checkbox"
+                            checked={selectAll}
+                            onChange={(e) =>
+                              handleSelectAll(e.target.checked)
+                            }
+                          />
+                        </th>
+                        <th>#</th>
+                        <th>Drawing</th>
+                        <th>Sheet</th>
+                        <th>Assembly</th>
+                        <th>Grid</th>
+                        <th>Qty</th>
+                        <th>Remark</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {randomItems.map((item, i) => (
+                        <tr key={item._id}>
+                          <td>
                             <input
                               type="checkbox"
-                              checked={selectAll}
+                              checked={item.selected}
                               onChange={(e) =>
-                                handleSelectAll(e.target.checked)
+                                handleItemChange(
+                                  i,
+                                  "selected",
+                                  e.target.checked
+                                )
                               }
                             />
-                          </th>
-                          <th>#</th>
-                          <th>Drawing</th>
-                          <th>Rev</th>
-                          <th>Assembly No</th>
-                          <th>Grid No</th>
-                          <th>Grid Qty</th>
-                          <th>Remark</th>
+                          </td>
+                          <td>{i + 1}</td>
+                          <td>{item.drawing_no}</td>
+                          <td>{item.sheet_no}</td>
+                          <td>{item.assembly_no}</td>
+                          <td>{item.grid_no}</td>
+                          <td>{item.grid_qty}</td>
+                          <td>
+                            <input
+                              className="form-control"
+                              value={item.remark}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  i,
+                                  "remark",
+                                  e.target.value
+                                )
+                              }
+                            />
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {randomItems.map((item, i) => (
-                          <tr key={item._id}>
-                            <td>
-                              <input
-                                type="checkbox"
-                                checked={item.selected}
-                                onChange={(e) =>
-                                  handleItemChange(i, 'selected', e.target.checked)
-                                }
-                              />
-                            </td>
-                            <td>{i + 1}</td>
-                            <td>{item.drawing_no}</td>
-                            <td>{item.rev_no}</td>
-                            <td>{item.assembly_no}</td>
-                            <td>{item.grid_no}</td>
-                            <td>{item.grid_qty}</td>
-                            <td>
-                              <input
-                                className="form-control"
-                                value={item.remark}
-                                onChange={(e) =>
-                                  handleItemChange(i, 'remark', e.target.value)
-                                }
-                              />
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      ))}
+                    </tbody>
+                  </table>
 
                   <button
-                    className="btn btn-success mt-2"
-                    onClick={() => submitMptStatus('RANDOM WITNESSED')}
+                    className="btn btn-success"
+                    onClick={() => submitLptStatus("RANDOM WITNESSED")}
                   >
                     Submit Random Witnessed
                   </button>
@@ -342,7 +352,6 @@ const ViewMultiMptClearance = () => {
               )}
             </div>
           </div>
-
         </div>
         <Footer />
       </div>
@@ -350,4 +359,4 @@ const ViewMultiMptClearance = () => {
   );
 };
 
-export default ViewMultiMptClearance;
+export default ViewMultiLptClearance;

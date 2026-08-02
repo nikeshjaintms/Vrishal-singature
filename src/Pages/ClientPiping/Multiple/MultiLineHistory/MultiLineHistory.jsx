@@ -1,19 +1,16 @@
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom';
-import Header from '../../../Include/Header';
-import Sidebar from '../../../Include/Sidebar';
-import Footer from '../../../Include/Footer';
-import Loader from '../../../Include/Loader';
-import { Pagination, Search } from '../../../Table';
-import moment from 'moment';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import DropDown from '../../../../../Components/DropDown';
-import { V_URL } from '../../../../../BaseUrl';
-import { PdfDownloadErp } from '../../../../../Components/ErpPdf/PdfDownloadErp';
+import Header from '../../Include/Header';
+import Sidebar from '../../Include/Sidebar';
+import Footer from '../../Include/Footer';
+import Loader from '../../Include/Loader';
+import { Pagination } from '../../Table';
+import DropDown from '../../../../Components/DropDown';
+import { V_URL } from '../../../../BaseUrl';
 
-// Read-only: FT does not yet have the client_status/status_type fields the
-// RT/MPT/LPT accept-reject action depends on — view + download only.
-const useDebounce = (value, delay = 600) => {
+// Read-only view of the Line History Sheet (LHS) list for a party's project.
+const useDebounce = (value, delay = 500) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedValue(value), delay);
@@ -22,7 +19,8 @@ const useDebounce = (value, delay = 600) => {
   return debouncedValue;
 };
 
-const MultiFtClearance = () => {
+const MultiLineHistory = () => {
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -39,19 +37,22 @@ const MultiFtClearance = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${V_URL}/party/get-multi-ft-clearance`, {
-        params: {
-          project_id: projectId,
+      const res = await axios.post(
+        `${V_URL}/party/get-line-history-sheet-piping`,
+        {
           page,
           limit,
           search: debouncedSearch,
+          project: projectId,
         },
-        headers: {
-          Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
-        },
-      });
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          },
+        }
+      );
       setRows(res?.data?.data || []);
-      setTotalItems(res?.data?.pagination?.totalItems || 0);
+      setTotalItems(res?.data?.pagination?.totalRecords || 0);
     } catch (err) {
       setRows([]);
       setTotalItems(0);
@@ -74,17 +75,6 @@ const MultiFtClearance = () => {
     setPage(1);
   };
 
-  const downloadInspection = (elem) => {
-    const bodyFormData = new URLSearchParams();
-    bodyFormData.append('report_no_two', elem.report_no_two);
-    bodyFormData.append('print_date', true);
-    PdfDownloadErp({
-      apiMethod: 'post',
-      url: 'download-ft-inspection-pdf',
-      body: bodyFormData,
-    });
-  };
-
   return (
     <>
       <div className={`main-wrapper ${isSidebarOpen ? 'slide-nav' : ''}`}>
@@ -102,7 +92,7 @@ const MultiFtClearance = () => {
                     <li className="breadcrumb-item">
                       <i className="feather-chevron-right"></i>
                     </li>
-                    <li className="breadcrumb-item active">FT Acc / Rej</li>
+                    <li className="breadcrumb-item active">Line History Sheet List</li>
                   </ul>
                 </div>
               </div>
@@ -116,11 +106,17 @@ const MultiFtClearance = () => {
                       <div className="row align-items-center">
                         <div className="col">
                           <div className="doctor-table-blk">
-                            <h3>FT Clearance</h3>
+                            <h3>Line History Sheet List</h3>
                             <div className="doctor-search-blk">
                               <div className="top-nav-search table-search-blk">
                                 <form>
-                                  <Search onSearch={(value) => setSearch(value)} />
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Search"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                  />
                                   <a className="btn">
                                     <img src="/assets/img/icons/search-normal.svg" alt="search" />
                                   </a>
@@ -155,46 +151,35 @@ const MultiFtClearance = () => {
                           <table className="table border-0 custom-table comman-table mb-0">
                             <thead>
                               <tr>
-                                <th>Sr.</th>
-                                <th>Report No.</th>
-                                <th>Off. Report No.</th>
-                                <th>Line No./Drawing No.</th>
+                                <th className="text-start" style={{ width: '35px' }}>
+                                  Sr.
+                                </th>
+                                <th>Line No. / Drawing No.</th>
+                                <th>Rev No.</th>
                                 <th>Spool No.</th>
-                                <th>Qc. By</th>
-                                <th>Date</th>
-                                <th>Status</th>
                                 <th className="text-end">Action</th>
                               </tr>
                             </thead>
                             <tbody>
                               {rows.length === 0 && (
                                 <tr>
-                                  <td colSpan="9">
+                                  <td colSpan="5">
                                     <div className="no-table-data">No Data Found!</div>
                                   </td>
                                 </tr>
                               )}
                               {rows.map((elem, i) => (
-                                <tr key={elem._id}>
-                                  <td>{(page - 1) * limit + i + 1}</td>
-                                  <td>{elem?.report_no}</td>
-                                  <td>{elem?.report_no_two}</td>
-                                  <td>{elem?.drawing_no || '-'}</td>
-                                  <td>{elem?.spool_no || '-'}</td>
-                                  <td>{elem?.qc_by || '-'}</td>
-                                  <td>
-                                    {elem.qc_date ? moment(elem.qc_date).format('DD-MM-YYYY') : '-'}
+                                <tr key={elem._id || i}>
+                                  <td className="text-start">
+                                    {(page - 1) * limit + i + 1}
                                   </td>
-                                  <td className="status-badge">
-                                    {elem.status === 1 ? (
-                                      <span className="custom-badge status-orange">Pending</span>
-                                    ) : elem.status === 2 ? (
-                                      <span className="custom-badge status-green">Accepted</span>
-                                    ) : elem.status === 3 ? (
-                                      <span className="custom-badge status-pink">Rejected</span>
-                                    ) : elem.status === 4 ? (
-                                      <span className="custom-badge status-purple">Partially</span>
-                                    ) : null}
+                                  <td>{elem?.drawing_no || '-'}</td>
+                                  <td>{elem?.rev || '-'}</td>
+                                  <td>
+                                    {elem?.spool_wise
+                                      ?.map((e) => e?.spool_no)
+                                      .filter((value, index, self) => self.indexOf(value) === index)
+                                      .join(', ') || '-'}
                                   </td>
                                   <td className="text-end">
                                     <div className="dropdown dropdown-action">
@@ -209,10 +194,13 @@ const MultiFtClearance = () => {
                                         <button
                                           type="button"
                                           className="dropdown-item"
-                                          onClick={() => downloadInspection(elem)}
+                                          onClick={() =>
+                                            navigate('/party/piping-store/view-line-history', {
+                                              state: elem,
+                                            })
+                                          }
                                         >
-                                          <i className="fa-solid fa-download m-r-5"></i>
-                                          Download Inspection
+                                          <i className="fa-solid fa-eye m-r-5"></i> View
                                         </button>
                                       </div>
                                     </div>
@@ -253,4 +241,4 @@ const MultiFtClearance = () => {
   );
 };
 
-export default MultiFtClearance;
+export default MultiLineHistory;

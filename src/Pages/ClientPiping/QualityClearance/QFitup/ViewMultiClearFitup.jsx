@@ -6,7 +6,7 @@ import moment from 'moment';
 import Header from '../../Include/Header';
 import Sidebar from '../../Include/Sidebar';
 import Footer from '../../Include/Footer';
-import { V_URL } from '../../../BaseUrl';
+import { V_URL } from '../../../../BaseUrl';
 
 const ViewMultiClearFitup = () => {
   const navigate = useNavigate();

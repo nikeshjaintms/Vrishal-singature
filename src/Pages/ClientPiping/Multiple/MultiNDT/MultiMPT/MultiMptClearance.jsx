@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom';
 import Header from '../../../Include/Header';
 import Sidebar from '../../../Include/Sidebar';
@@ -11,41 +11,57 @@ import DropDown from '../../../../../Components/DropDown';
 import { V_URL } from '../../../../../BaseUrl';
 import { PdfDownloadErp } from '../../../../../Components/ErpPdf/PdfDownloadErp';
 
-// Read-only: Pickling & Passivation does not yet have the client_status/
-// status_type fields the RT/MPT/LPT accept-reject action depends on — view +
-// download only.
+// Read-only, built against the getMptInspectionPiping endpoint added this
+// session — this is genuinely new backend code with no prior staff usage,
+// so treat this page as needing real QA before relying on it in production.
 //
-// The backend getPicklingTestInspectionTable endpoint has no pagination,
-// search, or status filter — it returns every Pickling inspection item for
-// the project. So clearance-only filtering (status 2/3/4), search, and
-// pagination are all done client-side here.
-const MultiPicklingClearance = () => {
+// IMPORTANT: this model's status enum is 0-based
+// (0:Pending 1:Accepted 2:Rejected 3:Partially), unlike every other NDT
+// type built earlier (which use 1-based). Do not copy the 1/2/3/4 badge
+// logic from those files here.
+const useDebounce = (value, delay = 600) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+};
+
+const MultiMptClearance = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
 
-  const [allRows, setAllRows] = useState([]);
+  const [rows, setRows] = useState([]);
+  const [totalItems, setTotalItems] = useState(0);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
+  const debouncedSearch = useDebounce(search, 500);
 
   const projectId = localStorage.getItem('PARTY_PROJECT_ID');
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await axios.post(
-        `${V_URL}/party/get-pickling-offer-piping`,
-        { project_id: projectId },
-        {
-          headers: {
-            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
-          },
-        }
-      );
-      setAllRows(res?.data?.data || []);
+      const res = await axios.get(`${V_URL}/party/get-multi-mpt-clearance`, {
+        params: {
+          project: projectId,
+          status: '1,2,3', // Accepted, Rejected, Partially (0-based enum)
+          page,
+          limit,
+          search: debouncedSearch,
+        },
+        headers: {
+          Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+        },
+      });
+      setRows(res?.data?.data || []);
+      setTotalItems(res?.data?.pagination?.totalItems || 0);
     } catch (err) {
-      setAllRows([]);
+      setRows([]);
+      setTotalItems(0);
     } finally {
       setLoading(false);
     }
@@ -54,29 +70,11 @@ const MultiPicklingClearance = () => {
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const filteredRows = useMemo(() => {
-    let data = allRows.filter((r) => [2, 3, 4].includes(r.status));
-    if (search.trim()) {
-      const s = search.trim().toLowerCase();
-      data = data.filter(
-        (r) =>
-          r.report_no?.toLowerCase().includes(s) ||
-          r.report_no_two?.toLowerCase().includes(s) ||
-          r.drawing_no?.toLowerCase().includes(s) ||
-          r.spool_no?.toLowerCase().includes(s)
-      );
-    }
-    return data;
-  }, [allRows, search]);
-
-  const totalItems = filteredRows.length;
-  const pagedRows = filteredRows.slice((page - 1) * limit, page * limit);
+  }, [page, limit, debouncedSearch]);
 
   useEffect(() => {
     setPage(1);
-  }, [search, limit]);
+  }, [debouncedSearch]);
 
   const handleRefresh = () => {
     setSearch('');
@@ -85,11 +83,11 @@ const MultiPicklingClearance = () => {
 
   const downloadInspection = (elem) => {
     const bodyFormData = new URLSearchParams();
-    bodyFormData.append('report_no_two', elem.report_no_two);
+    bodyFormData.append('inspection_id', elem._id);
     bodyFormData.append('print_date', true);
     PdfDownloadErp({
       apiMethod: 'post',
-      url: 'download-pickling-inspection-pdf',
+      url: 'download-mpt-inspection-pdf',
       body: bodyFormData,
     });
   };
@@ -111,7 +109,7 @@ const MultiPicklingClearance = () => {
                     <li className="breadcrumb-item">
                       <i className="feather-chevron-right"></i>
                     </li>
-                    <li className="breadcrumb-item active">Pickling & Passivation Acc / Rej</li>
+                    <li className="breadcrumb-item active">MPT Acc / Rej</li>
                   </ul>
                 </div>
               </div>
@@ -125,7 +123,7 @@ const MultiPicklingClearance = () => {
                       <div className="row align-items-center">
                         <div className="col">
                           <div className="doctor-table-blk">
-                            <h3>Pickling & Passivation Clearance</h3>
+                            <h3>MPT Clearance</h3>
                             <div className="doctor-search-blk">
                               <div className="top-nav-search table-search-blk">
                                 <form>
@@ -166,7 +164,6 @@ const MultiPicklingClearance = () => {
                               <tr>
                                 <th>Sr.</th>
                                 <th>Report No.</th>
-                                <th>Off. Report No.</th>
                                 <th>Line No./Drawing No.</th>
                                 <th>Spool No.</th>
                                 <th>Qc. By</th>
@@ -176,32 +173,49 @@ const MultiPicklingClearance = () => {
                               </tr>
                             </thead>
                             <tbody>
-                              {pagedRows.length === 0 && (
+                              {rows.length === 0 && (
                                 <tr>
-                                  <td colSpan="9">
+                                  <td colSpan="8">
                                     <div className="no-table-data">No Data Found!</div>
                                   </td>
                                 </tr>
                               )}
-                              {pagedRows.map((elem, i) => (
-                                <tr key={elem._id || i}>
+                              {rows.map((elem, i) => (
+                                <tr key={elem._id}>
                                   <td>{(page - 1) * limit + i + 1}</td>
                                   <td>{elem?.report_no}</td>
-                                  <td>{elem?.report_no_two}</td>
-                                  <td>{elem?.drawing_no || '-'}</td>
-                                  <td>{elem?.spool_no || '-'}</td>
+                                  <td>
+                                    {(elem?.drawing_no || [])
+                                      .filter((value, index, self) => value && self.indexOf(value) === index)
+                                      .map((value, index) => (
+                                        <span key={index}>
+                                          {value}
+                                          <br />
+                                        </span>
+                                      )) || '-'}
+                                  </td>
+                                  <td>
+                                    {(elem?.spool_no || [])
+                                      .filter((value, index, self) => value && self.indexOf(value) === index)
+                                      .map((value, index) => (
+                                        <span key={index}>
+                                          {value}
+                                          <br />
+                                        </span>
+                                      )) || '-'}
+                                  </td>
                                   <td>{elem?.qc_by?.name || '-'}</td>
                                   <td>
                                     {elem.qc_date ? moment(elem.qc_date).format('DD-MM-YYYY') : '-'}
                                   </td>
                                   <td className="status-badge">
-                                    {elem.status === 1 ? (
+                                    {elem.status === 0 ? (
                                       <span className="custom-badge status-orange">Pending</span>
-                                    ) : elem.status === 2 ? (
+                                    ) : elem.status === 1 ? (
                                       <span className="custom-badge status-green">Accepted</span>
-                                    ) : elem.status === 3 ? (
+                                    ) : elem.status === 2 ? (
                                       <span className="custom-badge status-pink">Rejected</span>
-                                    ) : elem.status === 4 ? (
+                                    ) : elem.status === 3 ? (
                                       <span className="custom-badge status-purple">Partially</span>
                                     ) : null}
                                   </td>
@@ -262,4 +276,4 @@ const MultiPicklingClearance = () => {
   );
 };
 
-export default MultiPicklingClearance;
+export default MultiMptClearance;

@@ -19,23 +19,21 @@ import ViewMultiClearFitup from '../../Pages/ClientPiping/QualityClearance/QFitu
 
 // Weld Visual Acceptance
 import QWeldVisualList from '../../Pages/ClientPiping/QualityClearance/QWeldVisual/QWeldVisualList';
-import ViewMultiClearWeld from '../../Pages/ClientPiping/QualityClearance/QWeldVisual/ViewMultiClearWeld';
 
 // Final Dimension Acceptance
 import QFinalDimensionList from '../../Pages/ClientPiping/QualityClearance/FinalDimension/QFinalDimensionList';
-import ViewMultiClearFd from '../../Pages/ClientPiping/QualityClearance/FinalDimension/ViewMultiClearFd';
 
 // NDT — RT/MPT/LPT: Clearance (Acc/Rej) only. Offer creation is a staff-only
 // workflow (selecting drawing items to submit for testing), not client-facing,
 // so the *-offer-management routes stay as PlaceholderPage.
 // NOTE: UT is NOT part of the approved 12-area scope (no route slots exist for
 // it in this file), so it is intentionally not built or imported here.
+// RT and MPT clearance: NEW backend endpoints built this session (no prior
+// staff-side equivalent existed) — see comments in the respective piping
+// controller files. Treat as needing real QA before production use.
 import MultiRtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiRT/MultiRtClearance';
-import ViewMultiRtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiRT/ViewMultiRtClearance';
 import MultiMptClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiMPT/MultiMptClearance';
-import ViewMultiMptClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiMPT/ViewMultiMptClearance';
 import MultiLptClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiLPT/MultiLptClearance';
-import ViewMultiLptClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiLPT/ViewMultiLptClearance';
 
 // NDT — PWHT/FT/HT/PMI/Pickling & Passivation: read-only (view + download).
 // These 5 NDT-type models don't yet have the client_status/status_type
@@ -48,16 +46,37 @@ import MultiPmiClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiP
 import MultiPicklingClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPickling/MultiPicklingClearance';
 
 /**
- * ClientPipingRoute.jsx — TRIMMED, TEMPORARY VERSION
- * ====================================================
- * Only Material Receiving (QC) and FIM are wired to real components right
- * now, matching the files currently present in the project. Every other
- * area (Fit-Up, Weld Visual, Final Dimension, all NDT types, Line History,
- * Surface/MIO/Final Coat, IRN) is left as PlaceholderPage on purpose — those
- * component files have not been added to the project yet. Adding more files
- * later without also updating the imports/routes below will not make them
- * appear; this file must be updated (or replaced with the full version) at
- * the same time those files are added.
+ * ClientPipingRoute.jsx — PRUNED to approved scope
+ * ==================================================
+ * Base path: /party/piping-store/*
+ * Reuses the existing Party login (PARTY_TOKEN via PartyLayout) — same as ClientRoute.jsx.
+ *
+ * SCOPE: This route file intentionally covers ONLY the 12 feature areas approved
+ * for Client Piping (per the "EXTERNAL/CLIENT = Y" filtered stage list from the
+ * project sheet), not the full 236-route staff Piping module:
+ *   Material Receiving (QC), FIM, Fit-Up (Acceptance), Weld Visual (Acceptance),
+ *   Final Dimension (Acceptance), NDT — RT/PWHT/FT/LPT/MPT/HT/PMI/Pickling & Passivation
+ *   (Offering + Acc/Rej for each), LHS, Surface & Primer (Acceptance), MIO (Acceptance),
+ *   Final Coat (Acceptance), IRN.
+ * Note: items marked "- Acceptance" on the approved list include ONLY the
+ * clearance/acceptance route (not the Offering side); NDT includes both since
+ * it wasn't marked "- Acceptance" on the sheet. If that reading turns out wrong,
+ * the Offering routes for Fitup/Weld Visual/FD/Surface/MIO/Final Coat are easy
+ * to add back — see Pages/Piping/Include/Sidebar.jsx for their route names
+ * (e.g. surface-primer-management / manage-surface-primer for Surface Offering).
+ *
+ * All 56 routes below currently render PlaceholderPage — real implementation
+ * is intern work. See the equivalent path under Pages/Piping/ for business logic
+ * reference, and Pages/Client/Multiple/ for the Party-adaptation conventions
+ * (/party/ prefix not /user/, PARTY_TOKEN not PAY_USER_TOKEN, no hasAccess() gates
+ * — Party sessions never have ERP_ROLE set, so any hasAccess() check here will
+ * silently make that route unreachable, the same bug that took a long debugging
+ * session to track down in the ERP Client module).
+ *
+ * If scope expands beyond these 12 areas later, do NOT copy the rest of
+ * Pages/Piping/ wholesale — every one of those ~225 remaining routes uses
+ * PAY_USER_TOKEN/user-prefixed calls/hasAccess gates and needs the same
+ * adaptation work as these did, one area at a time.
  */
 
 const ClientPipingRoutes = () => {
@@ -76,13 +95,13 @@ const ClientPipingRoutes = () => {
           <Route path='fitup-clearance-management' element={<QFitUpList />} />
           <Route path='view-quality-clearance-fitup' element={<ViewMultiClearFitup />} />
           <Route path='weld-visual-clearance-management' element={<QWeldVisualList />} />
-          <Route path='view-quality-clearance-weld-visual' element={<ViewMultiClearWeld />} />
+          <Route path='view-quality-clearance-weld-visual' element={<PlaceholderPage title="Weld Visual Detail" />} />
           <Route path='final-dimension-clearance-management' element={<QFinalDimensionList />} />
-          <Route path='view-quality-clearance-final-dimension' element={<ViewMultiClearFd />} />
+          <Route path='view-quality-clearance-final-dimension' element={<PlaceholderPage title="Final Dimension Detail" />} />
           <Route path='rt-offer-management' element={<PlaceholderPage title="RT Offering" />} />
           <Route path='manage-rt-offer' element={<PlaceholderPage title="Manage RT Offer" />} />
           <Route path='rt-clearance-management' element={<MultiRtClearance />} />
-          <Route path='manage-rt-clearance' element={<ViewMultiRtClearance />} />
+          <Route path='manage-rt-clearance' element={<PlaceholderPage title="RT Detail" />} />
           <Route path='pwht-offer-management' element={<PlaceholderPage title="PWHT Offering" />} />
           <Route path='manage-pwht-offer' element={<PlaceholderPage title="Manage PWHT Offer" />} />
           <Route path='pwht-clearance-management' element={<MultiPwhtClearance />} />
@@ -94,11 +113,11 @@ const ClientPipingRoutes = () => {
           <Route path='lpt-offer-management' element={<PlaceholderPage title="LPT Offering" />} />
           <Route path='manage-lpt-offer' element={<PlaceholderPage title="Manage LPT Offer" />} />
           <Route path='lpt-clearance-management' element={<MultiLptClearance />} />
-          <Route path='manage-lpt-clearance' element={<ViewMultiLptClearance />} />
+          <Route path='manage-lpt-clearance' element={<PlaceholderPage title="LPT Detail" />} />
           <Route path='mpt-offer-management' element={<PlaceholderPage title="MPT Offering" />} />
           <Route path='manage-mpt-offer' element={<PlaceholderPage title="Manage MPT Offer" />} />
           <Route path='mpt-clearance-management' element={<MultiMptClearance />} />
-          <Route path='manage-mpt-clearance' element={<ViewMultiMptClearance />} />
+          <Route path='manage-mpt-clearance' element={<PlaceholderPage title="MPT Detail" />} />
           <Route path='ht-offer-management' element={<PlaceholderPage title="Hardness Testing Offering" />} />
           <Route path='manage-ht-offer' element={<PlaceholderPage title="Manage Hardness Testing Offer" />} />
           <Route path='ht-clearance-management' element={<MultiHtClearance />} />

@@ -1,19 +1,18 @@
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom';
-import Header from '../../../Include/Header';
-import Sidebar from '../../../Include/Sidebar';
-import Footer from '../../../Include/Footer';
-import Loader from '../../../Include/Loader';
-import { Pagination, Search } from '../../../Table';
-import moment from 'moment';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import DropDown from '../../../../../Components/DropDown';
-import { V_URL } from '../../../../../BaseUrl';
-import { PdfDownloadErp } from '../../../../../Components/ErpPdf/PdfDownloadErp';
+import Header from '../../Include/Header';
+import Sidebar from '../../Include/Sidebar';
+import Footer from '../../Include/Footer';
+import Loader from '../../Include/Loader';
+import { Pagination } from '../../Table';
+import DropDown from '../../../../Components/DropDown';
+import { V_URL } from '../../../../BaseUrl';
+import { PdfDownloadErp } from '../../../../Components/ErpPdf/PdfDownloadErp';
 
-// Read-only: PMI does not yet have the client_status/status_type fields the
-// RT/MPT/LPT accept-reject action depends on — view + download only.
-const useDebounce = (value, delay = 600) => {
+// Read-only list of generated/saved Line History Sheets (LHS documents),
+// distinct from the live drawing-based Line History Sheet list.
+const useDebounce = (value, delay = 500) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedValue(value), delay);
@@ -22,7 +21,8 @@ const useDebounce = (value, delay = 600) => {
   return debouncedValue;
 };
 
-const MultiPmiClearance = () => {
+const GenLineHistoryList = () => {
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -40,13 +40,12 @@ const MultiPmiClearance = () => {
     setLoading(true);
     try {
       const res = await axios.post(
-        `${V_URL}/party/get-pmi-offer-piping`,
+        `${V_URL}/party/get-generate-line-history-sheet-piping`,
         {
-          project_id: projectId,
-          status: '2,3,4',
           page,
           limit,
           search: debouncedSearch,
+          project: projectId,
         },
         {
           headers: {
@@ -55,7 +54,7 @@ const MultiPmiClearance = () => {
         }
       );
       setRows(res?.data?.data || []);
-      setTotalItems(res?.data?.pagination?.totalItems || 0);
+      setTotalItems(res?.data?.pagination?.total || 0);
     } catch (err) {
       setRows([]);
       setTotalItems(0);
@@ -78,13 +77,14 @@ const MultiPmiClearance = () => {
     setPage(1);
   };
 
-  const downloadInspection = (elem) => {
+  const handleDownloadIns = (lhs) => {
     const bodyFormData = new URLSearchParams();
-    bodyFormData.append('report_no_two', elem.report_no_two);
-    bodyFormData.append('print_date', true);
+    bodyFormData.append('project_id', projectId);
+    bodyFormData.append('drawing_id', lhs?.drawings?.[0]?.drawing_id);
+    bodyFormData.append('_id', lhs?._id);
     PdfDownloadErp({
       apiMethod: 'post',
-      url: 'download-pmi-inspection-pdf',
+      url: 'download-line-history-sheet-pdf',
       body: bodyFormData,
     });
   };
@@ -106,7 +106,7 @@ const MultiPmiClearance = () => {
                     <li className="breadcrumb-item">
                       <i className="feather-chevron-right"></i>
                     </li>
-                    <li className="breadcrumb-item active">PMI Acc / Rej</li>
+                    <li className="breadcrumb-item active">Generated Line History Sheets</li>
                   </ul>
                 </div>
               </div>
@@ -120,11 +120,17 @@ const MultiPmiClearance = () => {
                       <div className="row align-items-center">
                         <div className="col">
                           <div className="doctor-table-blk">
-                            <h3>PMI Clearance</h3>
+                            <h3>Generated Line History Sheets</h3>
                             <div className="doctor-search-blk">
                               <div className="top-nav-search table-search-blk">
                                 <form>
-                                  <Search onSearch={(value) => setSearch(value)} />
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Search"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                  />
                                   <a className="btn">
                                     <img src="/assets/img/icons/search-normal.svg" alt="search" />
                                   </a>
@@ -159,70 +165,73 @@ const MultiPmiClearance = () => {
                           <table className="table border-0 custom-table comman-table mb-0">
                             <thead>
                               <tr>
-                                <th>Sr.</th>
+                                <th className="text-start" style={{ width: '35px' }}>
+                                  Sr.
+                                </th>
                                 <th>Report No.</th>
-                                <th>Off. Report No.</th>
-                                <th>Line No./Drawing No.</th>
+                                <th>Line No. / Drawing No.</th>
+                                <th>Rev No.</th>
                                 <th>Spool No.</th>
-                                <th>Qc. By</th>
-                                <th>Date</th>
-                                <th>Status</th>
                                 <th className="text-end">Action</th>
                               </tr>
                             </thead>
                             <tbody>
                               {rows.length === 0 && (
                                 <tr>
-                                  <td colSpan="9">
+                                  <td colSpan="6">
                                     <div className="no-table-data">No Data Found!</div>
                                   </td>
                                 </tr>
                               )}
-                              {rows.map((elem, i) => (
-                                <tr key={elem._id}>
-                                  <td>{(page - 1) * limit + i + 1}</td>
-                                  <td>{elem?.report_no}</td>
-                                  <td>{elem?.report_no_two}</td>
-                                  <td>{elem?.item?.drawing_no || '-'}</td>
-                                  <td>{elem?.item?.spool_no || '-'}</td>
-                                  <td>{elem?.qc_by?.name || '-'}</td>
-                                  <td>
-                                    {elem.qc_date ? moment(elem.qc_date).format('DD-MM-YYYY') : '-'}
-                                  </td>
-                                  <td className="status-badge">
-                                    {elem.status === 1 ? (
-                                      <span className="custom-badge status-orange">Pending</span>
-                                    ) : elem.status === 2 ? (
-                                      <span className="custom-badge status-green">Accepted</span>
-                                    ) : elem.status === 3 ? (
-                                      <span className="custom-badge status-pink">Rejected</span>
-                                    ) : elem.status === 4 ? (
-                                      <span className="custom-badge status-purple">Partially</span>
-                                    ) : null}
-                                  </td>
-                                  <td className="text-end">
-                                    <div className="dropdown dropdown-action">
-                                      <a
-                                        href="#"
-                                        className="action-icon dropdown-toggle"
-                                        data-bs-toggle="dropdown"
-                                      >
-                                        <i className="fa fa-ellipsis-v"></i>
-                                      </a>
-                                      <div className="dropdown-menu dropdown-menu-end">
-                                        <button
-                                          type="button"
-                                          className="dropdown-item"
-                                          onClick={() => downloadInspection(elem)}
+                              {rows.map((lhs, lhsIndex) =>
+                                (lhs.drawings || [{}]).map((drawing, dIndex) => (
+                                  <tr key={`${lhs._id}-${dIndex}`}>
+                                    <td className="text-start">
+                                      {(page - 1) * limit + lhsIndex + 1}
+                                    </td>
+                                    <td>{lhs?.report_no || '-'}</td>
+                                    <td>{lhs?.drawing_details?.[dIndex]?.drawing_no || '-'}</td>
+                                    <td>{lhs?.drawing_details?.[dIndex]?.rev || '-'}</td>
+                                    <td>
+                                      {lhs?.spool_details
+                                        ?.map((e) => e?.spool_no)
+                                        .filter((value, index, self) => self.indexOf(value) === index)
+                                        .join(', ') || '-'}
+                                    </td>
+                                    <td className="text-end">
+                                      <div className="dropdown dropdown-action">
+                                        <a
+                                          href="#"
+                                          className="action-icon dropdown-toggle"
+                                          data-bs-toggle="dropdown"
                                         >
-                                          <i className="fa-solid fa-download m-r-5"></i>
-                                          Download Inspection
-                                        </button>
+                                          <i className="fa fa-ellipsis-v"></i>
+                                        </a>
+                                        <div className="dropdown-menu dropdown-menu-end">
+                                          <button
+                                            type="button"
+                                            className="dropdown-item"
+                                            onClick={() =>
+                                              navigate('/party/piping-store/view-Genline-history', {
+                                                state: { drawingData: lhs },
+                                              })
+                                            }
+                                          >
+                                            <i className="fa-solid fa-eye m-r-5"></i> View
+                                          </button>
+                                          <button
+                                            type="button"
+                                            className="dropdown-item"
+                                            onClick={() => handleDownloadIns(lhs)}
+                                          >
+                                            <i className="fa-solid fa-download m-r-5"></i> Download Report
+                                          </button>
+                                        </div>
                                       </div>
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
                             </tbody>
                           </table>
                         </div>
@@ -257,4 +266,4 @@ const MultiPmiClearance = () => {
   );
 };
 
-export default MultiPmiClearance;
+export default GenLineHistoryList;

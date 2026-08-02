@@ -225,7 +225,7 @@ const commentsData = useMemo(() => entity, [entity]);
                           {commentsData?.map((elem, i) => (
                             <tr key={i}>
                               <td>{(currentPage - 1) * limit + i + 1}</td>
-                              <td>{elem.packing_no}</td>
+                              <td>{elem.package_list_no}</td>
                               <td>{elem.supplier}</td>
                               <td>{elem.vehicle_number}</td>
                               <td>{moment(elem.receiving_date).format('YYYY-MM-DD')}</td>
