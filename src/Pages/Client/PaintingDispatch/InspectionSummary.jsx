@@ -541,7 +541,7 @@ const InspectionSummary = () => {
                     ) : (
                       rows.map((r, i) => {
                         const uniqueAssemblyNos = [
-                          ...new Set(r.items?.map((e) => e.drawing_id?.assembly_no).filter(Boolean)),
+                          ...new Set(r.items?.map((e) => e.assembly_no || e.drawing_id?.assembly_no).filter(Boolean)),
                         ];
                         return (
                           <tr key={r._id}>

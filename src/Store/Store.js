@@ -403,7 +403,25 @@ import getIssueReturnAcceptanceSlice from "../Store/Erp/IssueReturnAcceptance/ge
 import getIssueReturnAcceptanceSummarySlice from "../Store/Erp/IssueReturnAcceptance/getIssueReturnAcceptanceSummary";
 
 // Client ============================================================================================================================
-import getClientMultiFitupSlice from "../Store/Client/MultiFitup/getClientMultiFitup";
+import getClientMultiFitupSlice from "../Store/Client/Structural/MultiFitup/getClientMultiFitup";
+import getClientMaterialReceivingSlice from "../Store/Client/Structural/MaterialReceiving/getClientMaterialReceiving";
+import getClientReleaseNoteSlice from "../Store/Client/Structural/IRN/getClientReleaseNote";
+import getClientSurfaceSlice from "../Store/Client/Structural/Surface/getClientSurface";
+import getClientMioSlice from "../Store/Client/Structural/MIO/getClientMio";
+import getClientFinalCoatSlice from "../Store/Client/Structural/FinalCoat/getClientFinalCoat";
+import getClientUtClearanceSlice from "../Store/Client/Structural/Testing/getClientUtClearance";
+import getClientRtClearanceSlice from "../Store/Client/Structural/Testing/getClientRtClearance";
+import getClientMptClearanceSlice from "../Store/Client/Structural/Testing/getClientMptClearance";
+import getClientLptClearanceSlice from "../Store/Client/Structural/Testing/getClientLptClearance";
+
+
+
+
+
+
+
+
+
 
 // Product Store ============================================================================================================================
 import getProductPartySlice from "../Store/ProductStore/Party/ProductParty";
@@ -1322,6 +1340,24 @@ getUserPaintManufacturePiping:getUserPaintManufacturePipingSlice,
 
     // Client
     getClientMultiFitup: getClientMultiFitupSlice,
+    getClientMaterialReceiving: getClientMaterialReceivingSlice,
+    getClientReleaseNote: getClientReleaseNoteSlice,
+    getClientSurface: getClientSurfaceSlice,
+    getClientMio: getClientMioSlice,
+    getClientFinalCoat: getClientFinalCoatSlice,
+    getClientUtClearance: getClientUtClearanceSlice,
+    getClientRtClearance: getClientRtClearanceSlice,
+    getClientMptClearance: getClientMptClearanceSlice,
+    getClientLptClearance: getClientLptClearanceSlice,
+
+
+
+
+
+
+
+
+
 
     // Product Store
     getProductParty: getProductPartySlice,

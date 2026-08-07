@@ -134,7 +134,7 @@ const RTOfferCompletedList = ({ rtType }) => {
                                                                     data-bs-toggle="dropdown" aria-expanded="false"><i
                                                                         className="fa fa-ellipsis-v"></i></a>
                                                                 <div className="dropdown-menu dropdown-menu-end">
-                                                                    
+
                                                                     <button type='button' className="dropdown-item" onClick={() => handleDownloadOffer(elem)} >
                                                                         <i className="fa-solid fa-download  m-r-5"></i> Download Offer</button>
                                                                 </div>

@@ -3,146 +3,93 @@ import Header from '../../Include/Header';
 import Sidebar from '../../Include/Sidebar';
 import Footer from '../../Include/Footer';
 import { Link, useNavigate } from 'react-router-dom';
-import { QC, V_URL } from '../../../../BaseUrl';
+import { V_URL } from '../../../../BaseUrl';
 import axios from 'axios';
 import Loader from '../../Include/Loader';
-import { Pagination, Search } from '../../Table';
+import { Pagination } from '../../Table';
 import DropDown from '../../../../Components/DropDown';
-import { Check, PackageCheck, X } from 'lucide-react';
-import toast from 'react-hot-toast';
 import moment from 'moment';
+import { useDispatch, useSelector } from 'react-redux';
+import { getClientMaterialReceiving } from '../../../../Store/Client/Structural/MaterialReceiving/getClientMaterialReceiving';
 
- const useDebounce = (value, delay = 500) => {
-        const [debouncedValue, setDebouncedValue] = useState(value);
-        useEffect(() => {
-          const timer = setTimeout(() => setDebouncedValue(value), delay);
-          return () => clearTimeout(timer);
-        }, [value, delay]);
-        return debouncedValue;
-      
-      }
+const useDebounce = (value, delay = 500) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+
+}
 
 const VerifyRequest = () => {
   const navigate = useNavigate();
-  const [totalItems, setTotalItems] = useState(0);
+  const dispatch = useDispatch();
+
+  const { data, loading } = useSelector((state) => state.getClientMaterialReceiving);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState('');
   const [limit, setLimit] = useState(10);
-  const [disable, setDisable] = useState(true);
-  const [entity, setEntity] = useState([]);
   const [status, setStatus] = useState('');
 
-  const projectId = localStorage.getItem('PARTY_PROJECT_ID');
-const debouncedSearch = useDebounce(search, 500);
+  const debouncedSearch = useDebounce(search, 500);
+
   useEffect(() => {
-    if (disable) {
-      setEntity([]);
-      getOffer();
-    }
-  }, [disable, currentPage, limit, debouncedSearch]);
+    dispatch(getClientMaterialReceiving({ page: currentPage, limit, search: debouncedSearch }));
+  }, [currentPage, limit, debouncedSearch, dispatch]);
 
-  const getOffer = () => {
-    const myurl = `${V_URL}/party/get-purchase-offer?page=${currentPage}&limit=${limit}&projectId=${projectId}&search=${search}`;
-    
-    axios({
-      method: 'post',
-      url: myurl,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
-      },
-    })
-      .then((response) => {
-        if (response.data.success === true) {
-          const resData = response.data?.data;
-          const list = resData?.data || [];
-          setEntity(list);
-          setTotalItems(resData.totalItems || 0);
-        } else {
-          toast.error(response.data.message || 'Failed to fetch data');
-        }
-      })
-    .catch((error) => {
-  console.error('Fetch offers error:', error);
-  toast.error('Error fetching offers!');
-  setDisable(false);
-})
-
-      .finally(() => {
-        setDisable(false);
-      });
-  };
+  const entity = useMemo(() => data?.data?.data || [], [data]);
+  const totalItems = useMemo(() => data?.data?.totalItems || 0, [data]);
 
   const commentsData = useMemo(() => {
     let computed = [...entity];
-    // if (search) {
-    //   computed = computed.filter(
-    //     (req) =>
-    //       req.offer_no?.toLowerCase().includes(search.toLowerCase()) ||
-    //       req.transactionId?.itemName?.name?.toLowerCase().includes(search.toLowerCase())
-    //   );
-    // }
-
     if (status) {
       computed = computed.filter((req) => parseInt(req.status) === parseInt(status));
     }
-
     return computed;
-  }, [entity, search, status]);
+  }, [entity, status]);
 
-  const handleStatusChange = (e) => {
-    setStatus(e.target.value);
+  const handleDownloadIns = async (elem) => {
+    try {
+      const bodyFormData = new URLSearchParams();
+      bodyFormData.append('requestId', elem?.requestId?._id);
+      bodyFormData.append('imir_no', elem?.imir_no);
+      bodyFormData.append('print_date', true);
+
+      const response = await axios.post(`${V_URL}/party/get-material-inspection-item`,
+        bodyFormData,
+        {
+          responseType: 'blob',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          },
+        }
+      );
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute(
+        'download',
+        `Material_Inspection_${elem?.imir_no}.pdf`
+      );
+
+      document.body.appendChild(link);
+      link.click();
+
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+    }
   };
-
-  // const handleDownloadIns = (elem) => {
-  //   const bodyFormData = new URLSearchParams();
-  //   bodyFormData.append('requestId', elem?.requestId?._id);
-  //   bodyFormData.append('imir_no', elem?.imir_no);
-  //   bodyFormData.append('print_date', true);
-  //   PdfDownloadErp({ apiMethod: 'post', url: 'get-material-inspection-item', body: bodyFormData });
-  // };
-
-
-const handleDownloadIns = async (elem) => {
-  try {
-    const bodyFormData = new URLSearchParams();
-    bodyFormData.append('requestId', elem?.requestId?._id);
-    bodyFormData.append('imir_no', elem?.imir_no);
-    bodyFormData.append('print_date', true);
-
-    const response = await axios.post(`${V_URL}/party/get-material-inspection-item`,
-      bodyFormData,
-      {
-        responseType: 'blob',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
-        },
-      }
-    );
-
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute(
-      'download',
-      `Material_Inspection_${elem?.imir_no}.pdf`
-    );
-
-    document.body.appendChild(link);
-    link.click();
-
-    link.remove();
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error('Download error:', error);
-  }
-};
 
   const handleRefresh = () => {
     setSearch('');
     setStatus('');
-    setDisable(true);
+    setCurrentPage(1);
   };
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -162,7 +109,7 @@ const handleDownloadIns = async (elem) => {
               <div className="col-sm-12">
                 <ul className="breadcrumb">
                   <li className="breadcrumb-item">
-                    <Link to="/user/project-store/dashboard">Dashboard</Link>
+                    <Link to="/party/project-store/dashboard">Dashboard</Link>
                   </li>
                   <li className="breadcrumb-item">
                     <i className="feather-chevron-right"></i>
@@ -173,7 +120,7 @@ const handleDownloadIns = async (elem) => {
             </div>
           </div>
 
-          {!disable ? (
+          {!loading ? (
             <div className="row">
               <div className="col-sm-12">
                 <div className="card card-table show-entire">
@@ -185,25 +132,17 @@ const handleDownloadIns = async (elem) => {
                             <h3>Material Receiving</h3>
                             <div className="doctor-search-blk">
                               <div className="top-nav-search table-search-blk">
-                                <form>
-                                  {/* <Search
-                                    onSearch={(value) => {
-                                      setSearch(value);
+                                <form onSubmit={(e) => e.preventDefault()}>
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Search"
+                                    value={search}
+                                    onChange={(e) => {
+                                      setSearch(e.target.value);
                                       setCurrentPage(1);
                                     }}
-                                  /> */}
-
-                                   <input
-                                      type="text"
-                                      className="form-control"
-                                      placeholder="Search"
-                                      value={search}
-                                      onChange={(e) => {
-                                        setSearch(e.target.value);
-                                        setCurrentPage(1);
-                                        setDisable(true); 
-                                      }}
-                                    />
+                                  />
                                   <a className="btn">
                                     <img src="/assets/img/icons/search-normal.svg" alt="search" />
                                   </a>
@@ -224,7 +163,6 @@ const handleDownloadIns = async (elem) => {
                             onLimitChange={(val) => {
                               setLimit(val);
                               setCurrentPage(1);
-                              setDisable(true);
                             }}
                           />
                         </div>
@@ -254,19 +192,18 @@ const handleDownloadIns = async (elem) => {
                               <td>{elem?.imir_no || '-'}</td>
                               <td>
                                 <span
-                                  className={`custom-badge ${
-                                    elem.client_status === 0
-                                      ? 'status-orange'
-                                      : elem.client_status === 1
+                                  className={`custom-badge ${elem.client_status === 0
+                                    ? 'status-orange'
+                                    : elem.client_status === 1
                                       ? 'status-green'
                                       : ''
-                                  }`}
+                                    }`}
                                 >
                                   {elem.client_status === 0
                                     ? 'Pending'
                                     : elem.client_status === 1
-                                    ? elem.status_type 
-                                    : ''}
+                                      ? elem.status_type
+                                      : ''}
                                 </span>
                               </td>
 
@@ -276,35 +213,24 @@ const handleDownloadIns = async (elem) => {
                                     <i className="fa fa-ellipsis-v"></i>
                                   </a>
                                   <div className="dropdown-menu dropdown-menu-end">
-                                    <button
-                                      type="button"
-                                      className="dropdown-item"
-                                      onClick={() =>
-                                        navigate('/user/project-store/view-qc-request', {
-                                          state: elem,
-                                        })
-                                      }
-                                    >
-                                      <i className="fa-solid fa-eye m-r-5"></i> View
-                                    </button>
                                     <button type="button" className="dropdown-item" onClick={() => handleDownloadIns(elem)}>
                                       <i className="fa-solid fa-download m-r-5"></i> Download Inspection
                                     </button>
                                     <button
-                                    type="button"
-                                    className="dropdown-item"
-                                    onClick={() =>
-                                      navigate('/party/project-store/manage-verify-request', {
-                                        state: {
-                                          requestId: elem?.requestId?._id,
-                                          imir_no: elem?.imir_no,
-                                          elem
-                                        },
-                                      })
-                                    }
-                                  >
-                                    <i className="fa-solid fa-file-pdf m-r-5"></i> View PDF
-                                  </button>
+                                      type="button"
+                                      className="dropdown-item"
+                                      onClick={() =>
+                                        navigate('/party/project-store/manage-verify-request', {
+                                          state: {
+                                            requestId: elem?.requestId?._id,
+                                            imir_no: elem?.imir_no,
+                                            elem
+                                          },
+                                        })
+                                      }
+                                    >
+                                      <i className="fa-solid fa-file-pdf m-r-5"></i> View PDF
+                                    </button>
                                   </div>
                                 </div>
                               </td>
@@ -323,23 +249,22 @@ const handleDownloadIns = async (elem) => {
 
 
                     <div className="row align-center mt-3 mb-2">
-  <div className="col-sm-12 col-md-6">
-    <div className="dataTables_info" role="status">
-      Showing {commentsData.length} of {totalItems} total records
-    </div>
-  </div>
-  <div className="col-sm-12 col-md-6 d-flex justify-content-end">
-    <Pagination
-      total={totalItems}
-      itemsPerPage={limit}
-      currentPage={currentPage}
-      onPageChange={(page) => {
-        setCurrentPage(page);
-        setDisable(true);
-      }}
-    />
-  </div>
-</div>
+                      <div className="col-sm-12 col-md-6">
+                        <div className="dataTables_info" role="status">
+                          Showing {commentsData.length} of {totalItems} total records
+                        </div>
+                      </div>
+                      <div className="col-sm-12 col-md-6 d-flex justify-content-end">
+                        <Pagination
+                          total={totalItems}
+                          itemsPerPage={limit}
+                          currentPage={currentPage}
+                          onPageChange={(page) => {
+                            setCurrentPage(page);
+                          }}
+                        />
+                      </div>
+                    </div>
 
                   </div>
                 </div>
@@ -356,3 +281,4 @@ const handleDownloadIns = async (elem) => {
 };
 
 export default VerifyRequest;
+

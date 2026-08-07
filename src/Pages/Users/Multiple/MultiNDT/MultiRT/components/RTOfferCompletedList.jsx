@@ -12,7 +12,6 @@ import { PdfDownloadErp } from '../../../../../../Components/ErpPdf/PdfDownloadE
 const RTOfferCompletedList = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const [totalItems, setTotalItems] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     const [search, setSearch] = useState("");
     const [limit, setlimit] = useState(10);
@@ -31,33 +30,42 @@ const RTOfferCompletedList = () => {
 
     const entity = useSelector((state) => state.getMultiNdtOffer?.user?.data);
 
-    const commentsData = useMemo(() => {
-        let computedComments = entity;
-        computedComments = computedComments?.filter((rt) => rt.status === 2 || rt.status === 3 || rt.status === 4 || rt.status === 5);
+    const filteredComments = useMemo(() => {
+        let computedComments = entity || [];
+        // Completed means status is 1 (Accepted) or 2 (Rejected)
+        computedComments = computedComments.filter((rt) => rt.status === 1 || rt.status === 2);
         if (search) {
             const lowerSearch = search.toLowerCase();
-            computedComments = computedComments?.filter(
+            computedComments = computedComments.filter(
                 (rt) => {
-                    const drawingNos = rt?.items?.map(e => e?.grid_item_id?.drawing_id?.drawing_no)?.filter(Boolean) || [];
-                    const assemblyNos = rt?.items?.map(e => e?.grid_item_id?.drawing_id?.assembly_no)?.filter(Boolean) || [];
+                    const drawingNos = rt?.items?.map(e => e?.drawing_no)?.filter(Boolean) || [];
+                    const spoolNos = rt?.items?.map(e => e?.spool_no)?.filter(Boolean) || [];
+                    const jointNos = rt?.items?.map(e => e?.joint_no)?.filter(Boolean) || [];
                     return (
-                        rt.ndt_offer_no?.toString().toLowerCase()?.includes(search?.toLowerCase()) ||
+                        rt.offer_no?.toString().toLowerCase()?.includes(lowerSearch) ||
+                        rt.report_no?.toString().toLowerCase()?.includes(lowerSearch) ||
                         drawingNos.some(drawingNo => drawingNo?.toString()?.toLowerCase().includes(lowerSearch)) ||
-                        assemblyNos.some(assemblyNo => assemblyNo?.toString()?.toLowerCase().includes(lowerSearch))
+                        spoolNos.some(spoolNo => spoolNo?.toString()?.toLowerCase().includes(lowerSearch)) ||
+                        jointNos.some(jointNo => jointNo?.toString()?.toLowerCase().includes(lowerSearch))
                     )
                 }
             );
         }
-        setTotalItems(computedComments?.length);
-        return computedComments?.slice(
+        return computedComments;
+    }, [search, entity]);
+
+    const totalItems = filteredComments.length;
+
+    const commentsData = useMemo(() => {
+        return filteredComments.slice(
             (currentPage - 1) * limit,
             (currentPage - 1) * limit + limit
         );
-    }, [currentPage, search, limit, entity]);
+    }, [filteredComments, currentPage, limit]);
 
     const handleDownloadOffer = (elem) => {
         const bodyFormData = new URLSearchParams();
-        bodyFormData.append('ndt_offer_no', elem.ndt_offer_no);
+        bodyFormData.append('ndt_offer_no', elem.offer_no);
         bodyFormData.append('print_date', true);
         PdfDownloadErp({ apiMethod: 'post', url: 'download-one-multi-ndt-offer', body: bodyFormData });
     }
@@ -112,9 +120,12 @@ const RTOfferCompletedList = () => {
                                             <thead>
                                                 <tr>
                                                     <th>Sr.</th>
-                                                    <th>Drawing No.</th>
-                                                    <th>Assem. No.</th>
                                                     <th>Test Offer No.</th>
+                                                    <th>Report No.</th>
+                                                    <th>Drawing No.</th>
+                                                    <th>Spool No.</th>
+                                                    <th>Joint No.</th>
+                                                    <th>Material Specification</th>
                                                     <th>Offer Date</th>
                                                     <th>Type</th>
                                                     <th>Status</th>
@@ -125,22 +136,21 @@ const RTOfferCompletedList = () => {
                                                 {commentsData?.map((elem, i) =>
                                                     <tr key={elem?._id}>
                                                         <td>{(currentPage - 1) * limit + i + 1}</td>
-                                                        <td>{[...new Set(elem?.items?.map(e => e?.grid_item_id?.drawing_id?.drawing_no))].join(', ')}</td>
-                                                        <td>{[...new Set(elem?.items?.map(e => e?.grid_item_id?.drawing_id?.assembly_no))].join(', ')}</td>
-                                                        <td>{elem?.ndt_offer_no || '-'}</td>
-                                                        <td>{elem?.report_date ? moment(elem?.report_date).format('YYYY-MM-DD HH:mm') : '-'}</td>
-                                                        <td>{elem?.ndt_type_id?.name}</td>
+                                                        <td>{elem?.offer_no}</td>
+                                                        <td>{elem?.report_no || '-'}</td>
+                                                        <td>{[...new Set(elem?.items?.map(e => e?.drawing_no))].join(', ')}</td>
+                                                        <td>{[...new Set(elem?.items?.map(e => e?.spool_no))].join(', ')}</td>
+                                                        <td>{[...new Set(elem?.items?.map(e => e?.joint_no))].join(', ')}</td>
+                                                        <td>{[...new Set(elem?.items?.map(e => e?.material_specification))].join(', ')}</td>
+                                                        <td>{elem?.offer_date ? moment(elem?.offer_date).format('YYYY-MM-DD HH:mm') : '-'}</td>
+                                                        <td>{[...new Set(elem?.items?.map(e => e?.rt_type))].join(', ')}</td>
                                                         <td className='status-badge'>
-                                                            {elem.status === 1 ? (
+                                                            {elem.status === 0 ? (
                                                                 <span className="custom-badge status-orange">Pending</span>
-                                                            ) : elem.status === 3 ? (
+                                                            ) : elem.status === 1 ? (
                                                                 <span className="custom-badge status-green">Accepted</span>
-                                                            ) : elem.status === 4 ? (
-                                                                <span className="custom-badge status-pink">Rejected</span>
                                                             ) : elem.status === 2 ? (
-                                                                <span className='custom-badge status-blue'>Send For Clearance</span>
-                                                            ) : elem.status === 5 ? (
-                                                                <span className="custom-badge status-purple">Partially</span>
+                                                                <span className="custom-badge status-pink">Rejected</span>
                                                             ) : null}
                                                         </td>
                                                         <td className="text-end">
@@ -175,7 +185,9 @@ const RTOfferCompletedList = () => {
                                     <div className="row align-center mt-3 mb-2">
                                         <div className="col-sm-12 col-md-6 col-lg-6 col-xxl-6">
                                             <div className="dataTables_info" id="DataTables_Table_0_info" role="status"
-                                                aria-live="polite">Showing {Math.min(limit, totalItems)} from {totalItems} data</div>
+                                                aria-live="polite">
+                                                Showing {totalItems > 0 ? (currentPage - 1) * limit + 1 : 0} to {Math.min(currentPage * limit, totalItems)} of {totalItems} data
+                                            </div>
                                         </div>
                                         <div className="col-sm-12 col-md-6 col-lg-6 col-xxl-6 ">
                                             <div className="dataTables_paginate paging_simple_numbers"
