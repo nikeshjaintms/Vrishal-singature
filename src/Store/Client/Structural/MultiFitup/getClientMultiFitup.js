@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { V_URL } from "../../../BaseUrl";
+import { V_URL } from "../../../../BaseUrl";
 
 /* ================= GET CLIENT MULTI FITUP ================= */
 // export const getClientMultiFitup = createAsyncThunk(
