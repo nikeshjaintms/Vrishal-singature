@@ -53,7 +53,7 @@ const MultiMio = () => {
     body.append("report_no_two", row.report_no_two);
     PdfDownloadErp({
       apiMethod: "post",
-      url: "download-multi-mio",
+      url: "get-mio-inspection-item",
       body,
     });
   };
@@ -73,6 +73,7 @@ const MultiMio = () => {
               <li className="breadcrumb-item">
                 <Link to="/party/project-store/dashboard">Dashboard</Link>
               </li>
+              <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
               <li className="breadcrumb-item active">MIO Offer List</li>
             </ul>
           </div>
@@ -205,7 +206,7 @@ const MultiMio = () => {
                                     className="dropdown-item"
                                     onClick={() =>
                                       navigate(
-                                        "/party/project-store/manage-mio-offer",
+                                        "/party/project-store/view-mio-offer",
                                         { state: r }
                                       )
                                     }

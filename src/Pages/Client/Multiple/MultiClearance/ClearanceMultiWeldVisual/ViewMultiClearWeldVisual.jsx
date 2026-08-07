@@ -8,19 +8,19 @@ import Sidebar from '../../../Include/Sidebar';
 import Footer from '../../../Include/Footer';
 import { V_URL } from '../../../../../BaseUrl';
 
-const ViewMultiClearFd = () => {
+const ViewMultiClearWeldVisual = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const data = location.state;
 
-  console.log('Final Dimension Data:', data);
+  console.log('Weld Visual Data:', data);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [clientDate, setClientDate] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
   const [loadingPdf, setLoadingPdf] = useState(false);
 
-  // SAME STATES AS FITUP
+  // STATES FOR RANDOM WITNESSED
   const [randomItems, setRandomItems] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const [showRandomItems, setShowRandomItems] = useState(false);
@@ -49,7 +49,7 @@ const ViewMultiClearFd = () => {
       }
 
       const res = await axios.post(
-        `${V_URL}/party/get-fd-inspection-item`,
+        `${V_URL}/party/get-weld-inspection-item`,
         {
           fdId: data._id,
           report_no_two: data.report_no_two,
@@ -79,20 +79,24 @@ const ViewMultiClearFd = () => {
     };
   }, []);
 
-  /* ================= RANDOM WITNESSED PREP (FD DATA) ================= */
+  /* ================= RANDOM WITNESSED PREP ================= */
   const prepareRandomWitnessedItems = () => {
     const items =
-      data?.items?.map((item) => ({
-        _id: item._id,
-        drawing_no: item?.drawing_id?.drawing_no || '-',
-        rev_no: item?.drawing_id?.rev ?? '-',
-        assembly_no: item?.drawing_id?.assembly_no || '-',
-        assembly_quantity: item?.drawing_id?.assembly_quantity || 0,
-        required_dimension: item?.required_dimension || 0,
-        actual_dimension: item?.actual_dimension || 0,
-        selected: false,
-        remark: item?.remarks || '',
-      })) || [];
+      data?.items?.map((item) => {
+        const drawing = item?.grid_item_id?.drawing_id || item?.drawing_id;
+        return {
+          _id: item._id,
+          drawing_no: drawing?.drawing_no || '-',
+          rev_no: drawing?.rev ?? '-',
+          assembly_no: drawing?.assembly_no || '-',
+          assembly_quantity: drawing?.assembly_quantity || 0,
+          wps_no: item?.wps_no?.wpsNo || '-',
+          weldingProcess: item?.wps_no?.weldingProcess || '-',
+          welder_no: item?.weldor_no?.welderNo || '-',
+          selected: false,
+          remark: item?.remarks || '',
+        };
+      }) || [];
 
     setRandomItems(items);
     setSelectAll(false);
@@ -116,7 +120,7 @@ const ViewMultiClearFd = () => {
   };
 
   /* ================= UPDATE STATUS ================= */
-  const submitFdStatus = async (statusType) => {
+  const submitStatus = async (statusType) => {
     if (!clientDate) {
       toast.error('Please select date');
       return;
@@ -124,7 +128,7 @@ const ViewMultiClearFd = () => {
 
     try {
       const payload = {
-        fdmasterId: data._id,
+        weldinspectionId: data._id, // Assumed backend param matches similar structures
         status_type: statusType,
         client_date: clientDate,
         client_user: localStorage.getItem('PARTY_ID'),
@@ -145,7 +149,7 @@ const ViewMultiClearFd = () => {
       }
 
       const res = await axios.post(
-        `${V_URL}/party/fd-review-update`,
+        `${V_URL}/party/weld-review-update`,
         payload,
         {
           headers: {
@@ -155,7 +159,7 @@ const ViewMultiClearFd = () => {
       );
 
       if (res.data.success) {
-        toast.success('Final Dimension updated successfully');
+        toast.success('Weld Visual updated successfully');
         setShowRandomItems(false);
         fetchPdf();
       } else {
@@ -166,7 +170,6 @@ const ViewMultiClearFd = () => {
     }
   };
 
-  /* ================= UI (UNCHANGED) ================= */
   return (
     <div className={`main-wrapper ${isSidebarOpen ? 'slide-nav' : ''}`}>
       <Header handleOpen={handleOpen} />
@@ -181,15 +184,14 @@ const ViewMultiClearFd = () => {
               </li>
               <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
               <li className="breadcrumb-item active">
-                View Final Dimension Clearance
+                View Weld Visual Clearance
               </li>
             </ul>
           </div>
 
-          {/* ===== DETAILS ===== */}
           <div className="card">
             <div className="card-body">
-              <h4 className="mb-3">Final Dimension Details</h4>
+              <h4 className="mb-3">Weld Visual Details</h4>
               <div className="row">
                 <div className="col-md-4">
                   <label>Report No</label>
@@ -221,7 +223,6 @@ const ViewMultiClearFd = () => {
             </div>
           </div>
 
-          {/* ===== CLIENT REVIEW (UNCHANGED) ===== */}
           <div className="card mt-3">
             <div className="card-body">
               <h4 className="mb-3">Client Review</h4>
@@ -243,18 +244,16 @@ const ViewMultiClearFd = () => {
                   <div className="mt-3">
                     <button
                       className="btn btn-primary me-2"
-                      onClick={() => submitFdStatus('REVIEWED')}
+                      onClick={() => submitStatus('REVIEWED')}
                     >
                       REVIEWED
                     </button>
-
                     <button
                       className="btn btn-warning me-2"
-                      onClick={() => submitFdStatus('WITNESSED')}
+                      onClick={() => submitStatus('WITNESSED')}
                     >
                       WITNESSED
                     </button>
-
                     <button
                       className="btn btn-success"
                       onClick={prepareRandomWitnessedItems}
@@ -273,7 +272,7 @@ const ViewMultiClearFd = () => {
                 <div className="mt-4">
                   <iframe
                     src={pdfUrl}
-                    title="Final Dimension Inspection PDF"
+                    title="Weld Visual Inspection PDF"
                     width="100%"
                     height="700px"
                     style={{ border: '1px solid #ccc' }}
@@ -281,7 +280,6 @@ const ViewMultiClearFd = () => {
                 </div>
               )}
 
-              {/* ===== RANDOM WITNESSED TABLE (UNCHANGED GUI) ===== */}
               {showRandomItems && randomItems.length > 0 && (
                 <div className="mt-3">
                   <div style={{ overflowX: 'auto', border: '1px solid #ddd', padding: '5px', borderRadius: '6px' }}>
@@ -300,8 +298,8 @@ const ViewMultiClearFd = () => {
                           <th>REV. NO</th>
                           <th>ASSEMBLY NO</th>
                           <th>ASSEMBLY QTY</th>
-                          <th>REQUIRED DIMENSION</th>
-                          <th>ACTUAL DIMENSION</th>
+                          <th>WPS NO</th>
+                          <th>WELDER NO</th>
                           <th>REMARK</th>
                         </tr>
                       </thead>
@@ -313,9 +311,7 @@ const ViewMultiClearFd = () => {
                               <input
                                 type="checkbox"
                                 checked={item.selected}
-                                onChange={(e) =>
-                                  handleItemChange(index, 'selected', e.target.checked)
-                                }
+                                onChange={(e) => handleItemChange(index, 'selected', e.target.checked)}
                               />
                             </td>
                             <td>{index + 1}</td>
@@ -323,8 +319,8 @@ const ViewMultiClearFd = () => {
                             <td>{item.rev_no}</td>
                             <td>{item.assembly_no}</td>
                             <td>{item.assembly_quantity}</td>
-                            <td>{item.required_dimension}</td>
-                            <td>{item.actual_dimension}</td>
+                            <td>{item.wps_no}</td>
+                            <td>{item.welder_no}</td>
                             <td>
                               <input
                                 className="form-control"
@@ -342,7 +338,7 @@ const ViewMultiClearFd = () => {
 
                   <button
                     className="btn btn-success mt-2"
-                    onClick={() => submitFdStatus('RANDOM WITNESSED')}
+                    onClick={() => submitStatus('RANDOM WITNESSED')}
                   >
                     Submit Random Witnessed
                   </button>
@@ -357,4 +353,4 @@ const ViewMultiClearFd = () => {
   );
 };
 
-export default ViewMultiClearFd;
+export default ViewMultiClearWeldVisual;

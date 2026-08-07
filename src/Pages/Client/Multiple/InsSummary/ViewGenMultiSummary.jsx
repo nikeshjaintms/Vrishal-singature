@@ -52,9 +52,9 @@ const ViewGenMultiSummary = () => {
       }
  
       const res = await axios.post(
-        `${V_URL}/party/get-inspection-report-item`,
+        `${V_URL}/party/get-inspect-summary-item`,
         {
-          inspectionId: data._id,
+          report_no: data.report_no,
           print_date: clientDate,
         },
         {
@@ -149,7 +149,7 @@ const ViewGenMultiSummary = () => {
       }
  
       const res = await axios.post(
-        `${V_URL}/party/inspection-report-review-update`,
+        `${V_URL}/party/inspect-summary-review-update`,
         payload,
         {
           headers: {
@@ -185,6 +185,7 @@ const ViewGenMultiSummary = () => {
               <li className="breadcrumb-item">
                 <Link to="/party/project-store/dashboard">Dashboard</Link>
               </li>
+              <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
               <li className="breadcrumb-item active">
                 View Inspection Summary
               </li>

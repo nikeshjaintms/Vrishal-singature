@@ -404,11 +404,14 @@ import getIssueReturnAcceptanceSummarySlice from "../Store/Erp/IssueReturnAccept
 
 // Client ============================================================================================================================
 import getClientMultiFitupSlice from "../Store/Client/Structural/MultiFitup/getClientMultiFitup";
+import getClientMultiFdSlice from "../Store/Client/Structural/FdMaster/getClientMultiFd";
+import getClientMultiWeldVisualSlice from "../Store/Client/Structural/WeldVisualMaster/getClientMultiWeldVisual";
 import getClientMaterialReceivingSlice from "../Store/Client/Structural/MaterialReceiving/getClientMaterialReceiving";
 import getClientReleaseNoteSlice from "../Store/Client/Structural/IRN/getClientReleaseNote";
 import getClientSurfaceSlice from "../Store/Client/Structural/Surface/getClientSurface";
 import getClientMioSlice from "../Store/Client/Structural/MIO/getClientMio";
 import getClientFinalCoatSlice from "../Store/Client/Structural/FinalCoat/getClientFinalCoat";
+import getClientInspectSummarySlice from "../Store/Client/Structural/InspectSummaryMaster/getClientInspectSummary";
 import getClientUtClearanceSlice from "../Store/Client/Structural/Testing/getClientUtClearance";
 import getClientRtClearanceSlice from "../Store/Client/Structural/Testing/getClientRtClearance";
 import getClientMptClearanceSlice from "../Store/Client/Structural/Testing/getClientMptClearance";
@@ -1340,11 +1343,14 @@ getUserPaintManufacturePiping:getUserPaintManufacturePipingSlice,
 
     // Client
     getClientMultiFitup: getClientMultiFitupSlice,
+    getClientMultiFd: getClientMultiFdSlice,
+    getClientMultiWeldVisual: getClientMultiWeldVisualSlice,
     getClientMaterialReceiving: getClientMaterialReceivingSlice,
     getClientReleaseNote: getClientReleaseNoteSlice,
     getClientSurface: getClientSurfaceSlice,
     getClientMio: getClientMioSlice,
     getClientFinalCoat: getClientFinalCoatSlice,
+    getClientInspectSummary: getClientInspectSummarySlice,
     getClientUtClearance: getClientUtClearanceSlice,
     getClientRtClearance: getClientRtClearanceSlice,
     getClientMptClearance: getClientMptClearanceSlice,

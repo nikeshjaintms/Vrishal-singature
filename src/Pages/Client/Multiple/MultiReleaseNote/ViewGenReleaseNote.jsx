@@ -17,6 +17,7 @@ import { getUserWpsMaster } from '../../../../Store/Store/WpsMaster/WpsMaster';
 
 const ViewGenReleaseNote = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const data = location.state;
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -51,7 +52,7 @@ const ViewGenReleaseNote = () => {
       }
 
       const res = await axios.post(
-        `${V_URL}/party/get-multi-release-note-item`,
+        `${V_URL}/party/get-release-note-item`,
         {
           project_id: data?.project_id,
           batch_id: data?.batch_id,
@@ -159,6 +160,7 @@ const ViewGenReleaseNote = () => {
       if (res.data.success) {
         toast.success('Release Note updated successfully');
         setShowRandomItems(false);
+        navigate('/party/project-store/release-note-management');
         fetchPdf();
       } else {
         toast.error(res.data.message || 'Update failed');
@@ -183,6 +185,7 @@ const ViewGenReleaseNote = () => {
               <li className="breadcrumb-item">
                 <Link to="/party/project-store/dashboard">Dashboard</Link>
               </li>
+              <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
               <li className="breadcrumb-item active">
                 View Release Note
               </li>

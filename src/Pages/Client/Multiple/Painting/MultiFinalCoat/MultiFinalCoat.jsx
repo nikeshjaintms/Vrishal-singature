@@ -51,7 +51,7 @@ const MultiFinalCoat = () => {
     body.append("print_date", true);
     PdfDownloadErp({
       apiMethod: "post",
-      url: "download-multi-final_coat",
+      url: "get-final-coat-inspection-item",
       body,
     });
   };
@@ -71,6 +71,7 @@ const MultiFinalCoat = () => {
               <li className="breadcrumb-item">
                 <Link to="/party/project-store/dashboard">Dashboard</Link>
               </li>
+              <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
               <li className="breadcrumb-item active">Final / Top Coating Offer List</li>
             </ul>
           </div>
@@ -219,7 +220,7 @@ const MultiFinalCoat = () => {
                                     className="dropdown-item"
                                     onClick={() =>
                                       navigate(
-                                        "/party/project-store/manage-final-coat",
+                                        "/party/project-store/view-final-coat",
                                         { state: item }
                                       )
                                     }

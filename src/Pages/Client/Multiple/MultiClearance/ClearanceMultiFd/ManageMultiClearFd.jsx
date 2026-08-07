@@ -1,372 +1,235 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Header from '../../../Include/Header';
 import Sidebar from '../../../Include/Sidebar';
-import SubmitButton from '../../Components/SubmitButton/SubmitButton';
+import Footer from '../../../Include/Footer';
+import Loader from '../../../Include/Loader';
+import { Pagination } from '../../../Table';
 import DropDown from '../../../../../Components/DropDown';
-import PageHeader from '../../Components/Breadcrumbs/PageHeader';
-import { Search } from '../../../Table';
-import Swal from 'sweetalert2';
-import toast from 'react-hot-toast';
-import { V_URL } from '../../../../../BaseUrl';
-import axios from 'axios';
-import { getDrawing } from '../../../../../Store/Erp/Planner/Draw/Draw';
-import { Check, Save, X } from 'lucide-react';
-import { getUserAdminDraw } from '../../../../../Store/Erp/Planner/Draw/UserAdminDraw';
-import { getUserWpsMaster } from '../../../../../Store/Store/WpsMaster/WpsMaster';
+import moment from 'moment';
+import { PdfDownloadErp } from '../../../../../Components/ErpPdf/PdfDownloadErp';
+import { useDispatch, useSelector } from 'react-redux';
+import { getClientMultiFd } from '../../../../../Store/Client/Structural/FdMaster/getClientMultiFd';
+
+const useDebounce = (value, delay = 500) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+};
 
 const ManageMultiClearFd = () => {
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
-    const location = useLocation();
-    const [search, setSearch] = useState('');
-    const [limit, setlimit] = useState(10)
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalItems, setTotalItems] = useState(0);
-    const [tableData, setTableData] = useState([]);
-    const [disable, setDisable] = useState(false);
-    const [acceptRejectStatus, setAcceptRejectStatus] = useState({});
-    const data = location.state;
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-    const [editRowIndex, setEditRowIndex] = useState(null);
-    const [editFormData, setEditFormData] = useState({
-        qc_remarks: '',
-        actual_dimension: "",
-        required_dimension: ""
-    });
+  const { data, loading } = useSelector((state) => state.getClientMultiFd);
 
-    useEffect(() => {
-        dispatch(getUserAdminDraw());
-        dispatch(getUserWpsMaster({ status: true }));
-    }, []);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [search, setSearch] = useState("");
 
-    useEffect(() => {
-        if (data) {
-            setTableData(data?.items);
-        }
-    }, [data]);
+  const debouncedSearch = useDebounce(search, 500);
 
-    const handleEditFormChange = (e) => {
-        const { name, value } = e.target;
-        setEditFormData({
-            ...editFormData,
-            [name]: value,
-        });
+  useEffect(() => {
+    dispatch(getClientMultiFd({ page, limit, search: debouncedSearch }));
+  }, [page, limit, debouncedSearch, dispatch]);
+
+  const rows = useMemo(() => data?.data?.data || [], [data]);
+  const totalItems = useMemo(() => data?.data?.totalItems || 0, [data]);
+
+  const handleRefresh = () => {
+    setSearch("");
+    setPage(1);
+  };
+
+  const downloadInspection = async (row) => {
+    try {
+      const body = new URLSearchParams();
+      body.append("fdId", row._id);
+      body.append("report_no_two", row.report_no_two);
+      body.append("print_date", true);
+
+      PdfDownloadErp({
+        apiMethod: "post",
+        url: "get-fd-inspection-item",
+        body,
+      });
+    } catch (err) {
+      console.error("Download error:", err);
     }
+  };
 
-    const handleSaveClick = () => {
-        const updatedData = [...tableData];
-        const dataIndex = (currentPage - 1) * limit + editRowIndex;
-        updatedData[dataIndex] = { ...updatedData[dataIndex], ...editFormData, is_accepted: acceptRejectStatus[editRowIndex] };
-        setTableData(updatedData);
-        setEditRowIndex(null);
-    }
+  if (loading) return <Loader />;
 
-    const handleCancelClick = () => {
-        setEditRowIndex(null);
-    };
+  return (
+    <div className="main-wrapper">
+      <Header />
+      <Sidebar />
+      <div className="page-wrapper">
+        <div className="content">
+          <div className="page-header">
+            <ul className="breadcrumb">
+              <li className="breadcrumb-item">
+                <Link to="/party/project-store/dashboard">Dashboard</Link>
+              </li>
+              <li className="breadcrumb-item active">Final Dimension Acceptance</li>
+            </ul>
+          </div>
 
-    const handleAcceptRejectClick = (index, isAccepted, name) => {
-        Swal.fire({
-            title: isAccepted ? `Accept this ${name}?` : `Reject this ${name}?`,
-            text: "Are you sure you want to proceed?",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Confirm",
-            cancelButtonText: "Cancel",
-            dangerMode: !isAccepted,
-        }).then((result) => {
-            if (result.isConfirmed) {
-                setAcceptRejectStatus((prev) => ({
-                    ...prev,
-                    [index]: isAccepted,
-                }));
-                toast.success(`${name} ${index + 1} ${isAccepted ? "accepted" : "rejected"}.`);
-            }
-        });
-    };
-
-    const commentsData = useMemo(() => {
-        let computedComments = tableData || [];
-        if (search) {
-            computedComments = computedComments?.filter(
-                (i) =>
-                    i?.drawing_id?.drawing_no?.toLowerCase()?.includes(search?.toLowerCase()) ||
-                    i?.grid_id?.grid_no?.toLowerCase()?.includes(search?.toLowerCase()) ||
-                    i?.drawing_id?.assembly_no?.toLowerCase()?.includes(search?.toLowerCase())
-            );
-        }
-        setTotalItems(computedComments?.length);
-        // return computedComments?.slice(
-        //     (currentPage - 1) * limit,
-        //     (currentPage - 1) * limit + limit
-        // );
-        return computedComments;
-    }, [currentPage, search, limit, tableData]);
-
-    const handleEditClick = (index, row) => {
-        setEditRowIndex(index);
-        setEditFormData({
-            qc_remarks: row.qc_remarks || '',
-            actual_dimension: row.actual_dimension || '',
-            required_dimension: row.required_dimension || '',
-        });
-    };
-
-
-    const handleSubmit = () => {
-        let updatedData = tableData;
-        let isValid = true;
-        updatedData?.forEach(item => {
-            if (item.actual_dimension === '' || item.actual_dimension === undefined) {
-                isValid = false;
-                toast.error(`Please add actual dimension for ${item?.grid_id?.grid_no}`);
-            }
-            if (item.required_dimension === '' || item.required_dimension === undefined) {
-                isValid = false;
-                toast.error(`Please add required dimension for ${item?.grid_id?.grid_no}`);
-            }
-            if (item.is_accepted === '' || item.is_accepted === undefined) {
-                isValid = false;
-                toast.error(`Please accept or reject for ${item?.grid_id?.grid_no}`);
-            }
-        })
-
-        if (!isValid) {
-            return;
-        }
-
-        const filteredData = updatedData?.map(item => ({
-            _id: item._id,
-            drawing_id: item.drawing_id._id,
-            grid_id: item.grid_id._id,
-            qc_remarks: item.qc_remarks || '',
-            remarks: item.remarks || '',
-            required_dimension: item.required_dimension,
-            actual_dimension: item.actual_dimension,
-            fd_balanced_grid_qty: item.fd_balanced_grid_qty,
-            fd_used_grid_qty: item.fd_used_grid_qty,
-            moved_next_step: item.moved_next_step,
-            is_accepted: item.is_accepted
-        }))
-
-        setDisable(true);
-        const myurl = `${V_URL}/user/verify-fd-offer`;
-        const bodyFormData = new URLSearchParams();
-        bodyFormData.append('id', data?._id);
-        bodyFormData.append('items', JSON.stringify(filteredData));
-        bodyFormData.append('qc_name', localStorage.getItem('PAY_USER_ID'));
-        bodyFormData.append('project', localStorage.getItem('PAY_USER_PROJECT_NAME'));
-        axios({
-            method: "post",
-            url: myurl,
-            data: bodyFormData,
-            headers: { "Content-Type": "application/x-www-form-urlencoded", Authorization: "Barrer " + localStorage.getItem('PAY_USER_TOKEN') },
-        }).then((response) => {
-            if (response.data?.success === true) {
-                toast.success(response.data.message);
-                navigate('/user/project-store/final-dimension-clearance-management');
-                localStorage.removeItem('issue_acc_ids');
-                localStorage.removeItem('ndt_master_ids');
-            } else {
-                toast.error(response.data.message);
-            }
-        }).catch((error) => {
-            toast.error(error?.response?.data?.message);
-        }).finally(() => { setDisable(false) });
-    }
-
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const handleOpen = () => {
-        setIsSidebarOpen(!isSidebarOpen);
-    };
-
-    return (
-        <>
-            <div className={`main-wrapper ${isSidebarOpen ? "slide-nav" : ""}`}>
-                <Header handleOpen={handleOpen} />
-                <Sidebar />
-
-                <div className="page-wrapper">
-                    <div className="content">
-                        <PageHeader breadcrumbs={[
-                            { name: "Dashboard", link: "/user/project-store/dashboard", active: false },
-                            { name: "Final Dimension Clearance List", link: "/user/project-store/final-dimension-clearance-management", active: false },
-                            { name: `${data?._id ? 'Edit' : 'Add'} Final Dimension Inspection Offer`, active: true }
-                        ]} />
-
-                        <div className="row">
-                            <div className="col-sm-12">
-                                <div className="card">
-                                    <div className="card-body">
-                                        <form>
-                                            <div className="col-12">
-                                                <div className="form-heading">
-                                                    <h4>{data?._id ? 'Edit' : 'Add'} Final Dimension Clearance Details</h4>
-                                                </div>
-                                            </div>
-                                            <div className='row'>
-                                                <div className="col-12 col-md-6 col-xl-6">
-                                                    <div className="input-block local-forms custom-select-wpr">
-                                                        <label> Final Dimension Offer List <span className="login-danger">*</span></label>
-                                                        <input value={data?.report_no} className='form-control' readOnly />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
+          <div className="card card-table show-entire">
+            <div className="card-body">
+              {/* Top Controls */}
+              <div className="page-table-header mb-2">
+                <div className="row align-items-center">
+                  <div className="col">
+                    <div className="doctor-table-blk">
+                      <h3>Final Dimension Acceptance</h3>
+                      <div className="doctor-search-blk">
+                        <div className="top-nav-search table-search-blk">
+                          <form onSubmit={(e) => e.preventDefault()}>
+                            <input
+                              type="text"
+                              className="form-control"
+                              placeholder="Search"
+                              value={search}
+                              onChange={(e) => {
+                                setSearch(e.target.value);
+                                setPage(1);
+                              }}
+                            />
+                            <a className="btn">
+                              <img
+                                src="/assets/img/icons/search-normal.svg"
+                                alt="search"
+                              />
+                            </a>
+                          </form>
                         </div>
-
-                        <div className='row'>
-                            <div className="col-sm-12">
-                                <div className="card card-table show-entire">
-                                    <div className="card-body">
-
-                                        <div className="page-table-header mb-2">
-                                            <div className="row align-items-center">
-                                                <div className="col">
-                                                    <div className="doctor-table-blk">
-                                                        <h3>Final Dimension Clearance List</h3>
-                                                        <div className="doctor-search-blk">
-                                                            <div className="top-nav-search table-search-blk">
-                                                                <form>
-                                                                    <Search onSearch={(value) => {
-                                                                        setSearch(value);
-                                                                        setCurrentPage(1);
-                                                                    }} />
-                                                                    <a className="btn"><img src="/assets/img/icons/search-normal.svg"
-                                                                        alt="search" /></a>
-                                                                </form>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="pageDropDown col-auto text-end float-end ms-auto download-grp">
-                                                    {/* <DropDown limit={limit} onLimitChange={(val) => setlimit(val)} /> */}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="table-responsive mt-2">
-                                            <table className="table border-0 custom-table comman-table  mb-0">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Sr.</th>
-                                                        <th>Drawing No.</th>
-                                                        <th>Rev</th>
-                                                        <th>Assem. No.</th>
-                                                        <th>Assem. Qty.</th>
-                                                        <th>Grid No.</th>
-                                                        <th>Grid Qty.</th>
-                                                        <th>Required Dimensions</th>
-                                                        <th>Actual Dimensions</th>
-                                                        <th>Remarks</th>
-                                                        <th>Acc/Rej</th>
-                                                        <th>Status</th>
-                                                        <th>Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {commentsData && commentsData.length > 0 ? (
-                                                        commentsData.map((elem, i) => (
-                                                            <tr key={i}>
-                                                                <td>{(currentPage - 1) * limit + i + 1}</td>
-                                                                <td>{elem?.drawing_id?.drawing_no || '-'}</td>
-                                                                <td>{elem?.drawing_id?.rev || '-'}</td>
-                                                                <td>{elem?.drawing_id?.assembly_no || '-'}</td>
-                                                                <td>{elem?.drawing_id?.assembly_quantity || '-'}</td>
-                                                                <td>{elem?.grid_id?.grid_no || '-'}</td>
-                                                                <td>{elem?.fd_used_grid_qty || '-'}</td>
-
-                                                                <td>{elem?.required_dimension || '-'}</td>
-                                                                {editRowIndex === i ? (
-                                                                    <td>
-                                                                        <textarea
-                                                                            className="form-control"
-                                                                            name="actual_dimension"
-                                                                            onChange={handleEditFormChange}
-                                                                            value={editFormData.actual_dimension}
-                                                                            rows={1}
-                                                                        />
-                                                                    </td>
-                                                                ) : (
-                                                                    <td onClick={() => handleEditClick(i, elem)}>{elem?.actual_dimension || '-'}</td>
-                                                                )}
-                                                                {editRowIndex === i ? (
-                                                                    <td>
-                                                                        <textarea
-                                                                            className="form-control"
-                                                                            name="qc_remarks"
-                                                                            onChange={handleEditFormChange}
-                                                                            value={editFormData.qc_remarks}
-                                                                            rows={1}
-                                                                        />
-                                                                    </td>
-                                                                ) : (
-                                                                    <td onClick={() => handleEditClick(i, elem)}>{elem?.qc_remarks || '-'}</td>
-                                                                )}
-                                                                <td>
-                                                                    {editRowIndex === i ? (
-                                                                        <div className='d-flex gap-2'>
-                                                                            <span className={`present-table attent-status ${acceptRejectStatus[i] === true ? 'selected' : ''}`}
-                                                                                style={{ cursor: 'pointer' }}
-                                                                                onClick={() => handleAcceptRejectClick(i, true, elem?.grid_id?.grid_no)}>
-                                                                                <Check />
-                                                                            </span>
-                                                                            <span className={`absent-table attent-status ${acceptRejectStatus[i] === false ? 'selected' : ''}`}
-                                                                                style={{ cursor: 'pointer' }}
-                                                                                onClick={() => handleAcceptRejectClick(i, false, elem?.grid_id?.grid_no)}>
-                                                                                <X />
-                                                                            </span>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <td onClick={() => handleEditClick(i, elem)}>{acceptRejectStatus[i] !== undefined ? (acceptRejectStatus[i] ? 'Accepted' : 'Rejected') : '-'}</td>
-                                                                    )}
-                                                                </td>
-                                                                <td className='status-badge'>
-                                                                    {acceptRejectStatus[i] === true ? (
-                                                                        <span className="custom-badge status-green">Acc</span>
-                                                                    ) : acceptRejectStatus[i] === false ? (
-                                                                        <span className="custom-badge status-pink">Rej</span>
-                                                                    ) : (
-                                                                        <span>-</span>
-                                                                    )}
-                                                                </td>
-                                                                {editRowIndex === i ? (
-                                                                    <td>
-                                                                        <button type="button" className='btn btn-success p-1 mx-1' onClick={handleSaveClick}><Save /></button>
-                                                                        <button type="button" className='btn btn-secondary p-1 mx-1' onClick={handleCancelClick}><X /></button>
-                                                                    </td>
-                                                                ) : (
-                                                                    <td>-</td>
-                                                                )}
-                                                            </tr>
-                                                        ))
-                                                    ) : (
-                                                        <tr>
-                                                            <td colSpan="10" className="text-center">No Data Available</td>
-                                                        </tr>
-                                                    )}
-                                                </tbody>
-
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div className="add-group">
+                          <button
+                            type="button"
+                            onClick={handleRefresh}
+                            className="btn btn-primary doctor-refresh ms-2"
+                          >
+                            <img
+                              src="/assets/img/icons/re-fresh.svg"
+                              alt="refresh"
+                            />
+                          </button>
                         </div>
-
-                        <SubmitButton disable={disable} handleSubmit={handleSubmit}
-                            link={'/user/project-store/final-dimension-clearance-management'} buttonName={'Generate Final Dimension Acceptance'} />
-
+                      </div>
                     </div>
-                </div>
-            </div>
-        </>
-    )
-}
+                  </div>
 
-export default ManageMultiClearFd
+                  <div className="pageDropDown col-auto text-end float-end ms-auto download-grp">
+                    <DropDown
+                      limit={limit}
+                      onLimitChange={(val) => {
+                        setLimit(val);
+                        setPage(1);
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Table */}
+              <div className="table-responsive">
+                <table className="table border-0 custom-table comman-table mb-0">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Report No</th>
+                      <th>Assem. No.</th>
+                      <th>Date</th>
+                      <th>Status</th>
+                      <th className="text-end">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.length === 0 && (
+                      <tr>
+                        <td colSpan="7">
+                          <div className="no-table-data">No Data Found!</div>
+                        </td>
+                      </tr>
+                    )}
+                    {rows.map((r, i) => {
+                      const uniqueAssemblyNos = [
+                        ...new Set(r?.items?.map(e => e?.drawing_id?.assembly_no).filter(Boolean))
+                      ];
+                      return (
+                        (
+                          <tr key={r._id}>
+                            <td>{(page - 1) * limit + i + 1}</td>
+                            <td>{r.report_no_two}</td>
+                            <td>{uniqueAssemblyNos.join(", ")}</td>
+                            <td>{moment(r.createdAt).format('YYYY-MM-DD HH:mm')}</td>
+                            <td>
+                              {['REVIEWED', 'WITNESSED', 'RANDOM WITNESSED'].includes(r.status_type) ? (
+                                <span className="custom-badge status-green">{r.status_type}</span>
+                              ) : (
+                                <span className="custom-badge status-orange">{r.status_text || 'Pending'}</span>
+                              )}
+                            </td>
+
+                            <td className="text-end">
+                              <div className="dropdown dropdown-action">
+                                <a href="#" className="action-icon dropdown-toggle" data-bs-toggle="dropdown">
+                                  <i className="fa fa-ellipsis-v"></i>
+                                </a>
+                                <div className="dropdown-menu dropdown-menu-end">
+                                  <button
+                                    type="button"
+                                    className="dropdown-item"
+                                    onClick={() =>
+                                      navigate('/party/project-store/view-quality-clearance-final-dimension', { state: r })
+                                    }
+                                  >
+                                    View
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="dropdown-item"
+                                    onClick={() => downloadInspection(r)}
+                                  >
+                                    Download
+                                  </button>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              <div className="row align-center mt-3 mb-2">
+                <div className="col-sm-12 col-md-6">
+                  <div className="dataTables_info">
+                    Showing {rows.length} of {totalItems} total records
+                  </div>
+                </div>
+                <div className="col-sm-12 col-md-6 d-flex justify-content-end">
+                  <Pagination
+                    total={totalItems}
+                    itemsPerPage={limit}
+                    currentPage={page}
+                    onPageChange={setPage}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    </div>
+  );
+};
+
+export default ManageMultiClearFd;

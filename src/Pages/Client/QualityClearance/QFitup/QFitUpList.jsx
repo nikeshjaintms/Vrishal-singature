@@ -73,6 +73,7 @@ const QFitUpList = () => {
               <li className="breadcrumb-item">
                 <Link to="/party/project-store/dashboard">Dashboard</Link>
               </li>
+              <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
               <li className="breadcrumb-item active">Fit-Up Acceptance</li>
             </ul>
           </div>
@@ -187,14 +188,14 @@ const QFitUpList = () => {
                                       navigate('/party/project-store/view-quality-clearance-fitup', { state: r })
                                     }
                                   >
-                                    View
+                                   <i className="fa-solid fa-eye m-r-5"></i> View
                                   </button>
                                   <button
                                     type="button"
                                     className="dropdown-item"
                                     onClick={() => downloadInspection(r)}
                                   >
-                                    Download
+                                    <i className="fa-solid fa-download m-r-5"></i>Download
                                   </button>
                                 </div>
                               </div>

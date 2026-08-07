@@ -48,9 +48,10 @@ const MultiSurface = () => {
   const downloadSurface = (row) => {
     const body = new URLSearchParams();
     body.append("report_no_two", row.report_no_two);
+    body.append("print_date", true);
     PdfDownloadErp({
       apiMethod: "post",
-      url: "download-multi-surface",
+      url: "get-surface-inspection-item",
       body,
     });
   };
@@ -70,6 +71,7 @@ const MultiSurface = () => {
               <li className="breadcrumb-item">
                 <Link to="/party/project-store/dashboard">Dashboard</Link>
               </li>
+              <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
               <li className="breadcrumb-item active">
                 Surface & Primer List
               </li>
@@ -185,7 +187,7 @@ const MultiSurface = () => {
                                     className="dropdown-item"
                                     onClick={() =>
                                       navigate(
-                                        "/party/project-store/manage-surface-primer",
+                                        "/party/project-store/view-surface-primer",
                                         { state: r }
                                       )
                                     }

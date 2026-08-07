@@ -125,8 +125,10 @@ import ManageMultiClearFitup from '../../Pages/Client/Multiple/MultiClearance/Cl
 import ViewMultiClearFitup from '../../Pages/Client/Multiple/MultiClearance/ClearanceMultiFitup/ViewMultiClearFitup';
 import ManageMultiWeldVisual from '../../Pages/Client/Multiple/MultiExecution/MultiWeldVisual/ManageMultiWeldVisual';
 import ManageMultiClearWeld from '../../Pages/Client/Multiple/MultiClearance/ClearanceMultiWeldVisual/ManageMultiClearWeld';
+import ViewMultiClearWeldVisual from '../../Pages/Client/Multiple/MultiClearance/ClearanceMultiWeldVisual/ViewMultiClearWeldVisual';
 import ManageMultiFd from '../../Pages/Client/Multiple/MultiExecution/MultiFinalDimension/ManageMultiFd';
 import ManageMultiClearFd from '../../Pages/Client/Multiple/MultiClearance/ClearanceMultiFd/ManageMultiClearFd';
+import ViewMultiClearFd from '../../Pages/Client/Multiple/MultiClearance/ClearanceMultiFd/ViewMultiClearFd';
 import ManageMultiNDT from '../../Pages/Client/Multiple/MultiExecution/MultiNDT/ManageMultiNDT';
 import ViewMultiUtClearance from '../../Pages/Client/Multiple/MultiNDT/MultiUT/ViewMultiUtClearance';
 import ViewMultiRtClearance from '../../Pages/Client/Multiple/MultiNDT/MultiRT/ViewMultiRtClearance';
@@ -158,13 +160,16 @@ import MultiSurface from '../../Pages/Client/Multiple/Painting/Surface/MultiSurf
 import MultiSurfaceClearance from '../../Pages/Client/Multiple/Painting/Surface/MultiSurfaceClearance';
 import MultiManageSurfaceClearance from '../../Pages/Client/Multiple/Painting/Surface/MultiManageSurfaceClearance';
 import MultiViewSurfaceClearanc from '../../Pages/Client/Multiple/Painting/Surface/MultiViewSurfaceClearanc';
+import ViewMultiSurface from '../../Pages/Client/Multiple/Painting/Surface/ViewMultiSurface';
 import MultiMio from '../../Pages/Client/Multiple/Painting/Mio/MultiMio';
 import MultiMioClearance from '../../Pages/Client/Multiple/Painting/Mio/MultiMioClearance';
 import MultiManageMioClearance from '../../Pages/Client/Multiple/Painting/Mio/MultiManageMioClearance';
 import MultiManageMio from '../../Pages/Client/Multiple/Painting/Mio/MultiManageMio';
 import MultiViewMioClearance from '../../Pages/Client/Multiple/Painting/Mio/MultiViewMioClearance';
+import ViewMultiMio from '../../Pages/Client/Multiple/Painting/Mio/ViewMultiMio';
 import MultiFinalCoat from '../../Pages/Client/Multiple/Painting/MultiFinalCoat/MultiFinalCoat';
 import ManageMultiFinalCoat from '../../Pages/Client/Multiple/Painting/MultiFinalCoat/ManageMultiFinalCoat';
+import ViewMultiFinalCoat from '../../Pages/Client/Multiple/Painting/MultiFinalCoat/ViewMultiFinalCoat';
 import MultiFinalCoatClearance from '../../Pages/Client/Multiple/Painting/MultiFinalCoat/MultiFinalCoatClearance';
 import ManageMultiFinalCoatClearance from '../../Pages/Client/Multiple/Painting/MultiFinalCoat/ManageMultiFinalCoatClearance';
 import MultiViewFinalCoatClearance from '../../Pages/Client/Multiple/Painting/MultiFinalCoat/MultiViewFinalCoatClearance';
@@ -228,11 +233,12 @@ const ClientRoutes = () => {
                     <Route path='weld-visual-acceptance' element={<QWeldVisualList />} />
                     {/* <Route path='quality-clearance-weld-visual-management' element={<QWeldVisual />} /> */}
                     <Route path='quality-clearance-weld-visual-management' element={<ManageMultiClearWeld />} />
+                    <Route path='view-quality-clearance-weld-visual' element={<ViewMultiClearWeldVisual />} />
 
                     {/* <Route path='quality-clearance-final-dimension-management' element={<QFinalDimension />} /> */}
                     <Route path='final-dimension-acceptance' element={<QFinalDimensionList />} />
                     <Route path='quality-clearance-final-dimension-management' element={<ManageMultiClearFd />} />
-                       
+                    <Route path='view-quality-clearance-final-dimension' element={<ViewMultiClearFd />} />
 
                     <Route path='ndt-management' element={<Ndt />} />
                     <Route path='manage-ndt' element={<ManageMultiNDT />} />
@@ -301,6 +307,7 @@ const ClientRoutes = () => {
                     <Route path='surface-clearance-management' element={<MultiSurfaceClearance />} />
                     <Route path='manage-surface-clearance' element={<MultiManageSurfaceClearance />} />
                     <Route path='view-surface-clearance' element={<MultiViewSurfaceClearanc />} />
+                    <Route path='view-surface-primer' element={<ViewMultiSurface />} />
 
                     {/* Old */}
                     {/* <Route path='mio-offer-management' element={<MioPaint />} />
@@ -311,6 +318,7 @@ const ClientRoutes = () => {
                     {/* New */}
                     <Route path='mio-offer-management' element={<MultiMio />} />
                     <Route path='manage-mio-offer' element={<MultiManageMio />} />
+                    <Route path='view-mio-offer' element={<ViewMultiMio />} />
                     <Route path='mio-clearance-management' element={<MultiMioClearance />} />
                     <Route path='manage-mio-clearance' element={<MultiManageMioClearance />} />
                     <Route path='view-mio-clearance' element={<MultiViewMioClearance />} />
@@ -324,6 +332,7 @@ const ClientRoutes = () => {
                     {/* new */}
                     <Route path='final-coat-management' element={<MultiFinalCoat />} />
                     <Route path='manage-final-coat' element={<ManageMultiFinalCoat />} />
+                    <Route path='view-final-coat' element={<ViewMultiFinalCoat />} />
                     <Route path='final-coat-clearance-management' element={<MultiFinalCoatClearance />} />
                     <Route path='manage-final-coat-clearance' element={<ManageMultiFinalCoatClearance />} />
                     <Route path='view-final-coat-clearance' element={<MultiViewFinalCoatClearance />} />

@@ -20,21 +20,17 @@ export const getClientReleaseNote = createAsyncThunk(
       const queryParams = new URLSearchParams();
       queryParams.append("page", page);
       queryParams.append("limit", limit);
+      queryParams.append("project", projectId);
       if (search) {
         queryParams.append("search", search);
       }
 
-      const body = new URLSearchParams();
-      body.append("project_id", projectId);
-
-      const myurl = `${V_URL}/party/list-multi-release-generate?${queryParams.toString()}`;
+      const myurl = `${V_URL}/party/get-multi-release-note-view?${queryParams.toString()}`;
 
       const response = await axios({
-        method: "post",
+        method: "get",
         url: myurl,
-        data: body,
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
           Authorization: "Bearer " + token,
         },
       });

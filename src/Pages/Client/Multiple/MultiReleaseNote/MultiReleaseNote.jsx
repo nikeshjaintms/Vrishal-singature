@@ -57,7 +57,7 @@ const MultiReleaseNote = () => {
  
     PdfDownloadErp({
       apiMethod: 'post',
-      url: 'download-multi-release-generate',
+      url: 'get-release-note-item',
       body,
     });
   };
@@ -78,6 +78,7 @@ const MultiReleaseNote = () => {
               <li className="breadcrumb-item">
                 <Link to="/party/project-store/dashboard">Dashboard</Link>
               </li>
+              <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
               <li className="breadcrumb-item active">
                 Release Note Summary
               </li>
@@ -145,7 +146,6 @@ const MultiReleaseNote = () => {
                       <th>Report No</th>
                       <th>Assem No.</th>
                       <th>Date</th>
-                      {ERP_ROLE === QC && <th>Verify</th>}
                       <th>Status</th>
                       <th className="text-end">Action</th>
                     </tr>
@@ -172,21 +172,6 @@ const MultiReleaseNote = () => {
                                 ? moment(r.release_date).format('YYYY-MM-DD HH:mm')
                                 : '-'}
                             </td>
-                             {ERP_ROLE === QC && (
-                              <td>
-                                {r.status === 1 ? (
-                                  <BadgeCheck
-                                    style={{ cursor: 'pointer' }}
-                                    onClick={() =>
-                                      navigate('/party/project-store/view-release-note', { state: r })
-                                    }
-                                  />
-                                ) : (
-                                  <X />
-                                )}
-                              </td>
-                            )}
- 
                             <td>
                               {['REVIEWED', 'WITNESSED', 'RANDOM WITNESSED'].includes(r.status_type) ? (
                                 <span className="custom-badge status-green">{r.status_type}</span>
@@ -258,4 +243,4 @@ const MultiReleaseNote = () => {
   );
 };
  
-export default MultiReleaseNote;
+export default MultiReleaseNote;
