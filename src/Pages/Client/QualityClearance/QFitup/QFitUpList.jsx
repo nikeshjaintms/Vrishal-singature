@@ -16,7 +16,6 @@
 // import { getMultiFitup } from '../../../../Store/MutipleDrawing/MultiFitup/getMultiFitup';
 // import { getClientMultiFitup } from '../../../../Store/Client/MultiFitup/getClientMultiFitup';
 
-
 // commented by Rubina from line 21 to 289
 
 // const QFitUpList = () => {
@@ -30,8 +29,6 @@
 //     const [disable, setDisable] = useState(true);
 //     const [showModal, setShowModal] = useState(false);
 
-    
-
 //     useEffect(() => {
 //         if (disable === true) {
 //             // dispatch(getUserFitup({ status: '' }))
@@ -43,9 +40,6 @@
 //             setDisable(false);
 //         }
 //     }, [dispatch, disable,currentPage , limit,search ]);
-
-
-
 
 //     // const entity = useSelector((state) => state?.getUserFitup?.user?.data);
 //     const entity = useSelector((state) => state?.getMultiFitup?.user?.data?.data);
@@ -269,8 +263,6 @@
 //   onPageChange={(page) => setCurrentPage(page)}
 // />
 
-
-                            
 //                                                 </div>
 //                                             </div>
 //                                         </div>
@@ -694,20 +686,19 @@
 // };
 // export default QFitUpList;
 
-
-import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import Header from '../../Include/Header';
-import Sidebar from '../../Include/Sidebar';
-import Footer from '../../Include/Footer';
-import Loader from '../../Include/Loader';
-import { Pagination } from '../../Table';
-import DropDown from '../../../../Components/DropDown';
-import moment from 'moment';
-import { V_URL, QC } from '../../../../BaseUrl';
-import { PdfDownloadErp } from '../../../../Components/ErpPdf/PdfDownloadErp';
-import { BadgeCheck, X } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import Header from "../../Include/Header";
+import Sidebar from "../../Include/Sidebar";
+import Footer from "../../Include/Footer";
+import Loader from "../../Include/Loader";
+import { Pagination } from "../../Table";
+import DropDown from "../../../../Components/DropDown";
+import moment from "moment";
+import { V_URL, QC } from "../../../../BaseUrl";
+import { PdfDownloadErp } from "../../../../Components/ErpPdf/PdfDownloadErp";
+import { BadgeCheck, X } from "lucide-react";
 
 const useDebounce = (value, delay = 500) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -726,10 +717,10 @@ const QFitUpList = () => {
 
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
 
   const debouncedSearch = useDebounce(search, 500);
-  const projectId = localStorage.getItem('PARTY_PROJECT_ID');
+  const projectId = localStorage.getItem("PARTY_PROJECT_ID");
 
   const fetchData = async () => {
     try {
@@ -740,21 +731,21 @@ const QFitUpList = () => {
           limit,
           search: debouncedSearch,
           project: projectId,
-          _t: Date.now()
+          _t: Date.now(),
         },
         headers: {
-          Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN')
-        }
+          Authorization: "Bearer " + localStorage.getItem("PARTY_TOKEN"),
+        },
       });
 
       if (response.data.success) {
         setRows(response.data.data.data || []);
         setTotalItems(response.data.data.totalItems || 0);
       } else {
-        alert(response.data.message || 'Failed to fetch data');
+        alert(response.data.message || "Failed to fetch data");
       }
     } catch (err) {
-      console.error('Error fetching Fit-Up data:', err);
+      console.error("Error fetching Fit-Up data:", err);
     } finally {
       setLoading(false);
     }
@@ -765,7 +756,7 @@ const QFitUpList = () => {
   }, [page, limit, debouncedSearch]);
 
   const handleRefresh = () => {
-    setSearch('');
+    setSearch("");
     setPage(1);
     fetchData();
   };
@@ -773,16 +764,16 @@ const QFitUpList = () => {
   const downloadInspection = async (row) => {
     try {
       const body = new URLSearchParams();
-      body.append('report_no_two', row.report_no_two);
-      body.append('print_date', true);
+      body.append("report_no_two", row.report_no_two);
+      body.append("print_date", true);
 
       PdfDownloadErp({
-        apiMethod: 'post',
-        url: 'one-multi-fitup-download',
-        body
+        apiMethod: "post",
+        url: "one-multi-fitup-download",
+        body,
       });
     } catch (err) {
-      console.error('Download error:', err);
+      console.error("Download error:", err);
     }
   };
 
@@ -825,7 +816,10 @@ const QFitUpList = () => {
                               }}
                             />
                             <a className="btn">
-                              <img src="/assets/img/icons/search-normal.svg" alt="search" />
+                              <img
+                                src="/assets/img/icons/search-normal.svg"
+                                alt="search"
+                              />
                             </a>
                           </form>
                         </div>
@@ -835,7 +829,10 @@ const QFitUpList = () => {
                             onClick={handleRefresh}
                             className="btn btn-primary doctor-refresh ms-2"
                           >
-                            <img src="/assets/img/icons/re-fresh.svg" alt="refresh" />
+                            <img
+                              src="/assets/img/icons/re-fresh.svg"
+                              alt="refresh"
+                            />
                           </button>
                         </div>
                       </div>
@@ -863,7 +860,9 @@ const QFitUpList = () => {
                       <th>Report No</th>
                       <th>Assem. No.</th>
                       <th>Date</th>
-                      {localStorage.getItem('ERP_ROLE') === QC && <th>Verify</th>}
+                      {localStorage.getItem("ERP_ROLE") === QC && (
+                        <th>Verify</th>
+                      )}
                       <th>Status</th>
                       <th className="text-end">Action</th>
                     </tr>
@@ -876,68 +875,94 @@ const QFitUpList = () => {
                         </td>
                       </tr>
                     )}
-                  {rows.map((r, i) =>{
-                       const uniqueAssemblyNos = [
-                          ...new Set(r?.items?.map(e => e?.grid_item_id?.drawing_id?.assembly_no).filter(Boolean))
+                    {rows.map((r, i) => {
+                      const uniqueAssemblyNos = [
+                        ...new Set(
+                          r?.items
+                            ?.map(
+                              (e) => e?.grid_item_id?.drawing_id?.assembly_no,
+                            )
+                            .filter(Boolean),
+                        ),
                       ];
                       return (
-                      (
-                      <tr key={r._id}>
-                        <td>{(page - 1) * limit + i + 1}</td>
-                        <td>{r.report_no_two}</td>
-                        <td>{uniqueAssemblyNos}</td>
-                        <td>{moment(r.createdAt).format('YYYY-MM-DD HH:mm')}</td>
-
-                        {localStorage.getItem('ERP_ROLE') === QC && (
+                        <tr key={r._id}>
+                          <td>{(page - 1) * limit + i + 1}</td>
+                          <td>{r.report_no_two}</td>
+                          <td>{uniqueAssemblyNos.join(", ")}</td>
                           <td>
-                            {r.status === 1 ? (
-                              <BadgeCheck
-                                style={{ cursor: 'pointer' }}
-                                onClick={() =>
-                                  navigate('/user/project-store/quality-clearance-fitup-management', { state: r })
-                                }
-                              />
+                            {moment(r.createdAt).format("YYYY-MM-DD HH:mm")}
+                          </td>
+
+                          {localStorage.getItem("ERP_ROLE") === QC && (
+                            <td>
+                              {r.status === 1 ? (
+                                <BadgeCheck
+                                  style={{ cursor: "pointer" }}
+                                  onClick={() =>
+                                    navigate(
+                                      "/user/project-store/quality-clearance-fitup-management",
+                                      { state: r },
+                                    )
+                                  }
+                                />
+                              ) : (
+                                <X />
+                              )}
+                            </td>
+                          )}
+
+                          <td>
+                            {[
+                              "REVIEWED",
+                              "WITNESSED",
+                              "RANDOM WITNESSED",
+                            ].includes(r.status_type) ? (
+                              <span className="custom-badge status-green">
+                                {r.status_type}
+                              </span>
                             ) : (
-                              <X />
+                              <span className="custom-badge status-orange">
+                                {r.status_text || "Pending"}
+                              </span>
                             )}
                           </td>
-                        )}
 
-                        <td>
-                          {['REVIEWED', 'WITNESSED', 'RANDOM WITNESSED'].includes(r.status_type) ? (
-                            <span className="custom-badge status-green">{r.status_type}</span>
-                          ) : (
-                            <span className="custom-badge status-orange">{r.status_text || 'Pending'}</span>
-                          )}
-                        </td>
-
-                        <td className="text-end">
-                          <div className="dropdown dropdown-action">
-                            <a href="#" className="action-icon dropdown-toggle" data-bs-toggle="dropdown">
-                              <i className="fa fa-ellipsis-v"></i>
-                            </a>
-                            <div className="dropdown-menu dropdown-menu-end">
-                              <button
-                                type="button"
-                                className="dropdown-item"
-                                onClick={() =>
-                                  navigate('/party/project-store/view-quality-clearance-fitup', { state: r })
-                                }
+                          <td className="text-end">
+                            <div className="dropdown dropdown-action">
+                              <a
+                                href="#"
+                                className="action-icon dropdown-toggle"
+                                data-bs-toggle="dropdown"
                               >
-                                View
-                              </button>
-                              <button
-                                type="button"
-                                className="dropdown-item"
-                                onClick={() => downloadInspection(r)}
-                              >
-                                Download
-                              </button>
+                                <i className="fa fa-ellipsis-v"></i>
+                              </a>
+                              <div className="dropdown-menu dropdown-menu-end">
+                                <button
+                                  type="button"
+                                  className="dropdown-item"
+                                  onClick={() =>
+                                    navigate(
+                                      "/party/project-store/view-quality-clearance-fitup",
+                                      { state: r },
+                                    )
+                                  }
+                                >
+                                  View
+                                </button>
+                                <button
+                                  type="button"
+                                  className="dropdown-item"
+                                  onClick={() => downloadInspection(r)}
+                                >
+                                  Download
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                      </tr>
-                    ))})}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

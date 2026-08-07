@@ -420,6 +420,7 @@ const ViewMultiClearFitup = () => {
 
       if (res.data.success) {
         toast.success('Fit-Up updated successfully');
+        navigate("/party/project-store/fitup-acceptance");
         setShowRandomItems(false);
         fetchPdf();
       } else {
