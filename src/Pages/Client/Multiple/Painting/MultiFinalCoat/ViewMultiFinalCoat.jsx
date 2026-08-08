@@ -11,6 +11,7 @@ import { V_URL } from '../../../../../BaseUrl';
 const ViewMultiFinalCoat = () => {
   const location = useLocation();
   const data = location.state;
+  console.log("Data", data)
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [clientDate, setClientDate] = useState("");
@@ -44,7 +45,7 @@ const ViewMultiFinalCoat = () => {
       }
 
       const res = await axios.post(
-        `${V_URL}/party/get-multi-final-coat-report-item`,
+        `${V_URL}/party/get-final-coat-inspection-item`,
         {
           report_no_two: data?.report_no_two,
           print_date: clientDate,

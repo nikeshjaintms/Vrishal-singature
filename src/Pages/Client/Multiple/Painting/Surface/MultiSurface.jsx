@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import moment from "moment";
-import { PdfDownloadErp } from '../../../../../Components/ErpPdf/PdfDownloadErp';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import { V_URL } from '../../../../../BaseUrl';
 import Header from '../../../Include/Header';
 import Sidebar from '../../../Include/Sidebar';
 import Footer from "../../../Include/Footer";
@@ -45,15 +47,36 @@ const MultiSurface = () => {
     setPage(1);
   };
 
-  const downloadSurface = (row) => {
-    const body = new URLSearchParams();
-    body.append("report_no_two", row.report_no_two);
-    body.append("print_date", true);
-    PdfDownloadErp({
-      apiMethod: "post",
-      url: "get-surface-inspection-item",
-      body,
-    });
+  const downloadSurface = async (row) => {
+    try {
+      const toastId = toast.loading('Downloading...');
+      const response = await axios.post(
+        `${V_URL}/party/get-surface-inspection-item`,
+        {
+          report_no_two: row.report_no_two,
+          print_date: true
+        },
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          },
+          responseType: 'blob',
+        }
+      );
+
+      const file = new Blob([response.data], { type: 'application/pdf' });
+      const fileUrl = window.URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = `Surface_Primer_${row.report_no_two || 'Report'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Downloaded successfully', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to download PDF');
+    }
   };
 
   if (loading) return <Loader />;

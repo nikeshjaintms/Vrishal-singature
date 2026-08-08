@@ -184,7 +184,7 @@ const QWeldVisualList = () => {
                         const uniqueAssemblyNos = [
                           ...new Set(
                             r.items
-                              ?.map((e) => e?.grid_item_id?.drawing_id?.assembly_no)
+                              ?.map((e) => e?.drawing_id?.assembly_no)
                               .filter(Boolean)
                           ),
                         ];

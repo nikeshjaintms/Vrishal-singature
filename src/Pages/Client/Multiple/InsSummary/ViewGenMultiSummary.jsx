@@ -8,17 +8,10 @@ import Sidebar from '../../Include/Sidebar';
 import Footer from '../../Include/Footer';
 import { V_URL } from '../../../../BaseUrl';
 
-//import PageHeader from '../Components/Breadcrumbs/PageHeader';
-//import { Pagination, Search } from '../../Table';
-//import DropDown from '../../../../Components/DropDown';
-//import { useDispatch, useSelector } from 'react-redux';
-//import { getUserAdminDraw } from '../../../../Store/Erp/Planner/Draw/UserAdminDraw';
-//import { getUserWpsMaster } from '../../../../Store/Store/WpsMaster/WpsMaster';
-
-
 const ViewGenMultiSummary = () => {
   const location = useLocation();
   const data = location.state;
+  console.log("data",data);
  
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [clientDate, setClientDate] = useState('');
@@ -88,10 +81,10 @@ const ViewGenMultiSummary = () => {
       data?.items?.map((item) => ({
         _id: item._id,
  
-        drawing_no: item?.drawing_id?.drawing_no || '-',
-        sheet_no: item?.drawing_id?.sheet_no || '-',
-        assembly_no: item?.drawing_id?.assembly_no || '-',
-        grid_no: item?.grid_id?.grid_no || '-',
+        drawing_no: item?.drawing_no || item?.drawing_id?.drawing_no || '-',
+        sheet_no: item?.sheet_no || item?.drawing_id?.sheet_no || '-',
+        assembly_no: item?.assembly_no || item?.drawing_id?.assembly_no || '-',
+        grid_no: item?.grid_no || item?.grid_id?.grid_no || '-',
         grid_qty: item?.is_grid_qty || 0,
  
         selected: false,
@@ -128,7 +121,7 @@ const ViewGenMultiSummary = () => {
  
     try {
       const payload = {
-        inspectionId: data._id,
+        batch_id: data.batch_id,
         status_type: statusType,
         client_date: clientDate,
         client_user: localStorage.getItem('PARTY_ID'),
@@ -184,6 +177,10 @@ const ViewGenMultiSummary = () => {
             <ul className="breadcrumb">
               <li className="breadcrumb-item">
                 <Link to="/party/project-store/dashboard">Dashboard</Link>
+              </li>
+              <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
+               <li className="breadcrumb-item">
+                <Link to="/party/project-store/inspection-summary-management">Inspection Summary</Link>
               </li>
               <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
               <li className="breadcrumb-item active">

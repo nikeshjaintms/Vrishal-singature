@@ -9,6 +9,9 @@ import { PdfDownloadErp } from '../../../../../Components/ErpPdf/PdfDownloadErp'
 import { Pagination } from '../../../Table';
 import DropDown from '../../../../../Components/DropDown';
 import moment from 'moment';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import { V_URL } from '../../../../../BaseUrl';
 import { getClientFinalCoat } from '../../../../../Store/Client/Structural/FinalCoat/getClientFinalCoat';
 
 /* ---------------- Debounce ---------------- */
@@ -45,15 +48,36 @@ const MultiFinalCoat = () => {
     setPage(1);
   };
 
-  const downloadInspection = (row) => {
-    const body = new URLSearchParams();
-    body.append("report_no_two", row.report_no_two);
-    body.append("print_date", true);
-    PdfDownloadErp({
-      apiMethod: "post",
-      url: "get-final-coat-inspection-item",
-      body,
-    });
+  const downloadInspection = async (row) => {
+    try {
+      const toastId = toast.loading('Downloading...');
+      const response = await axios.post(
+        `${V_URL}/party/get-final-coat-inspection-item`,
+        {
+          report_no_two: row.report_no_two,
+          print_date: true
+        },
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          },
+          responseType: 'blob',
+        }
+      );
+
+      const file = new Blob([response.data], { type: 'application/pdf' });
+      const fileUrl = window.URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = `FinalCoat_Offer_${row.report_no_two || 'Report'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Downloaded successfully', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to download PDF');
+    }
   };
 
   if (loading) return <Loader />;

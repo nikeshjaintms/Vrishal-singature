@@ -11,7 +11,7 @@ import { V_URL } from '../../../../../BaseUrl';
 const ViewMultiSurface = () => {
   const location = useLocation();
   const data = location.state;
-
+  console.log("data", data);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [clientDate, setClientDate] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
@@ -44,7 +44,7 @@ const ViewMultiSurface = () => {
       }
 
       const res = await axios.post(
-        `${V_URL}/party/get-surface-report-item`,
+        `${V_URL}/party/get-surface-inspection-item`,
         {
           report_no: data?.report_no,
           //report_no_two: data?.report_no_two,
@@ -81,11 +81,11 @@ const ViewMultiSurface = () => {
       data?.items?.map((item) => ({
         _id: item._id,
 
-        drawing_no: item?.drawing_no || '-',
-        sheet_no: item?.sheet_no || '-',
-        assembly_no: item?.assembly_no || '-',
-        grid_no: item?.grid_no || '-',
-        grid_qty: item?.grid_qty || 0,
+        drawing_no: item?.drawing_no || item?.drawing_id?.drawing_no || '-',
+        rev: item?.rev ?? item?.drawing_id?.rev ?? '-',
+        assembly_no: item?.assembly_no || item?.drawing_id?.assembly_no || '-',
+        grid_no: item?.grid_no || item?.grid_id?.grid_no || '-',
+        grid_qty: item?.surface_used_grid_qty || item?.grid_qty || item?.is_grid_qty || 0,
 
         selected: false,
         remark: item?.remarks || '',
@@ -121,7 +121,7 @@ const ViewMultiSurface = () => {
 
     try {
       const payload = {
-        report_id: data?._id,
+        surfaceinspectionId: data?._id,
         status_type: statusType,
         client_date: clientDate,
         client_user: localStorage.getItem('PARTY_ID'),
@@ -142,7 +142,7 @@ const ViewMultiSurface = () => {
       }
 
       const res = await axios.post(
-        `${V_URL}/party/surface-report-review-update`,
+        `${V_URL}/party/surface-review-update`,
         payload,
         {
           headers: {
@@ -178,6 +178,11 @@ const ViewMultiSurface = () => {
               <li className="breadcrumb-item">
                 <Link to="/party/project-store/dashboard">Dashboard</Link>
               </li>
+              <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
+              <li className="breadcrumb-item">
+                <Link to="/party/project-store/surface-primer-management">Surface Primer Management</Link>
+              </li>
+              <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
               <li className="breadcrumb-item active">
                 View Surface Summary
               </li>
@@ -193,7 +198,7 @@ const ViewMultiSurface = () => {
                   <label>Report No</label>
                   <input
                     className="form-control"
-                    value={data?.report_no || '-'}
+                    value={data?.report_no_two || '-'}
                     readOnly
                   />
                 </div>
@@ -300,7 +305,7 @@ const ViewMultiSurface = () => {
                           </th>
                           <th>#</th>
                           <th>Drawing</th>
-                          <th>Sheet</th>
+                          <th>Rev</th>
                           <th>Assembly</th>
                           <th>Grid</th>
                           <th>Qty</th>
@@ -325,7 +330,7 @@ const ViewMultiSurface = () => {
                             </td>
                             <td>{i + 1}</td>
                             <td>{item.drawing_no}</td>
-                            <td>{item.sheet_no}</td>
+                            <td>{item.rev}</td>
                             <td>{item.assembly_no}</td>
                             <td>{item.grid_no}</td>
                             <td>{item.grid_qty}</td>

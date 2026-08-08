@@ -6,13 +6,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import DropDown from '../../../Components/DropDown';
 import moment from 'moment';
-import { BadgeCheck, X } from 'lucide-react';
 import { Pagination } from '../Table';
 import Loader from '../Include/Loader';
-import { PdfDownloadErp } from '../../../Components/ErpPdf/PdfDownloadErp';
-import { QC } from '../../../BaseUrl';
+import { V_URL } from '../../../BaseUrl';
 import { getClientInspectSummary } from '../../../Store/Client/Structural/InspectSummaryMaster/getClientInspectSummary';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 
 const useDebounce = (value, delay = 500) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -35,8 +34,7 @@ const InspectionSummary = () => {
   const debouncedSearch = useDebounce(search, 500);
 
   const projectId = localStorage.getItem('PARTY_PROJECT_ID');
-  const ERP_ROLE = localStorage.getItem('ERP_ROLE');
-  const QC = 'QC'; // adjust as per your role constant
+
 
   /* ---------- API CALL ---------- */
   useEffect(() => {
@@ -51,13 +49,37 @@ const InspectionSummary = () => {
     setPage(1);
   };
 
-  const downloadInspection = (row) => {
-    const body = new URLSearchParams();
-    if (row.batch_id) body.append('batch_id', row.batch_id);
-    if (row.report_no) body.append('report_no', row.report_no);
-    body.append('project_id', projectId);
+  const downloadInspection = async (row) => {
+    try {
+      const toastId = toast.loading('Downloading...');
+      const response = await axios.post(
+        `${V_URL}/party/get-inspect-summary-item`,
+        {
+          batch_id: row.batch_id,
+          report_no: row.report_no,
+          project_id: projectId
+        },
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          },
+          responseType: 'blob',
+        }
+      );
 
-    PdfDownloadErp({ apiMethod: 'post', url: 'get-inspect-summary-item', body });
+      const file = new Blob([response.data], { type: 'application/pdf' });
+      const fileUrl = window.URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = `Inspection_Summary_${row.report_no || 'Report'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Downloaded successfully', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to download PDF');
+    }
   };
 
   if (loading) return <Loader />;
@@ -72,7 +94,7 @@ const InspectionSummary = () => {
           <div className="page-header">
             <ul className="breadcrumb">
               <li className="breadcrumb-item">
-                <Link to="/user/project-store/dashboard">Dashboard</Link>
+                <Link to="/party/project-store/dashboard">Dashboard</Link>
               </li>
               <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
               <li className="breadcrumb-item active">Inspection Summary</li>

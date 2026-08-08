@@ -8,8 +8,10 @@ import Footer from '../../../Include/Footer';
 import Loader from '../../../Include/Loader';
 import { Pagination } from '../../../Table';
 import DropDown from '../../../../../Components/DropDown';
-import { QC } from '../../../../../BaseUrl';
+import { V_URL } from '../../../../../BaseUrl';
 import moment from 'moment';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 import { BadgeCheck, X } from "lucide-react";
 import { getClientMio } from '../../../../../Store/Client/Structural/MIO/getClientMio';
 
@@ -26,7 +28,6 @@ const useDebounce = (value, delay = 500) => {
 const MultiMio = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const ERP_ROLE = localStorage.getItem("ERP_ROLE");
 
   const { data, loading } = useSelector((state) => state.getClientMio);
 
@@ -48,14 +49,36 @@ const MultiMio = () => {
     setPage(1);
   };
 
-  const downloadMio = (row) => {
-    const body = new URLSearchParams();
-    body.append("report_no_two", row.report_no_two);
-    PdfDownloadErp({
-      apiMethod: "post",
-      url: "get-mio-inspection-item",
-      body,
-    });
+  const downloadMio = async (row) => {
+    try {
+      const toastId = toast.loading('Downloading...');
+      const response = await axios.post(
+        `${V_URL}/party/get-mio-inspection-item`,
+        {
+          report_no_two: row.report_no_two,
+          print_date: true
+        },
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          },
+          responseType: 'blob',
+        }
+      );
+
+      const file = new Blob([response.data], { type: 'application/pdf' });
+      const fileUrl = window.URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = `MIO_Offer_${row.report_no_two || 'Report'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Downloaded successfully', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to download PDF');
+    }
   };
 
   if (loading) return <Loader />;
