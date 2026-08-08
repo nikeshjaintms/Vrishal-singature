@@ -1,4 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
+import getClientFimPackingListReducer from './Client/Structural/FIM/getClientFimPackingList';
 // import getCustomersReducer from './slices/customer/Customer';
 import getCustomersReducer from '../../src/Store/Store/Customer/Customer';
 // Admin
@@ -669,6 +670,7 @@ import getIssueReturnAcceptancePipingSlice from "../Store/Piping/IssueReturnAcce
 import getIssueReturnAcceptanceSummaryPipingSlice from "../Store/Piping/IssueReturnAcceptance/getIssueReturnAcceptanceSummaryPiping";
 export default configureStore({
   reducer: {
+      getClientFimPackingList: getClientFimPackingListReducer,
     login: adminLoginSlice,
     forgetPassword: adminForgetPasswordSlice,
     adminOtp: adminOtpSlice,

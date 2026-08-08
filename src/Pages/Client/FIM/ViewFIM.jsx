@@ -1,211 +1,333 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Header from '../Include/Header';
 import Sidebar from '../Include/Sidebar';
 import Footer from '../Include/Footer';
 import moment from 'moment';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import { V_URL } from '../../../BaseUrl';
 
 const ViewFIM = () => {
   const location = useLocation();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const data = location.state;
+  console.log("data ", data)
+  const navigate = useNavigate();
 
-  const handleOpen = () => {
-    setIsSidebarOpen(!isSidebarOpen);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const [clientDate, setClientDate] = useState('');
+  const [showOption, setShowOption] = useState(true);
+
+  // 🔹 RANDOM WITNESSED STATES
+  const [randomItems, setRandomItems] = useState([]);
+  const [showRandomItems, setShowRandomItems] = useState(false);
+  const [selectAll, setSelectAll] = useState(false);
+  const [showButtons, setShowButtons] = useState(true);
+
+  const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
+  /* ================= BUTTON VISIBILITY ================= */
+
+    useEffect(() => {
+      if (data?._id) {
+        const show =
+          data?.client_status === 1 && data?.status !== 1 ? false : true;
+        setShowButtons(show);
+      }
+    }, [data?._id]);
+
+  /* ================= FETCH PDF ================= */
+  const fetchPdf = async () => {
+    try {
+      setPdfLoading(true);
+
+      if (pdfUrl) {
+        URL.revokeObjectURL(pdfUrl);
+        setPdfUrl(null);
+      }
+
+      const res = await axios.post(
+        `${V_URL}/party/fim/download-fim-imir-client`,
+        { fim_id: data?._id },
+        {
+          responseType: 'blob',
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          },
+        }
+      );
+
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      setPdfUrl(URL.createObjectURL(blob));
+    } catch {
+      toast.error('Failed to load PDF');
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPdf();
+    return () => {
+      if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+    };
+  }, []);
+
+  /* ================= RANDOM WITNESSED ================= */
+  const handleRandomWitnessed = () => {
+    const items =
+      data?.items?.map((item) => ({
+        _id: item._id,
+        item_name: item.item_id?.name,
+        material_grade: item.item_id?.material_grade,
+        manufacture: item.manufacture,
+        inspected_weight: item.inspected_weight,
+        inspected_nos: item.inspected_nos,
+        heat_no: item.heat_no,
+        tc_no: item.tc_no,
+        status: item.status === 1 ? 'Accepted' : 'Rejected',
+        selected: item.selected === true ? true : false,
+        remark: item.remarks || '',
+      })) || [];
+
+    setRandomItems(items);
+    setShowRandomItems(true);
+  };
+
+    useEffect(() => {
+        if(data?.elem?._id){
+          const show = data?.elem?.client_status === 1 && data?.elem?.status_type !== null ? false : true;
+          setShowOption(show);
+        }
+    })
+  const handleItemChange = (index, field, value) => {
+    const updated = [...randomItems];
+    updated[index][field] = value;
+    setRandomItems(updated);
+
+    if (field === 'selected') {
+      setSelectAll(updated.every((i) => i.selected));
+    }
+  };
+
+  const handleSelectAll = (checked) => {
+    setSelectAll(checked);
+    setRandomItems(randomItems.map((i) => ({ ...i, selected: checked })));
+  };
+
+  /* ================= SUBMIT ================= */
+  const submitFimUpdate = async (statusType) => {
+    try {
+      if (!clientDate) {
+        toast.error('Please select date');
+        return;
+      }
+
+      const payload = {
+        fimId: data?._id,
+        status_type: statusType,
+        client_date: clientDate,
+        client_user: localStorage.getItem('PARTY_ID'),
+      };
+
+      if (statusType === 'RANDOM WITNESSED') {
+        payload.items = randomItems.map((i) => ({
+          _id: i._id,
+          selected: i.selected === true,
+          remark: i.remark,
+        }));
+      }
+
+      const res = await axios.post(
+        `${V_URL}/party/fim/update-client-staus`,
+        payload,
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          },
+        }
+      );
+
+      if (res.data.success) {
+        toast.success('Updated Successfully');
+        setShowRandomItems(false);
+        setShowOption(false);
+        navigate('/party/project-store/fim-packing');
+      } else {
+        toast.error(res.data.message || 'Update failed');
+      }
+    } catch {
+      toast.error('Something went wrong');
+    }
   };
 
   return (
     <div className={`main-wrapper ${isSidebarOpen ? 'slide-nav' : ''}`}>
       <Header handleOpen={handleOpen} />
       <Sidebar />
+
       <div className="page-wrapper">
         <div className="content">
-          {/* Breadcrumb */}
+          {/* ================= BREADCRUMB ================= */}
           <div className="page-header">
-            <div className="row">
-              <div className="col-sm-12">
-                <ul className="breadcrumb">
-                  <li className="breadcrumb-item">
-                    <Link to="/user/project-store/dashboard">Dashboard </Link>
-                  </li>
-                  <li className="breadcrumb-item">
-                    <i className="feather-chevron-right"></i>
-                  </li>
-                  <li className="breadcrumb-item">
-                    <Link to="/user/project-store/fim-packing-list">FIM Packing List</Link>
-                  </li>
-                  <li className="breadcrumb-item">
-                    <i className="feather-chevron-right"></i>
-                  </li>
-                  <li className="breadcrumb-item active">View FIM Packing</li>
-                </ul>
+            <ul className="breadcrumb">
+              <li className="breadcrumb-item">
+                <Link to="/party/project-store/dashboard">Dashboard</Link>
+              </li>
+              <li className="breadcrumb-item">
+                <i className="feather-chevron-right"></i>
+              </li>
+              <li className="breadcrumb-item active">
+                <Link to="/party/project-store/fim-packing">FIM</Link>
+                </li>
+               <li className="breadcrumb-item">
+                <i className="feather-chevron-right"></i>
+              </li>
+              <li className="breadcrumb-item active">View FIM Packing</li>
+
+            </ul>
+          </div>
+
+          {/* ================= DETAILS ================= */}
+          <div className="card">
+            <div className="card-body">
+              <h4>FIM Packing Details</h4>
+              <div className="row">
+                {[
+                  ['Packing No', data?.packing_no],
+                  ['Packing Date', moment(data?.packing_date).format('YYYY-MM-DD')],
+                  ['Supplier', data?.supplier],
+                  ['Vehicle No', data?.vehicle_number],
+                ].map(([l, v]) => (
+                  <div key={l} className="col-md-4">
+                    <label>{l}</label>
+                    <input className="form-control" value={v || '-'} readOnly />
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* View FIM Packing Details */}
-          <div className="row">
-            <div className="col-sm-12">
-              <div className="card">
-                <div className="card-body">
-                  <div className="col-12">
-                    <div className="form-heading">
-                      <h4>FIM Packing Details</h4>
-                    </div>
+          {/* ================= PDF + ACTION ================= */}
+          <div className="card mt-3">
+            <div className="card-body">
+              <h4>FIM Inspection PDF</h4>
+
+              {showButtons && (
+                <>
+                  <div className="col-md-4 mb-2">
+                    <label>Date *</label>
+                    <input
+                      type="date"
+                      className="form-control"
+                      value={clientDate}
+                      onChange={(e) => setClientDate(e.target.value)}
+                    />
                   </div>
 
-                  <div className="row">
-                    {[
-                      { label: 'Package List No / Invoice No', value: data?.packing_no },
-                      { label: 'Package List Date', value: moment(data?.packing_date).format('YYYY-MM-DD') },
-                      { label: 'RGP No', value: data?.rgp_no },
-                      { label: 'FIM Lot No', value: data?.fim_lot_no },
-                      { label: 'Returnable / Non Returnable', value: data?.returnable_type },
-                      { label: 'Vehicle Number', value: data?.vehicle_number },
-                      { label: 'E-way Bill No', value: data?.eway_bill },
-                      { label: 'Supplier', value: data?.supplier },
-                      { label: 'Receiving Date', value: moment(data?.receiving_date).format('YYYY-MM-DD') },
-                      { label: 'Received By', value: data?.received_by?.user_name || "-" },
-                    ].map(({ label, value }) => (
-                      <div key={label} className="col-12 col-md-4 col-xl-4">
-                        <div className="input-block local-forms">
-                          <label>{label}</label>
-                          <input className="form-control" value={value || "-"} readOnly />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+                  <button className="btn btn-primary me-2" onClick={() => submitFimUpdate('REVIEWED')}>
+                    REVIEWED
+                  </button>
+                  <button className="btn btn-warning me-2" onClick={() => submitFimUpdate('WITNESSED')}>
+                    WITNESSED
+                  </button>
+                  <button className="btn btn-success" onClick={handleRandomWitnessed}>
+                    RANDOM WITNESSED
+                  </button>
+                </>
+              )}
 
-          {/* Requested Items (Packing Items) */}
-          <div className="row">
-            <div className="col-sm-12">
-              <div className="card">
-                <div className="card-body">
-                  <div className="col-12">
-                    <div className="form-heading">
-                      <h4>Packing Item Details</h4>
-                    </div>
-                  </div>
-                  <div className="table-responsive">
-                    <table className="table table-striped custom-table comman-table mb-0">
+              {pdfLoading && <div className="text-center py-3">
+                      <strong>Loading PDF...</strong>
+                    </div>}
+
+              {pdfUrl && !pdfLoading && (
+                <iframe
+                  src={`${pdfUrl}#toolbar=1`}
+                  width="100%"
+                  height="700px"
+                  title="FIM PDF"
+                  style={{
+                    border: '1px solid #ddd',
+                    borderRadius: '6px',
+                  }}
+                />
+              )}
+
+              {/* ================= RANDOM TABLE ================= */}
+              {showRandomItems && (
+                <>
+                  <div className="table-responsive mt-3">
+                    <table className="table table-bordered">
                       <thead>
                         <tr>
-                          <th>Sr.</th>
+                          <th>
+                            <input
+                              type="checkbox"
+                              checked={selectAll}
+                              onChange={(e) => handleSelectAll(e.target.checked)}
+                            />
+                          </th>
+                          <th>Sr</th>
                           <th>Item</th>
-                          <th>Material Grade</th>
-                          <th>Weight As Per List</th>
-                          <th>Nos As Per List</th>
-                          <th>Received Weight</th>
-                          <th>Received Length</th>
-                          <th>Received Width</th>
-                          <th>Received Nos</th>
-                          <th>Rejected Weight</th>
-                          <th>Rejected Length</th>
-                          <th>Rejected Width</th>
-                          <th>Rejected Nos</th>
+                          <th>Grade</th>
+                          <th>Manufacturer</th>
+                          <th>Inspected Wt</th>
+                          <th>Inspected Nos</th>
+                          <th>Heat No</th>
+                          <th>TC No</th>
+                          <th>Status</th>
                           <th>Remarks</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {data?.items?.map((elem, i) => (
+                        {randomItems.map((item, i) => (
                           <tr key={i}>
+                            <td>
+                              <input
+                                type="checkbox"
+                                checked={item.selected}
+                                onChange={(e) =>
+                                  handleItemChange(i, 'selected', e.target.checked)
+                                }
+                              />
+                            </td>
                             <td>{i + 1}</td>
-                            <td>{elem?.item_id?.name}</td>
-                            <td>{elem?.item_id?.material_grade}</td>
-                            <td>{elem?.weight_as_per_list}</td>
-                            <td>{elem?.numbers_as_per_list}</td>
-                            <td>{elem?.received_weight}</td>
-                            <td>{elem?.received_length}</td>
-                            <td>{elem?.received_width}</td>
-                            <td>{elem?.received_nos}</td>
-                            <td>{elem?.rejected_weight}</td>
-                            <td>{elem?.rejected_length}</td>
-                            <td>{elem?.rejected_width}</td>
-                            <td>{elem?.rejected_nos}</td>
-                            <td>{elem?.remarks || "-"}</td>
+                            <td>{item.item_name}</td>
+                            <td>{item.material_grade}</td>
+                            <td>{item.manufacture}</td>
+                            <td>{item.inspected_weight}</td>
+                            <td>{item.inspected_nos}</td>
+                            <td>{item.heat_no}</td>
+                            <td>{item.tc_no}</td>
+                            <td>{item.status}</td>
+                            <td>
+                              <input
+                                className="form-control"
+                                value={item.remark}
+                                onChange={(e) =>
+                                  handleItemChange(i, 'remark', e.target.value)
+                                }
+                              />
+                            </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                </div>
-              </div>
+
+                  <button
+                    className="btn btn-success mt-2"
+                    onClick={() => submitFimUpdate('RANDOM WITNESSED')}
+                  >
+                    Submit Random Witnessed
+                  </button>
+                </>
+              )}
             </div>
           </div>
-
-          {/* Drawing Details if exist */}
-          {data?.drawing_id && (
-            <div className="row">
-              <div className="col-sm-12">
-                <div className="card">
-                  <div className="card-body">
-                    <div className="col-12">
-                      <div className="form-heading">
-                        <h4>Drawing Details</h4>
-                      </div>
-                    </div>
-                    <div className="row">
-                      {[
-                        { label: 'Drawing No.', value: data?.drawing_id?.drawing_no },
-                        { label: 'REV', value: data?.drawing_id?.rev },
-                        { label: 'Sheet No.', value: data?.drawing_id?.sheet_no },
-                        { label: 'Assembly No.', value: data?.drawing_id?.assembly_no },
-                        { label: 'Assembly Quantity', value: data?.drawing_id?.assembly_quantity },
-                        { label: 'Issued To', value: data?.drawing_id?.issued_person?.name },
-                        { label: 'Issued Date', value: moment(data?.drawing_id?.issued_date).format('YYYY-MM-DD') },
-                      ].map(({ label, value }) => (
-                        <div key={label} className="col-12 col-md-4 col-xl-4">
-                          <div className="input-block local-forms">
-                            <label>{label}</label>
-                            <input className="form-control" value={value || "-"} readOnly />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="row">
-                      <div className="col-12 col-md-4 col-xl-4">
-                        <div className="input-block local-forms">
-                          <p className="m-0" style={{ fontSize: "12px" }}>Status</p>
-                          <span
-                            className={`custom-badge ${
-                              data?.drawing_id?.status === 1
-                                ? 'status-orange'
-                                : data?.drawing_id?.status === 2
-                                ? 'status-green'
-                                : ''
-                            }`}
-                          >
-                            {data?.drawing_id?.status === 1
-                              ? 'Pending'
-                              : data?.drawing_id?.status === 2
-                              ? 'Completed'
-                              : ''}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="col-12 col-md-4 col-xl-4">
-                        <a
-                          href={data?.drawing_id?.drawing_pdf}
-                          className="d-flex"
-                          target="_blank"
-                          rel="noreferrer"
-                          style={{ cursor: 'pointer' }}
-                        >
-                          <img src="/assets/img/pdflogo.png" alt="draw-pdf" />{" "}
-                          <p>{data?.drawing_id?.drawing_pdf_name}</p>
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
         <Footer />
       </div>

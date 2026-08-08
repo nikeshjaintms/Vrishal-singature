@@ -12,6 +12,7 @@ const ViewMultiSurface = () => {
   const location = useLocation();
   const data = location.state;
   console.log("data", data);
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [clientDate, setClientDate] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
@@ -155,6 +156,7 @@ const ViewMultiSurface = () => {
         toast.success('Surface Report updated successfully');
         setShowRandomItems(false);
         fetchPdf();
+        navigate('/party/project-store/surface-primer-management');
       } else {
         toast.error(res.data.message || 'Update failed');
       }

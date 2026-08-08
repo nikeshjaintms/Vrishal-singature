@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import moment from 'moment';
@@ -11,7 +11,8 @@ import { V_URL } from '../../../../../BaseUrl';
 const ViewMultiFinalCoat = () => {
   const location = useLocation();
   const data = location.state;
-  console.log("Data", data)
+  console.log("Data", data);
+  const navigate = useNavigate();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [clientDate, setClientDate] = useState("");
@@ -81,9 +82,12 @@ const ViewMultiFinalCoat = () => {
     const items =
       data?.items?.map((item) => ({
         _id: item._id,
-        procedure_no: item?.procedure_no || "-",
-        dispatch_report: item?.dispatch_report || "-",
-        drawing_no: item?.drawing_no || "-",
+        drawing_no: item?.drawing_id?.drawing_no || item?.drawing_no || "-",
+        rev_no: item?.drawing_id?.rev ?? item?.rev ?? "-",
+        assembly_no: item?.drawing_id?.assembly_no || item?.assembly_no || "-",
+        grid_no: item?.grid_id?.grid_no || "-",
+        grid_qty: item?.fc_used_grid_qty || 0,
+        average_dft: item?.average_dft_final_coat || "-",
         selected: false,
         remark: item?.remarks || "",
       })) || [];
@@ -118,7 +122,7 @@ const ViewMultiFinalCoat = () => {
 
     try {
       const payload = {
-        report_id: data?._id,
+        finalcoatinspectionId: data?._id,
         status_type: statusType,
         client_date: clientDate,
         client_user: localStorage.getItem("PARTY_ID"),
@@ -139,7 +143,7 @@ const ViewMultiFinalCoat = () => {
       }
 
       const res = await axios.post(
-        `${V_URL}/party/multi-final-coat-review-update`,
+        `${V_URL}/party/final-coat-review-update`,
         payload,
         {
           headers: {
@@ -152,6 +156,7 @@ const ViewMultiFinalCoat = () => {
         toast.success("Final Coat report updated successfully");
         setShowRandomItems(false);
         fetchPdf();
+        navigate('/party/project-store/final-coat-management');
       } else {
         toast.error(res.data.message || "Update failed");
       }
@@ -175,6 +180,11 @@ const ViewMultiFinalCoat = () => {
               <li className="breadcrumb-item">
                 <Link to="/party/project-store/dashboard">Dashboard</Link>
               </li>
+              <li className="breadcrumb-item"><i className='feather-chevron-right'></i></li>
+              <li className="breadcrumb-item">
+                <Link to="/party/project-store/final-coat-management">Final Coat Offer List</Link>
+              </li>
+              <li className="breadcrumb-item"><i className='feather-chevron-right'></i></li>
               <li className="breadcrumb-item active">
                 View Final Coat Summary
               </li>
@@ -294,9 +304,15 @@ const ViewMultiFinalCoat = () => {
                             />
                           </th>
                           <th>#</th>
-                          <th>Procedure No</th>
-                          <th>Dispatch No</th>
                           <th>Drawing No</th>
+                          <th>Rev No</th>
+                          <th>Assembly No</th>
+                          <th>Grid No</th>
+                          <th>Grid Qty</th>
+                          <th className="text-center">
+                            <div>Average DFT</div>
+                            <div style={{ fontSize: "0.85em", marginTop: "4px" }}>FINAL / TOP COAT</div>
+                          </th>
                           <th>Remark</th>
                         </tr>
                       </thead>
@@ -317,9 +333,12 @@ const ViewMultiFinalCoat = () => {
                               />
                             </td>
                             <td>{i + 1}</td>
-                            <td>{item.procedure_no}</td>
-                            <td>{item.dispatch_report}</td>
                             <td>{item.drawing_no}</td>
+                            <td>{item.rev_no}</td>
+                            <td>{item.assembly_no}</td>
+                            <td>{item.grid_no}</td>
+                            <td>{item.grid_qty}</td>
+                            <td>{item.average_dft}</td>
                             <td>
                               <input
                                 className="form-control"

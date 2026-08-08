@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import moment from 'moment';
@@ -11,6 +11,7 @@ import { V_URL } from '../../../../../BaseUrl';
 const ViewMultiMptClearance = () => {
   const location = useLocation();
   const data = location.state;
+  const navigate = useNavigate();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [clientDate, setClientDate] = useState('');
@@ -52,11 +53,10 @@ const ViewMultiMptClearance = () => {
       }
 
       const res = await axios.post(
-        `${V_URL}/party/get-mpt-clearance-report-item`,
+        `${V_URL}/party/get-mpt-inspection-item`,
         {
-          MPTId: data._id,
           test_inspect_no: testInspectNo,
-          print_date: clientDate,
+          print_date: clientDate || null,
         },
         {
           headers: {
@@ -88,11 +88,11 @@ const ViewMultiMptClearance = () => {
       data?.items?.map((item) => ({
         _id: item._id,
 
-        drawing_no: item?.grid_item_id?.drawing_id?.drawing_no || '-',
-        rev_no: item?.grid_item_id?.drawing_id?.rev ?? '-',
-        assembly_no: item?.grid_item_id?.drawing_id?.assembly_no || '-',
-        grid_no: item?.grid_item_id?.grid_id?.grid_no || '-',
-        grid_qty: item?.grid_item_id?.grid_id?.grid_qty || 0,
+        drawing_no: item?.drawing_no || item?.drawing_id?.drawing_no || '-',
+        rev_no: item?.rev ?? item?.drawing_id?.rev ?? '-',
+        assembly_no: item?.assembly_no || item?.drawing_id?.assembly_no || '-',
+        grid_no: item?.grid_no || item?.grid_id?.grid_no || item?.grid_item_id?.grid_no || item?.grid_item_id?.item_no || '-',
+        grid_qty: item?.offer_used_grid_qty || item?.ut_used_grid_qty || item?.grid_qty || item?.is_grid_qty || 0,
 
         selected: false,
         remark: item?.remarks || '',
@@ -128,7 +128,7 @@ const ViewMultiMptClearance = () => {
 
     try {
       const payload = {
-        MPTId: data._id,
+        id: data._id,
         status_type: statusType,
         client_date: clientDate,
         client_user: localStorage.getItem('PARTY_ID'),
@@ -149,7 +149,7 @@ const ViewMultiMptClearance = () => {
       }
 
       const res = await axios.post(
-        `${V_URL}/party/mpt-clearance-report-review-update`,
+        `${V_URL}/party/mpt-review-update`,
         payload,
         {
           headers: {
@@ -162,6 +162,7 @@ const ViewMultiMptClearance = () => {
         toast.success('MPT Clearance Report updated successfully');
         setShowRandomItems(false);
         fetchPdf();
+        navigate("/party/project-store/mpt-clearance-management");
       } else {
         toast.error(res.data.message || 'Update failed');
       }
@@ -184,6 +185,11 @@ const ViewMultiMptClearance = () => {
               <li className="breadcrumb-item">
                 <Link to="/party/project-store/dashboard">Dashboard</Link>
               </li>
+              <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
+              <li className="breadcrumb-item">
+                <Link to="/party/project-store/mpt-clearance-management">MPT Clearance Management</Link>
+              </li>
+              <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
               <li className="breadcrumb-item active">
                 View MPT Clearance Summary
               </li>

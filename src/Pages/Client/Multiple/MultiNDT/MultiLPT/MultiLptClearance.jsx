@@ -10,6 +10,9 @@ import Loader from '../../../Include/Loader';
 import { Pagination } from '../../../Table';
 import moment from 'moment';
 import { getClientLptClearance } from '../../../../../Store/Client/Structural/Testing/getClientLptClearance';
+import { V_URL } from '../../../../../BaseUrl';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 /* ================= DEBOUNCE ================= */
 const useDebounce = (value, delay = 500) => {
@@ -46,15 +49,36 @@ const MultiLptClearance = () => {
     setPage(1);
   };
 
-  const handleDownload = (row) => {
-    const body = new URLSearchParams();
-    body.append("test_inspect_no", row.test_inspect_no);
-    body.append("print_date", true);
-    PdfDownloadErp({
-      apiMethod: "post",
-      url: "download-multi-lpt-inspection",
-      body,
-    });
+  const handleDownload = async (row) => {
+    try {
+      const toastId = toast.loading('Downloading...');
+      const response = await axios.post(
+        `${V_URL}/party/get-lpt-inspection-item`,
+        {
+          test_inspect_no: row.test_inspect_no,
+          print_date: true
+        },
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          },
+          responseType: 'blob',
+        }
+      );
+
+      const file = new Blob([response.data], { type: 'application/pdf' });
+      const fileUrl = window.URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = `LPT_${row.test_inspect_no || 'Report'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Downloaded successfully', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to download PDF');
+    }
   };
 
   if (loading) return <Loader />;

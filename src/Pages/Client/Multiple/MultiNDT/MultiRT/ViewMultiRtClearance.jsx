@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import moment from 'moment';
@@ -10,6 +10,7 @@ import { V_URL } from '../../../../../BaseUrl';
 
 const ViewMultiRtClearance = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const data = location.state;
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -52,11 +53,10 @@ const ViewMultiRtClearance = () => {
       }
 
       const res = await axios.post(
-        `${V_URL}/party/get-rt-clearance-report-item`,
+        `${V_URL}/party/get-rt-inspection-item`,
         {
-          RTId: data._id,
           test_inspect_no: testInspectNo,
-          print_date: clientDate,
+          print_date: clientDate || null,
         },
         {
           headers: {
@@ -90,11 +90,11 @@ const ViewMultiRtClearance = () => {
       data?.items?.map((item) => ({
         _id: item._id,
 
-        drawing_no: item?.grid_item_id?.drawing_id?.drawing_no || '-',
-        rev_no: item?.grid_item_id?.drawing_id?.rev ?? '-',
-        assembly_no: item?.grid_item_id?.drawing_id?.assembly_no || '-',
-        grid_no: item?.grid_item_id?.grid_id?.grid_no || '-',
-        grid_qty: item?.grid_item_id?.grid_id?.grid_qty || 0,
+        drawing_no: item?.drawing_no || item?.drawing_id?.drawing_no || '-',
+        rev_no: item?.rev ?? item?.drawing_id?.rev ?? '-',
+        assembly_no: item?.assembly_no || item?.drawing_id?.assembly_no || '-',
+        grid_no: item?.grid_no || item?.grid_id?.grid_no || item?.grid_item_id?.grid_no || item?.grid_item_id?.item_no || '-',
+        grid_qty: item?.offer_used_grid_qty || item?.ut_used_grid_qty || item?.grid_qty || item?.is_grid_qty || 0,
 
         selected: false,
         remark: item?.remarks || '',
@@ -130,7 +130,7 @@ const ViewMultiRtClearance = () => {
 
     try {
       const payload = {
-        RTId: data._id,
+        id: data._id,
         status_type: statusType,
         client_date: clientDate,
         client_user: localStorage.getItem('PARTY_ID'),
@@ -151,7 +151,7 @@ const ViewMultiRtClearance = () => {
       }
 
       const res = await axios.post(
-        `${V_URL}/party/rt-clearance-report-review-update`,
+        `${V_URL}/party/rt-review-update`,
         payload,
         {
           headers: {
@@ -163,6 +163,7 @@ const ViewMultiRtClearance = () => {
       if (res.data.success) {
         toast.success('RT Clearance Report updated successfully');
         setShowRandomItems(false);
+        navigate('/party/project-store/rt-clearance-management');
         fetchPdf();
       } else {
         toast.error(res.data.message || 'Update failed');
@@ -186,6 +187,15 @@ const ViewMultiRtClearance = () => {
             <ul className="breadcrumb">
               <li className="breadcrumb-item">
                 <Link to="/party/project-store/dashboard">Dashboard</Link>
+              </li>
+              <li className="breadcrumb-item">
+                <i className="feather-chevron-right"></i>
+              </li>
+              <li className="breadcrumb-item">
+                <Link to="/party/project-store/rt-clearance-management">RT Inspection List</Link>
+              </li>
+              <li className="breadcrumb-item">
+                <i className="feather-chevron-right"></i>
               </li>
               <li className="breadcrumb-item active">
                 View RT Clearance Summary

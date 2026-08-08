@@ -10,8 +10,10 @@ import Loader from '../../../Include/Loader';
 import { Pagination } from '../../../Table';
 import { BadgeCheck, X } from 'lucide-react';
 import moment from 'moment';
-import { QC } from '../../../../../BaseUrl';
+import { QC, V_URL } from '../../../../../BaseUrl';
 import { getClientRtClearance } from '../../../../../Store/Client/Structural/Testing/getClientRtClearance';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 /* ================= DEBOUNCE ================= */
 const useDebounce = (value, delay = 500) => {
@@ -34,7 +36,6 @@ const MultiRtClearance = () => {
   const [search, setSearch] = useState("");
 
   const debouncedSearch = useDebounce(search, 500);
-  const ERP_ROLE = localStorage.getItem("ERP_ROLE");
 
   useEffect(() => {
     dispatch(getClientRtClearance({ page, limit, search: debouncedSearch }));
@@ -49,15 +50,36 @@ const MultiRtClearance = () => {
     setPage(1);
   };
 
-  const handleDownload = (elem) => {
-    const bodyFormData = new URLSearchParams();
-    bodyFormData.append('test_inspect_no', elem.test_inspect_no);
-    bodyFormData.append('print_date', true);
-    PdfDownloadErp({
-      apiMethod: 'post',
-      url: 'download-multi-rt-inspection',
-      body: bodyFormData
-    });
+  const handleDownload = async (row) => {
+    try {
+      const toastId = toast.loading('Downloading...');
+      const response = await axios.post(
+        `${V_URL}/party/get-rt-inspection-item`,
+        {
+          test_inspect_no: row.test_inspect_no,
+          print_date: true
+        },
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          },
+          responseType: 'blob',
+        }
+      );
+
+      const file = new Blob([response.data], { type: 'application/pdf' });
+      const fileUrl = window.URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = `RT_${row.test_inspect_no || 'Report'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Downloaded successfully', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to download PDF');
+    }
   };
 
   if (loading) return <Loader />;
@@ -74,6 +96,9 @@ const MultiRtClearance = () => {
             <ul className="breadcrumb">
               <li className="breadcrumb-item">
                 <Link to="/party/project-store/dashboard">Dashboard</Link>
+              </li>
+              <li className="breadcrumb-item">
+                <i className="feather-chevron-right"></i>
               </li>
               <li className="breadcrumb-item active">
                 Radiography Testing Clearance List

@@ -158,6 +158,7 @@ const ViewMultiClearFd = () => {
         toast.success('Final Dimension updated successfully');
         setShowRandomItems(false);
         fetchPdf();
+        navigate("/party/project-store/fd-clearance-management");
       } else {
         toast.error(res.data.message || 'Update failed');
       }

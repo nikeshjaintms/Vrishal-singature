@@ -12,7 +12,9 @@ import { PdfDownloadErp } from '../../../../../Components/ErpPdf/PdfDownloadErp'
 import { QC } from '../../../../../BaseUrl';
 import { BadgeCheck, X } from 'lucide-react';
 import { getClientUtClearance } from '../../../../../Store/Client/Structural/Testing/getClientUtClearance';
-
+import axios from 'axios';
+import { V_URL } from '../../../../../BaseUrl';
+import toast from 'react-hot-toast';
 /* ---------------- Debounce ---------------- */
 const useDebounce = (value, delay = 500) => {
   const [debounced, setDebounced] = useState(value);
@@ -26,7 +28,6 @@ const useDebounce = (value, delay = 500) => {
 const MultiUtClearance = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const ERP_ROLE = localStorage.getItem("ERP_ROLE");
 
   const { data, loading } = useSelector((state) => state.getClientUtClearance);
 
@@ -48,16 +49,38 @@ const MultiUtClearance = () => {
     setPage(1);
   };
 
-  const handleDownload = (row) => {
-    const body = new URLSearchParams();
-    body.append("test_inspect_no", row.test_inspect_no);
-    body.append("print_date", true);
-    PdfDownloadErp({
-      apiMethod: "post",
-      url: "download-multi-ut-inspection",
-      body,
-    });
-  };
+
+   const handleDownload = async (row) => {
+      try {
+        const toastId = toast.loading('Downloading...');
+        const response = await axios.post(
+          `${V_URL}/party/get-ut-inspection-item`,
+          {
+            test_inspect_no: row.test_inspect_no,
+            print_date: true
+          },
+          {
+            headers: {
+              Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+            },
+            responseType: 'blob',
+          }
+        );
+  
+        const file = new Blob([response.data], { type: 'application/pdf' });
+        const fileUrl = window.URL.createObjectURL(file);
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = `UT_${row.test_inspect_no || 'Report'}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        toast.success('Downloaded successfully', { id: toastId });
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to download PDF');
+      }
+    };
 
   if (loading) return <Loader />;
 
@@ -74,6 +97,9 @@ const MultiUtClearance = () => {
             <ul className="breadcrumb">
               <li className="breadcrumb-item">
                 <Link to="/party/project-store/dashboard">Dashboard</Link>
+              </li>
+              <li className="breadcrumb-item">
+                <i className="feather-chevron-right"></i>
               </li>
               <li className="breadcrumb-item active">
                 Ultrasonic Test Clearance List

@@ -11,6 +11,7 @@ import { V_URL } from '../../../../../BaseUrl';
 const ViewMultiMio = () => {
   const location = useLocation();
   const data = location.state;
+  const navigate = useNavigate();
   console.log("Data", data)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [clientDate, setClientDate] = useState("");
@@ -156,6 +157,7 @@ const ViewMultiMio = () => {
         toast.success("MIO Report updated successfully");
         setShowRandomItems(false);
         fetchPdf();
+        navigate("/party/project-store/mio-offer-management");
       } else {
         toast.error(res.data.message || "Update failed");
       }

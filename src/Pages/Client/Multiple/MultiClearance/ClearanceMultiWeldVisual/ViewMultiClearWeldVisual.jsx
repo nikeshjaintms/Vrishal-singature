@@ -162,6 +162,7 @@ const ViewMultiClearWeldVisual = () => {
         toast.success('Weld Visual updated successfully');
         setShowRandomItems(false);
         fetchPdf();
+        navigate("/party/project-store/weld-visual-management");
       } else {
         toast.error(res.data.message || 'Update failed');
       }
@@ -181,6 +182,10 @@ const ViewMultiClearWeldVisual = () => {
             <ul className="breadcrumb">
               <li className="breadcrumb-item">
                 <Link to="/party/project-store/dashboard">Dashboard</Link>
+              </li>
+              <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
+              <li className="breadcrumb-item">
+                <Link to="/party/project-store/weld-visual-management">Weld Visual Clearance List</Link>
               </li>
               <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
               <li className="breadcrumb-item active">

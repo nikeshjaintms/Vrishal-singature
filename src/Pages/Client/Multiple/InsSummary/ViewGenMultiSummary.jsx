@@ -11,6 +11,7 @@ import { V_URL } from '../../../../BaseUrl';
 const ViewGenMultiSummary = () => {
   const location = useLocation();
   const data = location.state;
+  const navigate = useNavigate();
   console.log("data",data);
  
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -155,6 +156,7 @@ const ViewGenMultiSummary = () => {
         toast.success('Inspection Report updated successfully');
         setShowRandomItems(false);
         fetchPdf();
+        navigate("/party/project-store/inspection-summary-management");
       } else {
         toast.error(res.data.message || 'Update failed');
       }
