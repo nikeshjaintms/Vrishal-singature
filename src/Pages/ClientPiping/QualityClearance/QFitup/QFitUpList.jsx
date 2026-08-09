@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import Header from '../../Include/Header';
 import Sidebar from '../../Include/Sidebar';
 import Footer from '../../Include/Footer';
@@ -8,9 +8,8 @@ import Loader from '../../Include/Loader';
 import { Pagination } from '../../Table';
 import DropDown from '../../../../Components/DropDown';
 import moment from 'moment';
-import { V_URL, QC } from '../../../../BaseUrl';
+import { getClientPipingMultiFitup } from '../../../../Store/Client/Piping/Fitup/getClientPipingMultiFitup';
 import { PdfDownloadErp } from '../../../../Components/ErpPdf/PdfDownloadErp';
-import { BadgeCheck, X } from 'lucide-react';
 
 const useDebounce = (value, delay = 500) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -23,49 +22,28 @@ const useDebounce = (value, delay = 500) => {
 
 const QFitUpList = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [rows, setRows] = useState([]);
-  const [totalItems, setTotalItems] = useState(0);
+  const dispatch = useDispatch();
+  
+  const { data: reduxData, loading } = useSelector((state) => state.getClientPipingMultiFitup);
 
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState('');
 
   const debouncedSearch = useDebounce(search, 500);
-  const projectId = localStorage.getItem('PARTY_PROJECT_ID');
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(`${V_URL}/party/get-multi-fitup-view`, {
-        params: {
-          page,
-          limit,
-          search: debouncedSearch,
-          project: projectId,
-          _t: Date.now()
-        },
-        headers: {
-          Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN')
-        }
-      });
-
-      if (response.data.success) {
-        setRows(response.data.data.data || []);
-        setTotalItems(response.data.data.totalItems || 0);
-      } else {
-        alert(response.data.message || 'Failed to fetch data');
-      }
-    } catch (err) {
-      console.error('Error fetching Fit-Up data:', err);
-    } finally {
-      setLoading(false);
-    }
+  const fetchData = () => {
+    dispatch(getClientPipingMultiFitup({ page, limit, search: debouncedSearch }));
   };
 
   useEffect(() => {
     fetchData();
-  }, [page, limit, debouncedSearch]);
+  }, [page, limit, debouncedSearch, dispatch]);
+
+  // Map rows depending on whether payload is nested (from the proxy backend aggregate method) or shallow
+  const payloadData = reduxData?.data || {};
+  const rows = Array.isArray(payloadData) ? payloadData : (payloadData?.data || []);
+  const totalItems = payloadData?.pagination?.total || payloadData?.totalItems || reduxData?.totalItems || 0;
 
   const handleRefresh = () => {
     setSearch('');
@@ -81,7 +59,7 @@ const QFitUpList = () => {
 
       PdfDownloadErp({
         apiMethod: 'post',
-        url: 'one-multi-fitup-download',
+        url: 'download-piping-fitup-client',
         body
       });
     } catch (err) {
@@ -102,6 +80,7 @@ const QFitUpList = () => {
               <li className="breadcrumb-item">
                 <Link to="/party/piping-store/dashboard">Dashboard</Link>
               </li>
+              <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
               <li className="breadcrumb-item active">Fit-Up Acceptance</li>
             </ul>
           </div>
@@ -164,9 +143,9 @@ const QFitUpList = () => {
                     <tr>
                       <th>#</th>
                       <th>Report No</th>
-                      <th>Assem. No.</th>
+                      <th>Drawing No.</th>
+                      <th>Spool No.</th>
                       <th>Date</th>
-                      {localStorage.getItem('ERP_ROLE') === QC && <th>Verify</th>}
                       <th>Status</th>
                       <th className="text-end">Action</th>
                     </tr>
@@ -179,32 +158,21 @@ const QFitUpList = () => {
                         </td>
                       </tr>
                     )}
-                  {rows.map((r, i) =>{
-                       const uniqueAssemblyNos = [
-                          ...new Set(r?.items?.map(e => e?.grid_item_id?.drawing_id?.assembly_no).filter(Boolean))
+                  {rows.map((r, i) => {
+                      const uniqueDrawingNos = [
+                          ...new Set(r?.items?.map(e => e?.drawing_id?.drawing_no).filter(Boolean))
                       ];
+                      const uniqueSpoolNos = [
+                          ...new Set(r?.items?.map(e => e?.joint_wise_data?.[0]?.spool_info?.spool_no || e?.joint_wise_data?.[0]?.spool_no_id?.spool_no).filter(Boolean))
+                      ];
+                      
                       return (
-                      (
                       <tr key={r._id}>
                         <td>{(page - 1) * limit + i + 1}</td>
                         <td>{r.report_no_two}</td>
-                        <td>{uniqueAssemblyNos}</td>
+                        <td>{uniqueDrawingNos.join(', ')}</td>
+                        <td>{uniqueSpoolNos.join(', ')}</td>
                         <td>{moment(r.createdAt).format('YYYY-MM-DD HH:mm')}</td>
-
-                        {localStorage.getItem('ERP_ROLE') === QC && (
-                          <td>
-                            {r.status === 1 ? (
-                              <BadgeCheck
-                                style={{ cursor: 'pointer' }}
-                                onClick={() =>
-                                  navigate('/user/project-store/quality-clearance-fitup-management', { state: r })
-                                }
-                              />
-                            ) : (
-                              <X />
-                            )}
-                          </td>
-                        )}
 
                         <td>
                           {['REVIEWED', 'WITNESSED', 'RANDOM WITNESSED'].includes(r.status_type) ? (
@@ -227,6 +195,7 @@ const QFitUpList = () => {
                                   navigate('/party/piping-store/view-quality-clearance-fitup', { state: r })
                                 }
                               >
+                                          <i className="fa-solid fa-eye m-r-5"></i>
                                 View
                               </button>
                               <button
@@ -234,13 +203,15 @@ const QFitUpList = () => {
                                 className="dropdown-item"
                                 onClick={() => downloadInspection(r)}
                               >
+                                          <i className="fa-solid fa-download m-r-5"></i>
+
                                 Download
                               </button>
                             </div>
                           </div>
                         </td>
                       </tr>
-                    ))})}
+                    )})}
                   </tbody>
                 </table>
               </div>

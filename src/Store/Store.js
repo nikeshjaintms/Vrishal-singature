@@ -1,5 +1,8 @@
 import { configureStore } from "@reduxjs/toolkit";
 import getClientFimPackingListReducer from './Client/Structural/FIM/getClientFimPackingList';
+import getClientPipingFimPackingListReducer from './Client/Piping/FIM/getClientPipingFimPackingList';
+import getClientPipingMultiFitupReducer from './Client/Piping/Fitup/getClientPipingMultiFitup';
+import getClientPipingMultiWeldVisualReducer from './Client/Piping/WeldVisual/getClientPipingMultiWeldVisual';
 // import getCustomersReducer from './slices/customer/Customer';
 import getCustomersReducer from '../../src/Store/Store/Customer/Customer';
 // Admin
@@ -670,6 +673,9 @@ import getIssueReturnAcceptancePipingSlice from "../Store/Piping/IssueReturnAcce
 import getIssueReturnAcceptanceSummaryPipingSlice from "../Store/Piping/IssueReturnAcceptance/getIssueReturnAcceptanceSummaryPiping";
 export default configureStore({
   reducer: {
+      getClientPipingFimPackingList: getClientPipingFimPackingListReducer,
+      getClientPipingMultiFitup: getClientPipingMultiFitupReducer,
+      getClientPipingMultiWeldVisual: getClientPipingMultiWeldVisualReducer,
       getClientFimPackingList: getClientFimPackingListReducer,
     login: adminLoginSlice,
     forgetPassword: adminForgetPasswordSlice,

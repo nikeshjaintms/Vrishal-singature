@@ -10,6 +10,9 @@ import moment from 'moment';
 import { PdfDownloadErp } from '../../../../Components/ErpPdf/PdfDownloadErp';
 import { useDispatch, useSelector } from 'react-redux';
 import { getClientMultiFitup } from '../../../../Store/Client/Structural/MultiFitup/getClientMultiFitup';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import { V_URL } from '../../../../BaseUrl';
 
 const useDebounce = (value, delay = 500) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -45,18 +48,30 @@ const QFitUpList = () => {
   };
 
   const downloadInspection = async (row) => {
+    const toastId = toast.loading("Downloading PDF...");
     try {
-      const body = new URLSearchParams();
-      body.append("report_no_two", row.report_no_two);
-      body.append("print_date", true);
+      const res = await axios.post(
+        `${V_URL}/party/get-fitup-inspection-item`,
+        { report_no_two: row.report_no_two, print_date: true },
+        {
+          headers: { Authorization: "Bearer " + localStorage.getItem("PARTY_TOKEN") },
+          responseType: "blob",
+        }
+      );
 
-      PdfDownloadErp({
-        apiMethod: "post",
-        url: "one-multi-fitup-download",
-        body,
-      });
+      const file = new Blob([res.data], { type: "application/pdf" });
+      const fileURL = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = fileURL;
+      link.setAttribute("download", `fitup_report_${row.report_no_two}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(fileURL);
+      toast.success("Downloaded successfully", { id: toastId });
     } catch (err) {
       console.error("Download error:", err);
+      toast.error("Failed to download PDF", { id: toastId });
     }
   };
 

@@ -8,12 +8,12 @@ import Sidebar from '../../Include/Sidebar';
 import Footer from '../../Include/Footer';
 import { V_URL } from '../../../../BaseUrl';
 
-const ViewMultiClearFitup = () => {
+const ViewMultiClearWeldVisual = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const data = location.state; // contains {data: [...], totalItems, ...} 
 
-  console.log('Fitup Data:', data);
+  console.log('Weld Visual Data:', data);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [clientDate, setClientDate] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
@@ -48,9 +48,9 @@ const ViewMultiClearFitup = () => {
       }
 
       const res = await axios.post(
-        `${V_URL}/party/download-piping-fitup-client`,
+        `${V_URL}/party/download-piping-weld-visual-client`,
         {
-          fitupId: data._id,
+          report_no: data.report_no,
           report_no_two: data.report_no_two,
           print_date: clientDate,
         },
@@ -82,25 +82,25 @@ const ViewMultiClearFitup = () => {
 
   /* ================= RANDOM WITNESSED PREP ================= */
   const prepareRandomWitnessedItems = () => {
-  const items =
-    data?.items?.map((item) => ({
-      _id: item._id,
-      drawing_no: item?.drawing_id?.drawing_no || '-',
-      rev_no: item?.drawing_id?.rev || '-',
-      spool_no: item?.joint_wise_data?.[0]?.spool_info?.spool_no || item?.joint_wise_data?.[0]?.spool_no_id?.spool_no || '-',
-      joint_no: item?.joint_wise_data?.[0]?.joint_no || '-',
-      size: item?.joint_wise_data?.[0]?.material_items?.selected_size?.name || '-',
-      thickness: item?.joint_wise_data?.[0]?.material_items?.selected_thickness?.name || '-',
-      joint_type: item?.joint_wise_data?.[0]?.material_items?.joint_type?.name || '-',
-      wps_no: item?.wps_no?.wpsNo || '-',
-      selected: false,
-      remark: item?.remarks || '',
-    })) || [];
+    const items =
+      data?.items?.map((item) => ({
+        _id: item._id,
+        drawing_no: item?.drawing_id?.drawing_no || item?.drawing_no || '-',
+        rev_no: item?.drawing_id?.rev || item?.rev_no || '-',
+        spool_no: item?.spool_no_id?.spool_no || item?.joint_wise_data?.[0]?.spool_info?.spool_no || '-',
+        joint_no: item?.joint_spool_item_id?.joint_no || item?.joint_wise_data?.[0]?.joint_no || '-',
+        size: item?.joint_wise_data?.[0]?.material_items?.selected_size?.name || '-',
+        thickness: item?.joint_wise_data?.[0]?.material_items?.selected_thickness?.name || '-',
+        joint_type: item?.joint_type_id?.name || item?.joint_wise_data?.[0]?.material_items?.joint_type?.name || '-',
+        wps_no: item?.wps_no?.wpsNo || '-',
+        selected: false,
+        remark: item?.remarks || item?.qc_remarks || '',
+      })) || [];
 
-  setRandomItems(items);
-  setSelectAll(false);
-  setShowRandomItems(true);
-};
+    setRandomItems(items);
+    setSelectAll(false);
+    setShowRandomItems(true);
+  };
 
   /* ================= SELECT / DESELECT ================= */
   const handleItemChange = (index, field, value) => {
@@ -121,7 +121,7 @@ const ViewMultiClearFitup = () => {
   };
 
   /* ================= UPDATE STATUS ================= */
-  const submitFitupStatus = async (statusType) => {
+  const submitWeldVisualStatus = async (statusType) => {
     if (!clientDate) {
       toast.error('Please select date');
       return;
@@ -129,7 +129,7 @@ const ViewMultiClearFitup = () => {
 
     try {
       const payload = {
-        fitupId: data._id,
+        weldinspectionId: data._id,
         status_type: statusType,
         client_date: clientDate,
         client_user: localStorage.getItem('PARTY_ID'),
@@ -150,14 +150,14 @@ const ViewMultiClearFitup = () => {
         }));
       }
 
-      const res = await axios.post(`${V_URL}/party/update-piping-fitup-status`, payload, {
+      const res = await axios.post(`${V_URL}/party/update-piping-weld-visual-status`, payload, {
         headers: {
           Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
         },
       });
 
       if (res.data.success) {
-        toast.success('Fit-Up updated successfully');
+        toast.success('Weld Visual updated successfully');
         setShowRandomItems(false);
         fetchPdf();
       } else {
@@ -184,17 +184,17 @@ const ViewMultiClearFitup = () => {
               </li>
               <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
               <li className="breadcrumb-item">
-                <Link to="/party/piping-store/fitup-clearance-management">Fit-Up Acceptance</Link>
+                <Link to="/party/piping-store/weld-visual-clearance-management">Weld Visual Acceptance</Link>
               </li>
               <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
-              <li className="breadcrumb-item active">View Fit-Up Clearance</li>
+              <li className="breadcrumb-item active">View Weld Visual Clearance</li>
             </ul>
           </div>
 
-          {/* ===== Fit-Up Details ===== */}
+          {/* ===== Weld Visual Details ===== */}
           <div className="card">
             <div className="card-body">
-              <h4 className="mb-3">Fit-Up Details</h4>
+              <h4 className="mb-3">Weld Visual Details</h4>
               <div className="row">
                 <div className="col-md-4">
                   <label>Report No</label>
@@ -237,11 +237,11 @@ const ViewMultiClearFitup = () => {
               </div>
         
               <div className="mt-3">
-                <button className="btn btn-primary me-2" onClick={() => submitFitupStatus('REVIEWED')}>
+                <button className="btn btn-primary me-2" onClick={() => submitWeldVisualStatus('REVIEWED')}>
                   REVIEWED
                 </button>
 
-                <button className="btn btn-warning me-2" onClick={() => submitFitupStatus('WITNESSED')}>
+                <button className="btn btn-warning me-2" onClick={() => submitWeldVisualStatus('WITNESSED')}>
                   WITNESSED
                 </button>
 
@@ -259,7 +259,7 @@ const ViewMultiClearFitup = () => {
                 <div className="mt-4">
                   <iframe
                     src={pdfUrl}
-                    title="Fit-Up Inspection PDF"
+                    title="Weld Visual Inspection PDF"
                     width="100%"
                     height="700px"
                     style={{ border: '1px solid #ccc' }}
@@ -326,7 +326,7 @@ const ViewMultiClearFitup = () => {
                     </table>
                   </div>
 
-                  <button className="btn btn-success mt-2" onClick={() => submitFitupStatus('RANDOM WITNESSED')}>
+                  <button className="btn btn-success mt-2" onClick={() => submitWeldVisualStatus('RANDOM WITNESSED')}>
                     Submit Random Witnessed
                   </button>
                 </div>
@@ -340,4 +340,4 @@ const ViewMultiClearFitup = () => {
   );
 };
 
-export default ViewMultiClearFitup;
+export default ViewMultiClearWeldVisual;

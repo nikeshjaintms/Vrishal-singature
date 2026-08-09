@@ -1,18 +1,15 @@
-import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Link, useNavigate } from 'react-router-dom';
 import Header from '../../Include/Header';
 import Sidebar from '../../Include/Sidebar';
 import Footer from '../../Include/Footer';
 import Loader from '../../Include/Loader';
 import { Pagination, Search } from '../../Table';
-import axios from 'axios';
 import DropDown from '../../../../Components/DropDown';
-import { V_URL } from '../../../../BaseUrl';
 import { PdfDownloadErp } from '../../../../Components/ErpPdf/PdfDownloadErp';
+import { getClientPipingMultiWeldVisual } from '../../../../Store/Client/Piping/WeldVisual/getClientPipingMultiWeldVisual';
 
-// Read-only: Weld Visual's real piping collection does not have the
-// client_status/status_type fields the RT/MPT accept-reject action depends
-// on — view + download only.
 const useDebounce = (value, delay = 600) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -26,53 +23,37 @@ const QWeldVisualList = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
 
-  const [rows, setRows] = useState([]);
-  const [totalItems, setTotalItems] = useState(0);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const { data: reduxData, loading } = useSelector((state) => state.getClientPipingMultiWeldVisual);
+
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(false);
   const debouncedSearch = useDebounce(search, 500);
 
-  const projectId = localStorage.getItem('PARTY_PROJECT_ID');
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`${V_URL}/party/get-multi-weldvisual`, {
-        params: {
-          project: projectId,
-          status: '2,3,4',
-          page,
-          limit,
-          search: debouncedSearch,
-        },
-        headers: {
-          Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
-        },
-      });
-      setRows(res?.data?.data || []);
-      setTotalItems(res?.data?.pagination?.total || 0);
-    } catch (err) {
-      setRows([]);
-      setTotalItems(0);
-    } finally {
-      setLoading(false);
-    }
+  const fetchData = () => {
+    dispatch(getClientPipingMultiWeldVisual({ page, limit, search: debouncedSearch }));
   };
 
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, limit, debouncedSearch]);
+  }, [page, limit, debouncedSearch, dispatch]);
 
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch]);
 
+  const payloadData = reduxData?.data || {};
+  const rows = Array.isArray(payloadData) ? payloadData : (payloadData?.data || []);
+  const totalItems = payloadData?.pagination?.total || payloadData?.totalItems || reduxData?.totalItems || 0;
+
   const handleRefresh = () => {
     setSearch('');
     setPage(1);
+    fetchData();
   };
 
   const downloadInspection = (elem) => {
@@ -82,7 +63,7 @@ const QWeldVisualList = () => {
     bodyFormData.append('print_date', true);
     PdfDownloadErp({
       apiMethod: 'post',
-      url: 'download-weldvisual-inspection-pdf',
+      url: 'download-piping-weld-visual-client',
       body: bodyFormData,
     });
   };
@@ -144,7 +125,7 @@ const QWeldVisualList = () => {
                           </div>
                         </div>
                         <div className="pageDropDown col-auto text-end float-end ms-auto download-grp">
-                          <DropDown limit={limit} onLimitChange={(val) => setLimit(val)} />
+                          <DropDown limit={limit} onLimitChange={(val) => { setLimit(val); setPage(1); }} />
                         </div>
                       </div>
                     </div>
@@ -159,7 +140,6 @@ const QWeldVisualList = () => {
                               <tr>
                                 <th>Sr.</th>
                                 <th>Report No.</th>
-                                <th>Off. Report No.</th>
                                 <th>Line No./Drawing No.</th>
                                 <th>Spool No.</th>
                                 <th>Status</th>
@@ -177,11 +157,10 @@ const QWeldVisualList = () => {
                               {rows.map((elem, i) => (
                                 <tr key={elem._id}>
                                   <td>{(page - 1) * limit + i + 1}</td>
-                                  <td>{elem?.report_no}</td>
                                   <td>{elem?.report_no_two}</td>
                                   <td>
                                     {elem?.items
-                                      ?.map((e) => e?.jointDetails?.[0]?.drawing_no)
+                                      ?.map((e) => e?.jointDetails?.[0]?.drawing_no || e?.drawing_id?.drawing_no)
                                       .filter((value, index, self) => value && self.indexOf(value) === index)
                                       .map((value, index) => (
                                         <span key={index}>
@@ -192,7 +171,7 @@ const QWeldVisualList = () => {
                                   </td>
                                   <td>
                                     {elem?.items
-                                      ?.map((e) => e?.jointDetails?.[0]?.spool_no)
+                                      ?.map((e) => e?.jointDetails?.[0]?.spool_no || e?.spool_no_id?.spool_no || e?.joint_wise_data?.[0]?.spool_info?.spool_no)
                                       .filter((value, index, self) => value && self.indexOf(value) === index)
                                       .map((value, index) => (
                                         <span key={index}>
@@ -202,15 +181,11 @@ const QWeldVisualList = () => {
                                       )) || '-'}
                                   </td>
                                   <td className="status-badge">
-                                    {elem.status === 1 ? (
+                                    {['REVIEWED', 'WITNESSED', 'RANDOM WITNESSED'].includes(elem.status_type) ? (
+                                      <span className="custom-badge status-green">{elem.status_type}</span>
+                                    ) : (
                                       <span className="custom-badge status-orange">Pending</span>
-                                    ) : elem.status === 2 ? (
-                                      <span className="custom-badge status-green">Accepted</span>
-                                    ) : elem.status === 3 ? (
-                                      <span className="custom-badge status-pink">Rejected</span>
-                                    ) : elem.status === 4 ? (
-                                      <span className="custom-badge status-purple">Partially</span>
-                                    ) : null}
+                                    )}
                                   </td>
                                   <td className="text-end">
                                     <div className="dropdown dropdown-action">
@@ -222,6 +197,14 @@ const QWeldVisualList = () => {
                                         <i className="fa fa-ellipsis-v"></i>
                                       </a>
                                       <div className="dropdown-menu dropdown-menu-end">
+                                        <button
+                                          type="button"
+                                          className="dropdown-item"
+                                          onClick={() => navigate('/party/piping-store/view-quality-clearance-weldvisual', { state: elem })}
+                                        >
+                                          <i className="fa-solid fa-eye m-r-5"></i>
+                                          View
+                                        </button>
                                         <button
                                           type="button"
                                           className="dropdown-item"

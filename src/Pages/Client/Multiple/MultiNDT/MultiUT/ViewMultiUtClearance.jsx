@@ -157,6 +157,11 @@ const ViewMultiUtClearance = () => {
               <li className="breadcrumb-item">
                 <Link to="/party/project-store/dashboard">Dashboard</Link>
               </li>
+              <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
+              <li className="breadcrumb-item">
+                <Link to="/party/project-store/ut-clearance-management">UT Clearance Management</Link>
+              </li>
+              <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
               <li className="breadcrumb-item active">View UT Clearance</li>
             </ul>
           </div>

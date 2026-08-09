@@ -19,6 +19,7 @@ import ViewMultiClearFitup from '../../Pages/ClientPiping/QualityClearance/QFitu
 
 // Weld Visual Acceptance
 import QWeldVisualList from '../../Pages/ClientPiping/QualityClearance/QWeldVisual/QWeldVisualList';
+import ViewMultiClearWeldVisual from '../../Pages/ClientPiping/QualityClearance/QWeldVisual/ViewMultiClearWeldVisual';
 
 // Final Dimension Acceptance
 import QFinalDimensionList from '../../Pages/ClientPiping/QualityClearance/FinalDimension/QFinalDimensionList';
@@ -95,7 +96,7 @@ const ClientPipingRoutes = () => {
           <Route path='fitup-clearance-management' element={<QFitUpList />} />
           <Route path='view-quality-clearance-fitup' element={<ViewMultiClearFitup />} />
           <Route path='weld-visual-clearance-management' element={<QWeldVisualList />} />
-          <Route path='view-quality-clearance-weld-visual' element={<PlaceholderPage title="Weld Visual Detail" />} />
+          <Route path='view-quality-clearance-weldvisual' element={<ViewMultiClearWeldVisual />} />
           <Route path='final-dimension-clearance-management' element={<QFinalDimensionList />} />
           <Route path='view-quality-clearance-final-dimension' element={<PlaceholderPage title="Final Dimension Detail" />} />
           <Route path='rt-offer-management' element={<PlaceholderPage title="RT Offering" />} />

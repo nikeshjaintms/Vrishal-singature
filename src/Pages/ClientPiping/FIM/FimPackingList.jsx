@@ -9,70 +9,43 @@ import Footer from '../Include/Footer';
 import Loader from '../Include/Loader';
 import DropDown from '../../../Components/DropDown';
 import Swal from 'sweetalert2';
-import { SendHorizontal, X } from 'lucide-react';
 import { Pagination, Search } from '../Table';
 import { V_URL } from '../../../BaseUrl';
+import { useDispatch, useSelector } from 'react-redux';
+import { getClientPipingFimPackingList } from '../../../Store/Client/Piping/FIM/getClientPipingFimPackingList';
 
 const FimPackingList = () => {
   const navigate = useNavigate();
-  const [entity, setEntity] = useState([]);
-  const [disable, setDisable] = useState(true);
+  const dispatch = useDispatch();
+  const { data, loading } = useSelector((state) => state.getClientPipingFimPackingList);
+  
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const [totalItems, setTotalItems] = useState(0);
+
+  // Debounce search
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 500);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   useEffect(() => {
-    if (disable === true) {
-      setEntity([]);
-      getPackingLists({currentPage, limit, search});
-    }
-}, [disable, currentPage, limit, search]); // ✅ added search + status
+    dispatch(getClientPipingFimPackingList({ page: currentPage, limit, search: debouncedSearch }));
+  }, [currentPage, limit, debouncedSearch, dispatch]); 
 
-  const getPackingLists = async () => {
-      setDisable(true);
-      const project = localStorage.getItem('PARTY_PROJECT_ID');
-      console.log("saerch",search);
-      try {
-          const res = await axios.post(
-      `${V_URL}/party/fim/get-fim-packing-list`,
-      { project, page: currentPage, limit, search }, // ✅ send filters
-          {
-            headers: {
-              Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
-              'Content-Type': 'application/json',
-            },
-          }
-        );
+  const commentsData = useMemo(() => {
+    const list = data?.data?.data || [];
+    return list.filter((e) => !e.deleted);
+  }, [data]);
 
-       if (res.data.success) {
-        // ✅ Adjusted according to your response JSON
-        const data = res.data.data?.data || [];
-        const pagination = res.data.data?.pagination;
+  const totalItems = useMemo(() => {
+    return data?.data?.pagination?.totalItems || data?.data?.totalItems || commentsData.length;
+  }, [data, commentsData]);
 
-        const filtered = data.filter((e) => !e.deleted);
-        setEntity(filtered);
-
-        // ✅ Handle total items for pagination
-       if (pagination) {
-         setTotalItems(pagination.totalItems || filtered.length); // ✅ use totalItems
-       } else {
-         setTotalItems(filtered.length);
-       }
-      }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setDisable(false);
-      }
-    };
-
-const commentsData = useMemo(() => entity, [entity]);
   const handleRefresh = () => {
-    setDisable(true);
-    setStatus('');
     setSearch('');
+    setCurrentPage(1);
   };
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -80,7 +53,7 @@ const commentsData = useMemo(() => entity, [entity]);
   const handleDownloadPdf = async (elem) => {
   try {
     const res = await axios.post(
-      `${V_URL}/party/fim/download-fim-packing`,
+      `${V_URL}/party/download-fim-imir-piping-client`,
       { fim_id: elem._id },
       {
         headers: {
@@ -105,9 +78,10 @@ const commentsData = useMemo(() => entity, [entity]);
   const handleDownloadIMIRPdf = async (elem) => {
     try {
       const res = await axios.post(
-        `${V_URL}/party/fim/download-fim-data`,
+        `${V_URL}/party/download-fim-imir-piping-client`,
         { fim_id: elem._id },
         {
+          responseType: 'blob',
           headers: {
             Authorization: "Bearer " + localStorage.getItem("PARTY_TOKEN"),
             "Content-Type": "application/json",
@@ -115,9 +89,11 @@ const commentsData = useMemo(() => entity, [entity]);
         }
       );
 
-      if (res.data.success) {
+      if (res.status === 200) {
         toast.success("PDF generated!");
-        window.open(res.data.data.file, "_blank"); // open PDF
+        const blob = new Blob([res.data], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank"); // open PDF
       } else {
         toast.error("Failed to generate PDF");
       }
@@ -155,7 +131,7 @@ const commentsData = useMemo(() => entity, [entity]);
             </div>
           </div>
 
-          {disable === false ? (
+          {!loading ? (
             <div className="row">
               <div className="col-sm-12">
                 <div className="card card-table show-entire">
@@ -199,8 +175,7 @@ const commentsData = useMemo(() => entity, [entity]);
                           limit={limit}
                           onLimitChange={(val) => {
                             setLimit(val);
-                            setCurrentPage(1); // reset to first page
-                            setDisable(true);  // force reload
+                            setCurrentPage(1);
                           }}
                         />
                         </div>
@@ -230,13 +205,15 @@ const commentsData = useMemo(() => entity, [entity]);
                               <td>{elem.vehicle_number}</td>
                               <td>{moment(elem.receiving_date).format('YYYY-MM-DD')}</td>
                               <td>
-                                {elem.status === 2 && (
-                                  <span className="custom-badge status-green">Completed</span>
-                                )}
+                               {elem.client_status === 1 ? (
+                                <span className="badge bg-success-light">{elem.status_type?.toUpperCase()}</span>
+                               ) : (
+                                <span className="badge bg-warning-light">Pending</span>
+                               )}
                               </td>
                               <td className="text-end">
                                 <div className="dropdown dropdown-action">
-                                  <a
+                                  <a 
                                     href="#"
                                     className="action-icon dropdown-toggle"
                                     data-bs-toggle="dropdown"
@@ -252,30 +229,13 @@ const commentsData = useMemo(() => entity, [entity]);
                                       <i className="fa-solid fa-eye m-r-5"></i>
                                       View
                                     </button>
-                                 <button
-                                    type="button"
-                                    className="dropdown-item"
-                                    onClick={() => handleDownloadPdf(elem)}
-                                  >
-                                    <i className="fa-solid fa-file-pdf m-r-5"></i> Download PDF
-                                  </button>
-                                  {elem.status === 2 &&(
                                     <button
-                                    type="button"
-                                    className="dropdown-item"
-                                    onClick={() => handleDownloadIMIRPdf(elem)}
-                                  >
-                                    <i className="fa-solid fa-file-pdf m-r-5"></i> Download IMIR PDF
-                                  </button>
-                                  )}
-                                  {/* <button
-                                    type="button"
-                                    className="dropdown-item"
-                                    onClick={() => handleDownloadExcel(elem)}
-                                  >
-                                    <i className="fa-solid fa-file-excel m-r-5"></i> Download Excel
-                                  </button> */}
-                                    
+                                      type="button"
+                                      className="dropdown-item"
+                                      onClick={() => handleDownloadIMIRPdf(elem)}
+                                    >
+                                      <i className="fa-solid fa-file-pdf m-r-5"></i> Download IMIR PDF
+                                    </button>
                                   </div>
                                 </div>
                               </td>
@@ -307,7 +267,6 @@ const commentsData = useMemo(() => entity, [entity]);
                                     currentPage={currentPage}
                                      onPageChange={(page) => {
                                       setCurrentPage(page);
-                                      setDisable(true);
                                     }}
                                 />
                             </div>

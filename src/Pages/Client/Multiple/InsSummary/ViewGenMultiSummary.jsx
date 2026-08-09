@@ -26,12 +26,12 @@ const ViewGenMultiSummary = () => {
  
   /* ================= BUTTON VISIBILITY ================= */
   useEffect(() => {
-    if (data?._id) {
+    if (data?.batch_id || data?._id) {
       const show =
-        data?.client_status === 1 && data?.status !== 1 ? false : true;
+        data?.client_status === 1 ? false : true;
       setShowButtons(show);
     }
-  }, [data?._id]);
+  }, [data?.batch_id, data?._id]);
  
   const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
  
