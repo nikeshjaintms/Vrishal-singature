@@ -3,23 +3,22 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import moment from 'moment';
-import Header from '../../Include/Header';
-import Sidebar from '../../Include/Sidebar';
-import Footer from '../../Include/Footer';
-import { V_URL } from '../../../../BaseUrl';
+import Header from '../../../Include/Header';
+import Sidebar from '../../../Include/Sidebar';
+import Footer from '../../../Include/Footer';
+import { V_URL } from '../../../../../BaseUrl';
 
-const ViewMultiClearFitup = () => {
+const ViewMultiClearRT = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const data = location.state; // contains {data: [...], totalItems, ...} 
+  const data = location.state; // contains RT report object
 
-  console.log('Fitup Data:', data);
+  console.log('RT Data:', data);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [clientDate, setClientDate] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
   const [loadingPdf, setLoadingPdf] = useState(false);
 
-  // QC-like states
   const [randomItems, setRandomItems] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const [showRandomItems, setShowRandomItems] = useState(false);
@@ -48,10 +47,9 @@ const ViewMultiClearFitup = () => {
       }
 
       const res = await axios.post(
-        `${V_URL}/party/download-piping-fitup-client`,
+        `${V_URL}/party/download-piping-rt-client`,
         {
-          fitupId: data._id,
-          report_no_two: data.report_no_two,
+          report_no_two: data.report_no,
           print_date: clientDate,
         },
         {
@@ -87,14 +85,14 @@ const ViewMultiClearFitup = () => {
         _id: item._id,
         drawing_no: item?.drawing_id?.drawing_no || '-',
         rev_no: item?.drawing_id?.rev || '-',
-        spool_no: item?.joint_wise_data?.[0]?.spool_info?.spool_no || item?.joint_wise_data?.[0]?.spool_no_id?.spool_no || '-',
-        joint_no: item?.joint_wise_data?.[0]?.joint_no || '-',
-        size: item?.joint_wise_data?.[0]?.material_items?.selected_size?.name || '-',
-        thickness: item?.joint_wise_data?.[0]?.material_items?.selected_thickness?.name || '-',
-        joint_type: item?.joint_wise_data?.[0]?.material_items?.joint_type?.name || '-',
-        wps_no: item?.wps_no?.wpsNo || '-',
+        spool_no: item?.spool_id?.spool_no || item?.spool_id?.sub_spool_no || '-',
+        joint_no: item?.joint_id?.joint_no || '-',
+        rt_type: item?.rt_type || '-',
+        thickness: item?.thickness || '-',
+        rt_location: item?.rt_location || '-',
+        technique: item?.technique || '-',
+        status: item?.status === 1 ? 'Accepted' : item?.status === 2 ? 'Repair' : item?.status === 3 ? 'Re-take' : item?.status === 4 ? 'Re-shoot' : 'Pending',
         selected: false,
-        remark: item?.remarks || '',
       })) || [];
 
     setRandomItems(items);
@@ -121,7 +119,7 @@ const ViewMultiClearFitup = () => {
   };
 
   /* ================= UPDATE STATUS ================= */
-  const submitFitupStatus = async (statusType) => {
+  const submitRTStatus = async (statusType) => {
     if (!clientDate) {
       toast.error('Please select date');
       return;
@@ -129,7 +127,7 @@ const ViewMultiClearFitup = () => {
 
     try {
       const payload = {
-        fitupId: data._id,
+        id: data._id,
         status_type: statusType,
         client_date: clientDate,
         client_user: localStorage.getItem('PARTY_ID'),
@@ -146,18 +144,17 @@ const ViewMultiClearFitup = () => {
         payload.items = randomItems.map((item) => ({
           _id: item._id,
           selected: item.selected === true,
-          remark: item.remark,
         }));
       }
 
-      const res = await axios.post(`${V_URL}/party/update-piping-fitup-status`, payload, {
+      const res = await axios.post(`${V_URL}/party/update-piping-rt-status`, payload, {
         headers: {
           Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
         },
       });
 
       if (res.data.success) {
-        toast.success('Fit-Up updated successfully');
+        toast.success('RT Clearance updated successfully');
         setShowRandomItems(false);
         fetchPdf();
       } else {
@@ -184,33 +181,33 @@ const ViewMultiClearFitup = () => {
               </li>
               <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
               <li className="breadcrumb-item">
-                <Link to="/party/piping-store/fitup-clearance-management">Fit-Up Acceptance</Link>
+                <Link to="/party/piping-store/rt-clearance-management">RT Acc / Rej</Link>
               </li>
               <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
-              <li className="breadcrumb-item active">View Fit-Up Clearance</li>
+              <li className="breadcrumb-item active">View RT Clearance</li>
             </ul>
           </div>
 
-          {/* ===== Fit-Up Details ===== */}
+          {/* ===== RT Details ===== */}
           <div className="card">
             <div className="card-body">
-              <h4 className="mb-3">Fit-Up Details</h4>
+              <h4 className="mb-3">RT Details</h4>
               <div className="row">
                 <div className="col-md-4">
                   <label>Report No</label>
-                  <input className="form-control" value={data.report_no_two || '-'} readOnly />
+                  <input className="form-control" value={data.report_no || '-'} readOnly />
                 </div>
 
                 <div className="col-md-4">
-                  <label>Offered By</label>
-                  <input className="form-control" value={data?.offered_by?.user_name || '-'} readOnly />
+                  <label>QC By</label>
+                  <input className="form-control" value={data?.qc_by?.user_name || '-'} readOnly />
                 </div>
 
                 <div className="col-md-4">
-                  <label>Created Date</label>
+                  <label>QC Date</label>
                   <input
                     className="form-control"
-                    value={moment(data.createdAt).format('YYYY-MM-DD')}
+                    value={data.qc_date ? moment(data.qc_date).format('YYYY-MM-DD') : '-'}
                     readOnly
                   />
                 </div>
@@ -237,11 +234,11 @@ const ViewMultiClearFitup = () => {
                   </div>
 
                   <div className="mt-3">
-                    <button className="btn btn-primary me-2" onClick={() => submitFitupStatus('REVIEWED')}>
+                    <button className="btn btn-primary me-2" onClick={() => submitRTStatus('REVIEWED')}>
                       REVIEWED
                     </button>
 
-                    <button className="btn btn-warning me-2" onClick={() => submitFitupStatus('WITNESSED')}>
+                    <button className="btn btn-warning me-2" onClick={() => submitRTStatus('WITNESSED')}>
                       WITNESSED
                     </button>
 
@@ -259,7 +256,7 @@ const ViewMultiClearFitup = () => {
                 <div className="mt-4">
                   <iframe
                     src={pdfUrl}
-                    title="Fit-Up Inspection PDF"
+                    title="RT Inspection PDF"
                     width="100%"
                     height="700px"
                     style={{ border: '1px solid #ccc' }}
@@ -286,11 +283,11 @@ const ViewMultiClearFitup = () => {
                           <th>REV. NO</th>
                           <th>SPOOL NO</th>
                           <th>JOINT NO</th>
-                          <th>SIZE</th>
+                          <th>RT TYPE</th>
                           <th>THK</th>
-                          <th>JOINT TYPE</th>
-                          <th>WPS NO</th>
-                          <th>REMARK</th>
+                          <th>LOCATION</th>
+                          <th>TECHNIQUE</th>
+                          <th>STATUS</th>
                         </tr>
                       </thead>
 
@@ -309,24 +306,18 @@ const ViewMultiClearFitup = () => {
                             <td>{item.rev_no}</td>
                             <td>{item.spool_no}</td>
                             <td>{item.joint_no}</td>
-                            <td>{item.size}</td>
+                            <td>{item.rt_type}</td>
                             <td>{item.thickness}</td>
-                            <td>{item.joint_type}</td>
-                            <td>{item.wps_no}</td>
-                            <td>
-                              <input
-                                className="form-control"
-                                value={item.remark}
-                                onChange={(e) => handleItemChange(index, 'remark', e.target.value)}
-                              />
-                            </td>
+                            <td>{item.rt_location}</td>
+                            <td>{item.technique}</td>
+                            <td>{item.status}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
 
-                  <button className="btn btn-success mt-2" onClick={() => submitFitupStatus('RANDOM WITNESSED')}>
+                  <button className="btn btn-success mt-2" onClick={() => submitRTStatus('RANDOM WITNESSED')}>
                     Submit Random Witnessed
                   </button>
                 </div>
@@ -340,4 +331,4 @@ const ViewMultiClearFitup = () => {
   );
 };
 
-export default ViewMultiClearFitup;
+export default ViewMultiClearRT;

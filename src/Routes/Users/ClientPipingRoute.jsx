@@ -33,6 +33,7 @@ import QFinalDimensionList from '../../Pages/ClientPiping/QualityClearance/Final
 // staff-side equivalent existed) — see comments in the respective piping
 // controller files. Treat as needing real QA before production use.
 import MultiRtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiRT/MultiRtClearance';
+import ViewMultiClearRT from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiRT/ViewMultiClearRT';
 import MultiMptClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiMPT/MultiMptClearance';
 import MultiLptClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiLPT/MultiLptClearance';
 
@@ -102,7 +103,7 @@ const ClientPipingRoutes = () => {
           <Route path='rt-offer-management' element={<PlaceholderPage title="RT Offering" />} />
           <Route path='manage-rt-offer' element={<PlaceholderPage title="Manage RT Offer" />} />
           <Route path='rt-clearance-management' element={<MultiRtClearance />} />
-          <Route path='manage-rt-clearance' element={<PlaceholderPage title="RT Detail" />} />
+          <Route path='view-quality-clearance-rt' element={<ViewMultiClearRT />} />
           <Route path='pwht-offer-management' element={<PlaceholderPage title="PWHT Offering" />} />
           <Route path='manage-pwht-offer' element={<PlaceholderPage title="Manage PWHT Offer" />} />
           <Route path='pwht-clearance-management' element={<MultiPwhtClearance />} />

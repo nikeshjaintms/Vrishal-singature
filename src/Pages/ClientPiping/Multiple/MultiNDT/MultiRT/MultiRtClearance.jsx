@@ -1,24 +1,16 @@
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import Header from '../../../Include/Header';
 import Sidebar from '../../../Include/Sidebar';
 import Footer from '../../../Include/Footer';
 import Loader from '../../../Include/Loader';
 import { Pagination, Search } from '../../../Table';
 import moment from 'moment';
-import axios from 'axios';
 import DropDown from '../../../../../Components/DropDown';
-import { V_URL } from '../../../../../BaseUrl';
 import { PdfDownloadErp } from '../../../../../Components/ErpPdf/PdfDownloadErp';
+import { getClientPipingMultiRT } from '../../../../../Store/Client/Piping/NDT/getClientPipingMultiRT';
 
-// Read-only, built against the getRtInspectionPiping endpoint added this
-// session — this is genuinely new backend code with no prior staff usage,
-// so treat this page as needing real QA before relying on it in production.
-//
-// IMPORTANT: this model's status enum is 0-based
-// (0:Pending 1:Accepted 2:Rejected 3:Partially), unlike every other NDT
-// type built earlier (which use 1-based). Do not copy the 1/2/3/4 badge
-// logic from those files here.
 const useDebounce = (value, delay = 600) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -29,42 +21,23 @@ const useDebounce = (value, delay = 600) => {
 };
 
 const MultiRtClearance = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
 
-  const [rows, setRows] = useState([]);
-  const [totalItems, setTotalItems] = useState(0);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(false);
   const debouncedSearch = useDebounce(search, 500);
 
-  const projectId = localStorage.getItem('PARTY_PROJECT_ID');
+  const { data: reduxData, loading } = useSelector((state) => state.getClientPipingMultiRT);
+  const rows = reduxData?.data?.data || [];
+  const totalItems = reduxData?.data?.totalItems || 0;
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`${V_URL}/party/get-multi-rt-clearance`, {
-        params: {
-          project: projectId,
-          status: '1,2,3', // Accepted, Rejected, Partially (0-based enum)
-          page,
-          limit,
-          search: debouncedSearch,
-        },
-        headers: {
-          Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
-        },
-      });
-      setRows(res?.data?.data || []);
-      setTotalItems(res?.data?.pagination?.totalItems || 0);
-    } catch (err) {
-      setRows([]);
-      setTotalItems(0);
-    } finally {
-      setLoading(false);
-    }
+  const fetchData = () => {
+    dispatch(getClientPipingMultiRT({ page, limit, search: debouncedSearch }));
   };
 
   useEffect(() => {
@@ -87,7 +60,7 @@ const MultiRtClearance = () => {
     bodyFormData.append('print_date', true);
     PdfDownloadErp({
       apiMethod: 'post',
-      url: 'download-rt-inspection-pdf',
+      url: 'download-piping-rt-client',
       body: bodyFormData,
     });
   };
@@ -109,7 +82,7 @@ const MultiRtClearance = () => {
                     <li className="breadcrumb-item">
                       <i className="feather-chevron-right"></i>
                     </li>
-                    <li className="breadcrumb-item active">RT Acc / Rej</li>
+                    <li className="breadcrumb-item active">RT Inspection</li>
                   </ul>
                 </div>
               </div>
@@ -184,27 +157,23 @@ const MultiRtClearance = () => {
                                 <tr key={elem._id}>
                                   <td>{(page - 1) * limit + i + 1}</td>
                                   <td>{elem?.report_no}</td>
-                                  <td>
-                                    {(elem?.drawing_no || [])
-                                      .filter((value, index, self) => value && self.indexOf(value) === index)
-                                      .map((value, index) => (
-                                        <span key={index}>
-                                          {value}
-                                          <br />
-                                        </span>
-                                      )) || '-'}
-                                  </td>
-                                  <td>
-                                    {(elem?.spool_no || [])
-                                      .filter((value, index, self) => value && self.indexOf(value) === index)
-                                      .map((value, index) => (
-                                        <span key={index}>
-                                          {value}
-                                          <br />
-                                        </span>
-                                      )) || '-'}
-                                  </td>
-                                  <td>{elem?.qc_by?.name || '-'}</td>
+                                   <td>
+                                    {[...new Set(elem?.items?.map(item => item?.drawing_id?.drawing_no).filter(Boolean))].map((value, index) => (
+                                      <span key={index}>
+                                        {value}
+                                        <br />
+                                      </span>
+                                    ))}
+                                   </td>
+                                   <td>
+                                    {[...new Set(elem?.items?.map(item => item?.spool_id?.sub_spool_no || item?.spool_id?.spool_no || item?.spool_no_id?.spool_no || item?.spool_no).filter(Boolean))].map((value, index) => (
+                                      <span key={index}>
+                                        {value}
+                                        <br />
+                                      </span>
+                                    ))}
+                                   </td>
+                                   <td>{elem?.qc_by?.user_name || '-'}</td>
                                   <td>
                                     {elem.qc_date ? moment(elem.qc_date).format('DD-MM-YYYY') : '-'}
                                   </td>
@@ -229,6 +198,14 @@ const MultiRtClearance = () => {
                                         <i className="fa fa-ellipsis-v"></i>
                                       </a>
                                       <div className="dropdown-menu dropdown-menu-end">
+                                        <button
+                                          type="button"
+                                          className="dropdown-item"
+                                          onClick={() => navigate('/party/piping-store/view-quality-clearance-rt', { state: elem })}
+                                        >
+                                          <i className="fa-solid fa-eye m-r-5"></i>
+                                          View
+                                        </button>
                                         <button
                                           type="button"
                                           className="dropdown-item"

@@ -54,14 +54,14 @@ const Sidebar = () => {
   const toggle = (setter, value) => () => setter(!value);
 
   const ndtTypes = [
-    { key: 'rt', label: 'RT', open: ndtRt, setOpen: setNdtRt, offer: 'rt-offer-management', clearance: 'rt-clearance-management' },
-    { key: 'pwht', label: 'PWHT', open: ndtPwht, setOpen: setNdtPwht, offer: 'pwht-offer-management', clearance: 'pwht-clearance-management' },
-    { key: 'ft', label: 'FT', open: ndtFt, setOpen: setNdtFt, offer: 'ft-offer-management', clearance: 'ft-clearance-management' },
-    { key: 'lpt', label: 'LPT', open: ndtLpt, setOpen: setNdtLpt, offer: 'lpt-offer-management', clearance: 'lpt-clearance-management' },
-    { key: 'mpt', label: 'MPT', open: ndtMpt, setOpen: setNdtMpt, offer: 'mpt-offer-management', clearance: 'mpt-clearance-management' },
-    { key: 'ht', label: 'Hardness Testing', open: ndtHt, setOpen: setNdtHt, offer: 'ht-offer-management', clearance: 'ht-clearance-management' },
-    { key: 'pmi', label: 'PMI', open: ndtPmi, setOpen: setNdtPmi, offer: 'pmi-offer-management', clearance: 'pmi-clearance-management' },
-    { key: 'pickling', label: 'Pickling & Passivation', open: ndtPickling, setOpen: setNdtPickling, offer: 'pickling-passivation-offer-management', clearance: 'pickling-passivation-clearance-management' },
+    { key: 'rt', label: 'RT', open: ndtRt, setOpen: setNdtRt, clearance: 'rt-clearance-management' },
+    { key: 'pwht', label: 'PWHT', open: ndtPwht, setOpen: setNdtPwht, clearance: 'pwht-clearance-management' },
+    { key: 'ft', label: 'FT', open: ndtFt, setOpen: setNdtFt, clearance: 'ft-clearance-management' },
+    { key: 'lpt', label: 'LPT', open: ndtLpt, setOpen: setNdtLpt, clearance: 'lpt-clearance-management' },
+    { key: 'mpt', label: 'MPT', open: ndtMpt, setOpen: setNdtMpt, clearance: 'mpt-clearance-management' },
+    { key: 'ht', label: 'Hardness Testing', open: ndtHt, setOpen: setNdtHt, clearance: 'ht-clearance-management' },
+    { key: 'pmi', label: 'PMI', open: ndtPmi, setOpen: setNdtPmi, clearance: 'pmi-clearance-management' },
+    { key: 'pickling', label: 'Pickling & Passivation', open: ndtPickling, setOpen: setNdtPickling, clearance: 'pickling-passivation-clearance-management' },
   ];
 
   const paintingTypes = [
@@ -138,23 +138,10 @@ const Sidebar = () => {
               </a>
               <ul style={{ display: ndtOpen ? 'block' : 'none' }}>
                 {ndtTypes.map((t) => (
-                  <li className="submenu" key={t.key}>
-                    <a className={t.open ? "subdrop active" : ""} style={{ cursor: "pointer" }} onClick={toggle(t.setOpen, t.open)}>
+                  <li key={t.key}>
+                    <Link to={`/party/piping-store/${t.clearance}`} className={isActive(t.clearance) ? 'active' : ''}>
                       <span>{t.label}</span>
-                      <span className="menu-arrow" />
-                    </a>
-                    <ul style={{ display: t.open ? 'block' : 'none' }}>
-                      <li>
-                        <Link to={`/party/piping-store/${t.offer}`} className={isActive(t.offer) ? 'active' : ''}>
-                          <span>Offering</span>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to={`/party/piping-store/${t.clearance}`} className={isActive(t.clearance) ? 'active' : ''}>
-                          <span>Acc / Rej</span>
-                        </Link>
-                      </li>
-                    </ul>
+                    </Link>
                   </li>
                 ))}
               </ul>

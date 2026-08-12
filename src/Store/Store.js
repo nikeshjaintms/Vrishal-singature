@@ -3,6 +3,7 @@ import getClientFimPackingListReducer from './Client/Structural/FIM/getClientFim
 import getClientPipingFimPackingListReducer from './Client/Piping/FIM/getClientPipingFimPackingList';
 import getClientPipingMultiFitupReducer from './Client/Piping/Fitup/getClientPipingMultiFitup';
 import getClientPipingMultiWeldVisualReducer from './Client/Piping/WeldVisual/getClientPipingMultiWeldVisual';
+import getClientPipingMultiRTReducer from './Client/Piping/NDT/getClientPipingMultiRT';
 // import getCustomersReducer from './slices/customer/Customer';
 import getCustomersReducer from '../../src/Store/Store/Customer/Customer';
 // Admin
@@ -676,6 +677,7 @@ export default configureStore({
       getClientPipingFimPackingList: getClientPipingFimPackingListReducer,
       getClientPipingMultiFitup: getClientPipingMultiFitupReducer,
       getClientPipingMultiWeldVisual: getClientPipingMultiWeldVisualReducer,
+      getClientPipingMultiRT: getClientPipingMultiRTReducer,
       getClientFimPackingList: getClientFimPackingListReducer,
     login: adminLoginSlice,
     forgetPassword: adminForgetPasswordSlice,
