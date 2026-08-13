@@ -4,6 +4,8 @@ import getClientPipingFimPackingListReducer from './Client/Piping/FIM/getClientP
 import getClientPipingMultiFitupReducer from './Client/Piping/Fitup/getClientPipingMultiFitup';
 import getClientPipingMultiWeldVisualReducer from './Client/Piping/WeldVisual/getClientPipingMultiWeldVisual';
 import getClientPipingMultiRTReducer from './Client/Piping/NDT/getClientPipingMultiRT';
+import getClientPipingMultiPWHTReducer from './Client/Piping/NDT/getClientPipingMultiPWHT';
+import getClientPipingMultiPicklingReducer from './Client/Piping/NDT/getClientPipingMultiPickling';
 // import getCustomersReducer from './slices/customer/Customer';
 import getCustomersReducer from '../../src/Store/Store/Customer/Customer';
 // Admin
@@ -678,6 +680,8 @@ export default configureStore({
       getClientPipingMultiFitup: getClientPipingMultiFitupReducer,
       getClientPipingMultiWeldVisual: getClientPipingMultiWeldVisualReducer,
       getClientPipingMultiRT: getClientPipingMultiRTReducer,
+      getClientPipingMultiPWHT: getClientPipingMultiPWHTReducer,
+      getClientPipingMultiPickling: getClientPipingMultiPicklingReducer,
       getClientFimPackingList: getClientFimPackingListReducer,
     login: adminLoginSlice,
     forgetPassword: adminForgetPasswordSlice,

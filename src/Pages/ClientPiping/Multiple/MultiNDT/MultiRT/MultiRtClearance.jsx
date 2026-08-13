@@ -10,6 +10,9 @@ import moment from 'moment';
 import DropDown from '../../../../../Components/DropDown';
 import { PdfDownloadErp } from '../../../../../Components/ErpPdf/PdfDownloadErp';
 import { getClientPipingMultiRT } from '../../../../../Store/Client/Piping/NDT/getClientPipingMultiRT';
+import toast from 'react-hot-toast';
+import axios from 'axios';
+import { V_URL } from '../../../../../BaseUrl';
 
 const useDebounce = (value, delay = 600) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -33,8 +36,8 @@ const MultiRtClearance = () => {
   const debouncedSearch = useDebounce(search, 500);
 
   const { data: reduxData, loading } = useSelector((state) => state.getClientPipingMultiRT);
-  const rows = reduxData?.data?.data || [];
-  const totalItems = reduxData?.data?.totalItems || 0;
+  const rows = reduxData?.data || [];
+  const totalItems = reduxData?.pagination?.totalItems || 0;
 
   const fetchData = () => {
     dispatch(getClientPipingMultiRT({ page, limit, search: debouncedSearch }));
@@ -54,16 +57,39 @@ const MultiRtClearance = () => {
     setPage(1);
   };
 
-  const downloadInspection = (elem) => {
-    const bodyFormData = new URLSearchParams();
-    bodyFormData.append('inspection_id', elem._id);
-    bodyFormData.append('print_date', true);
-    PdfDownloadErp({
-      apiMethod: 'post',
-      url: 'download-piping-rt-client',
-      body: bodyFormData,
-    });
-  };
+
+  
+    const downloadInspection = async (row) => {
+      try {
+        const toastId = toast.loading('Downloading...');
+        const response = await axios.post(
+          `${V_URL}/party/download-piping-rt-client`,
+          {
+            test_inspect_no: row.test_inspect_no,
+            print_date: true
+          },
+          {
+            headers: {
+              Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+            },
+            responseType: 'blob',
+          }
+        );
+  
+        const file = new Blob([response.data], { type: 'application/pdf' });
+        const fileUrl = window.URL.createObjectURL(file);
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = `RT_${row.test_inspect_no || 'Report'}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        toast.success('Downloaded successfully', { id: toastId });
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to download PDF');
+      }
+    };
 
   return (
     <>
@@ -157,35 +183,31 @@ const MultiRtClearance = () => {
                                 <tr key={elem._id}>
                                   <td>{(page - 1) * limit + i + 1}</td>
                                   <td>{elem?.report_no}</td>
-                                   <td>
-                                    {[...new Set(elem?.items?.map(item => item?.drawing_id?.drawing_no).filter(Boolean))].map((value, index) => (
-                                      <span key={index}>
-                                        {value}
-                                        <br />
-                                      </span>
-                                    ))}
-                                   </td>
-                                   <td>
-                                    {[...new Set(elem?.items?.map(item => item?.spool_id?.sub_spool_no || item?.spool_id?.spool_no || item?.spool_no_id?.spool_no || item?.spool_no).filter(Boolean))].map((value, index) => (
-                                      <span key={index}>
-                                        {value}
-                                        <br />
-                                      </span>
-                                    ))}
-                                   </td>
-                                   <td>{elem?.qc_by?.user_name || '-'}</td>
                                   <td>
-                                    {elem.qc_date ? moment(elem.qc_date).format('DD-MM-YYYY') : '-'}
+                                    {[...new Set(elem?.items?.map(item => item?.drawing_no || item?.drawing_id?.drawing_no).filter(Boolean))].map((value, index) => (
+                                      <span key={index}>
+                                        {value}
+                                        <br />
+                                      </span>
+                                    ))}
+                                  </td>
+                                  <td>
+                                    {[...new Set(elem?.items?.map(item => item?.spool_no || item?.spool_id?.sub_spool_no || item?.spool_id?.spool_no || item?.spool_no_id?.spool_no).filter(Boolean))].map((value, index) => (
+                                      <span key={index}>
+                                        {value}
+                                        <br />
+                                      </span>
+                                    ))}
+                                  </td>
+                                  <td>{elem?.qc_by || elem?.qc_by?.user_name || '-'}</td>
+                                  <td>
+                                    {(elem.qc_time || elem.qc_date) ? moment(elem.qc_time || elem.qc_date).format('DD-MM-YYYY') : '-'}
                                   </td>
                                   <td className="status-badge">
-                                    {elem.status === 0 ? (
+                                    {elem.client_status === 0 || elem.client_status === null ? (
                                       <span className="custom-badge status-orange">Pending</span>
-                                    ) : elem.status === 1 ? (
-                                      <span className="custom-badge status-green">Accepted</span>
-                                    ) : elem.status === 2 ? (
-                                      <span className="custom-badge status-pink">Rejected</span>
-                                    ) : elem.status === 3 ? (
-                                      <span className="custom-badge status-purple">Partially</span>
+                                    ) : elem.client_status === 1 ? (
+                                      <span className="custom-badge status-green">{elem.status_type}</span>
                                     ) : null}
                                   </td>
                                   <td className="text-end">

@@ -10,7 +10,9 @@ import DropDown from '../../../../Components/DropDown';
 import moment from 'moment';
 import { getClientPipingMultiFitup } from '../../../../Store/Client/Piping/Fitup/getClientPipingMultiFitup';
 import { PdfDownloadErp } from '../../../../Components/ErpPdf/PdfDownloadErp';
-
+import toast from 'react-hot-toast';
+import axios from 'axios';
+import { V_URL } from '../../../../BaseUrl';
 const useDebounce = (value, delay = 500) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -51,22 +53,37 @@ const QFitUpList = () => {
     fetchData();
   };
 
-  const downloadInspection = async (row) => {
-    try {
-      const body = new URLSearchParams();
-      body.append('report_no_two', row.report_no_two);
-      body.append('print_date', true);
-
-      PdfDownloadErp({
-        apiMethod: 'post',
-        url: 'download-piping-fitup-client',
-        body
-      });
-    } catch (err) {
-      console.error('Download error:', err);
-    }
-  };
-
+    const downloadInspection = async (row) => {
+      try {
+        const toastId = toast.loading('Downloading...');
+        const response = await axios.post(
+          `${V_URL}/party/download-piping-fitup-client`,
+          {
+            test_inspect_no: row.test_inspect_no,
+            print_date: true
+          },
+          {
+            headers: {
+              Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+            },
+            responseType: 'blob',
+          }
+        );
+  
+        const file = new Blob([response.data], { type: 'application/pdf' });
+        const fileUrl = window.URL.createObjectURL(file);
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = `FitUp_${row.test_inspect_no || 'Report'}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        toast.success('Downloaded successfully', { id: toastId });
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to download PDF');
+      }
+    };
   if (loading) return <Loader />;
 
   return (
