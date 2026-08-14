@@ -37,86 +37,45 @@ const MultiPmiClearance = () => {
 
   const projectId = localStorage.getItem('PARTY_PROJECT_ID');
 
-  // const fetchData = async () => {
-  //   setLoading(true);
-  //   try {
-  //     const res = await axios.post(
-  //       `${V_URL}/party/get-piping-pmi-client`,
-  //       {
-  //         project_id: projectId,
-  //         status: '2,3,4',
-  //         page,
-  //         limit,
-  //         search: debouncedSearch,
-  //       },
-  //       {
-  //         headers: {
-  //           Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
-  //         },
-  //       }
-  //     );
-  //     setRows(res?.data?.data || []);
-  //     setTotalItems(res?.data?.pagination?.totalItems || 0);
-  //   } catch (err) {
-  //     setRows([]);
-  //     setTotalItems(0);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const fetchData = async () => {
-  setLoading(true);
-
-  try {
-    const res = await axios.post(
-      `${V_URL}/party/get-piping-pmi-client`,
-      {
-        project_id: projectId,
-        status: '2,3,4',
-        page,
-        limit,
-        search: debouncedSearch,
-      },
-      {
-        headers: {
-          Authorization:
-            'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+    setLoading(true);
+    try {
+      const res = await axios.post(
+        `${V_URL}/party/get-piping-pmi-client`,
+        {
+          project_id: projectId,
+          page,
+          limit,
+          search: debouncedSearch,
         },
-      }
-    );
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          },
+        }
+      );
 
-    // API response:
-    // {
-    //   data: {
-    //     data: [...],
-    //     totalItems: 13
-    //   }
-    // }
+      const responseData = res?.data?.data;
 
-    const responseData = res?.data?.data;
+      const data = Array.isArray(responseData)
+        ? responseData
+        : responseData?.data || [];
 
-    const data = Array.isArray(responseData)
-      ? responseData
-      : responseData?.data || [];
+      const total = Array.isArray(responseData)
+        ? res?.data?.pagination?.totalItems || data.length
+        : responseData?.totalItems || 0;
 
-    const total = Array.isArray(responseData)
-      ? res?.data?.pagination?.totalItems || data.length
-      : responseData?.totalItems || 0;
+      setRows(data);
+      setTotalItems(total);
+    } catch (err) {
+      console.error('PMI fetch error:', err);
+      setRows([]);
+      setTotalItems(0);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    setRows(data);
-    setTotalItems(total);
-  } catch (err) {
-    console.error('PMI fetch error:', err);
-
-    setRows([]);
-    setTotalItems(0);
-  } finally {
-    setLoading(false);
-  }
-};
-
-  console.log('rowss====>',rows);
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps

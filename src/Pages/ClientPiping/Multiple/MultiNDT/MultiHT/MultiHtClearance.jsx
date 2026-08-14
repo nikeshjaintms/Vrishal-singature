@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo } from 'react'
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom';
 import Header from '../../../Include/Header';
 import Sidebar from '../../../Include/Sidebar';
 import Footer from '../../../Include/Footer';
@@ -9,20 +9,15 @@ import moment from 'moment';
 import axios from 'axios';
 import DropDown from '../../../../../Components/DropDown';
 import { V_URL } from '../../../../../BaseUrl';
-import { PdfDownloadErp } from '../../../../../Components/ErpPdf/PdfDownloadErp';
+import toast from 'react-hot-toast';
 
-// Read-only: HT does not yet have the client_status/status_type fields the
-// RT/MPT/LPT accept-reject action depends on — view + download only.
-//
-// The backend getMultiHTClearance endpoint has no pagination, search, or
-// status filter — it returns every HT inspection item for the project. So
-// clearance-only filtering (status 2/3/4), search, and pagination are all
-// done client-side here.
 const MultiHtClearance = () => {
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
 
-  const [allRows, setAllRows] = useState([]);
+  const [rows, setRows] = useState([]);
+  const [totalItems, setTotalItems] = useState(0);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState('');
@@ -33,15 +28,37 @@ const MultiHtClearance = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${V_URL}/party/get-multi-ht-clearance`, {
-        params: { project_id: projectId },
-        headers: {
-          Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+      const res = await axios.post(
+        `${V_URL}/party/get-piping-ht-client`,
+        {
+          project_id: projectId,
+          page,
+          limit,
+          search,
         },
-      });
-      setAllRows(res?.data?.data || []);
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          },
+        }
+      );
+
+      const responseData = res?.data?.data;
+
+      const data = Array.isArray(responseData)
+        ? responseData
+        : responseData?.data || [];
+
+      const total = Array.isArray(responseData)
+        ? res?.data?.pagination?.totalItems || data.length
+        : responseData?.totalItems || 0;
+
+      setRows(data);
+      setTotalItems(total);
     } catch (err) {
-      setAllRows([]);
+      console.error('HT fetch error:', err);
+      setRows([]);
+      setTotalItems(0);
     } finally {
       setLoading(false);
     }
@@ -50,26 +67,7 @@ const MultiHtClearance = () => {
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Clearance-only (status 2/3/4), then search, done client-side
-  const filteredRows = useMemo(() => {
-    let data = allRows.filter((r) => [2, 3, 4].includes(r.status));
-    if (search.trim()) {
-      const s = search.trim().toLowerCase();
-      data = data.filter(
-        (r) =>
-          r.report_no?.toLowerCase().includes(s) ||
-          r.report_no_two?.toLowerCase().includes(s) ||
-          r.drawing_no?.toLowerCase().includes(s) ||
-          r.spool_no?.toLowerCase().includes(s)
-      );
-    }
-    return data;
-  }, [allRows, search]);
-
-  const totalItems = filteredRows.length;
-  const pagedRows = filteredRows.slice((page - 1) * limit, page * limit);
+  }, [page, limit, search]);
 
   useEffect(() => {
     setPage(1);
@@ -80,15 +78,31 @@ const MultiHtClearance = () => {
     setPage(1);
   };
 
-  const downloadInspection = (elem) => {
-    const bodyFormData = new URLSearchParams();
-    bodyFormData.append('report_no_two', elem.report_no_two);
-    bodyFormData.append('print_date', true);
-    PdfDownloadErp({
-      apiMethod: 'post',
-      url: 'download-ht-inspection-pdf',
-      body: bodyFormData,
-    });
+  const downloadInspection = async (elem) => {
+    try {
+      const bodyFormData = new URLSearchParams();
+      bodyFormData.append('report_no_two', elem.report_no_two);
+      bodyFormData.append('print_date', true);
+
+      const res = await axios.post(
+        `${V_URL}/party/download-piping-ht-client`,
+        bodyFormData,
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          },
+          responseType: 'blob',
+        }
+      );
+
+      const file = new Blob([res.data], { type: 'application/pdf' });
+      const fileUrl = URL.createObjectURL(file);
+      window.open(fileUrl, '_blank');
+    } catch (err) {
+      console.error('HT PDF download error:', err);
+      toast.error('Failed to download PDF');
+    }
   };
 
   return (
@@ -173,21 +187,42 @@ const MultiHtClearance = () => {
                               </tr>
                             </thead>
                             <tbody>
-                              {pagedRows.length === 0 && (
+                              {rows.length === 0 && (
                                 <tr>
                                   <td colSpan="9">
                                     <div className="no-table-data">No Data Found!</div>
                                   </td>
                                 </tr>
                               )}
-                              {pagedRows.map((elem, i) => (
+                              {rows.map((elem, i) => (
                                 <tr key={elem.item_id || elem.ht_test_id || i}>
                                   <td>{(page - 1) * limit + i + 1}</td>
                                   <td>{elem?.report_no}</td>
                                   <td>{elem?.report_no_two}</td>
-                                  <td>{elem?.drawing_no || '-'}</td>
-                                  <td>{elem?.spool_no || '-'}</td>
-                                  <td>{elem?.qc_by?.name || '-'}</td>
+                                   <td>
+                                    {[...new Set(
+                                      elem?.items
+                                        ?.map((e) => e?.drawing_id?.drawing_no)
+                                        .filter(Boolean)
+                                    )].map((drawingNo, index) => (
+                                      <span key={index}>
+                                        {drawingNo}
+                                        <br />
+                                      </span>
+                                    ))}
+                                  </td>
+                                  <td>
+                                    {elem?.items
+                                      ?.map((e) => e?.spool_no)
+                                      .filter((value, index, self) => self.indexOf(value) === index)
+                                      .map((value, index) => (
+                                        <span key={index}>
+                                          {value}
+                                          <br />
+                                        </span>
+                                      )) || '-'}
+                                  </td>
+                                  <td>{elem?.qc_by?.user_name || '-'}</td>
                                   <td>
                                     {elem.qc_date ? moment(elem.qc_date).format('DD-MM-YYYY') : '-'}
                                   </td>
@@ -212,6 +247,16 @@ const MultiHtClearance = () => {
                                         <i className="fa fa-ellipsis-v"></i>
                                       </a>
                                       <div className="dropdown-menu dropdown-menu-end">
+                                        <button
+                                          type="button"
+                                          className="dropdown-item"
+                                          onClick={() =>
+                                            navigate('/party/piping-store/view-quality-clearance-ht', { state: elem })
+                                          }
+                                        >
+                                          <i className="fa-solid fa-eye m-r-5"></i>
+                                          View
+                                        </button>
                                         <button
                                           type="button"
                                           className="dropdown-item"

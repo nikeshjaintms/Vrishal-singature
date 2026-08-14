@@ -46,6 +46,7 @@ import MultiPwhtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/Multi
 import ViewMultiClearPWHT from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPWHT/ViewMultiClearPWHT';
 import MultiFtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiFT/MultiFtClearance';
 import MultiHtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiHT/MultiHtClearance';
+import ViewMultiClearHT from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiHT/ViewMultiClearHT';
 import MultiPmiClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPMI/MultiPmiClearance';
 import ViewMultiClearPMI from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPMI/ViewMultiClearPMI';
 import MultiPicklingClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPickling/MultiPicklingClearance';
@@ -129,6 +130,7 @@ const ClientPipingRoutes = () => {
           <Route path='ht-offer-management' element={<PlaceholderPage title="Hardness Testing Offering" />} />
           <Route path='manage-ht-offer' element={<PlaceholderPage title="Manage Hardness Testing Offer" />} />
           <Route path='ht-clearance-management' element={<MultiHtClearance />} />
+          <Route path='view-quality-clearance-ht' element={<ViewMultiClearHT />} />
           <Route path='manage-ht-clearance' element={<PlaceholderPage title="Manage Hardness Testing Clearance" />} />
           <Route path='pmi-offer-management' element={<PlaceholderPage title="PMI Offering" />} />
           <Route path='manage-pmi-offer' element={<PlaceholderPage title="Manage PMI Offer" />} />
