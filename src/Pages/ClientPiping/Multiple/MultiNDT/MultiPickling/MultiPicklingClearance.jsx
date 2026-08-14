@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import Header from '../../../Include/Header';
 import Sidebar from '../../../Include/Sidebar';
 import Footer from '../../../Include/Footer';
@@ -10,45 +11,24 @@ import axios from 'axios';
 import DropDown from '../../../../../Components/DropDown';
 import { V_URL } from '../../../../../BaseUrl';
 import { PdfDownloadErp } from '../../../../../Components/ErpPdf/PdfDownloadErp';
+import { getClientPipingMultiPickling } from '../../../../../Store/Client/Piping/NDT/getClientPipingMultiPickling';
+import toast from 'react-hot-toast';
 
-// Read-only: Pickling & Passivation does not yet have the client_status/
-// status_type fields the RT/MPT/LPT accept-reject action depends on — view +
-// download only.
-//
-// The backend getPicklingTestInspectionTable endpoint has no pagination,
-// search, or status filter — it returns every Pickling inspection item for
-// the project. So clearance-only filtering (status 2/3/4), search, and
-// pagination are all done client-side here.
 const MultiPicklingClearance = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
 
-  const [allRows, setAllRows] = useState([]);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const projectId = localStorage.getItem('PARTY_PROJECT_ID');
+  const { data: reduxData, loading } = useSelector((state) => state.getClientPipingMultiPickling);
+  const allRows = reduxData?.data || [];
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.post(
-        `${V_URL}/party/get-pickling-offer-piping`,
-        { project_id: projectId },
-        {
-          headers: {
-            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
-          },
-        }
-      );
-      setAllRows(res?.data?.data || []);
-    } catch (err) {
-      setAllRows([]);
-    } finally {
-      setLoading(false);
-    }
+  const fetchData = () => {
+    dispatch(getClientPipingMultiPickling());
   };
 
   useEffect(() => {
@@ -57,7 +37,7 @@ const MultiPicklingClearance = () => {
   }, []);
 
   const filteredRows = useMemo(() => {
-    let data = allRows.filter((r) => [2, 3, 4].includes(r.status));
+    let data = allRows;
     if (search.trim()) {
       const s = search.trim().toLowerCase();
       data = data.filter(
@@ -81,17 +61,39 @@ const MultiPicklingClearance = () => {
   const handleRefresh = () => {
     setSearch('');
     setPage(1);
+    fetchData();
   };
 
-  const downloadInspection = (elem) => {
-    const bodyFormData = new URLSearchParams();
-    bodyFormData.append('report_no_two', elem.report_no_two);
-    bodyFormData.append('print_date', true);
-    PdfDownloadErp({
-      apiMethod: 'post',
-      url: 'download-pickling-inspection-pdf',
-      body: bodyFormData,
-    });
+  const downloadInspection = async (row) => {
+    try {
+      const toastId = toast.loading('Downloading...');
+      const response = await axios.post(
+        `${V_URL}/party/download-piping-pickling-client`,
+        {
+          report_no: row.report_no,
+          print_date: true
+        },
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          },
+          responseType: 'blob',
+        }
+      );
+
+      const file = new Blob([response.data], { type: 'application/pdf' });
+      const fileUrl = window.URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = `Pickling_${row.report_no_two || row.report_no || 'Report'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Downloaded successfully', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to download PDF');
+    }
   };
 
   return (
@@ -190,19 +192,19 @@ const MultiPicklingClearance = () => {
                                   <td>{elem?.report_no_two}</td>
                                   <td>{elem?.drawing_no || '-'}</td>
                                   <td>{elem?.spool_no || '-'}</td>
-                                  <td>{elem?.qc_by?.name || '-'}</td>
+                                  <td>
+                                    {typeof elem?.qc_by === 'object'
+                                      ? elem?.qc_by?.name
+                                      : (elem?.qc_by || '-')}
+                                  </td>
                                   <td>
                                     {elem.qc_date ? moment(elem.qc_date).format('DD-MM-YYYY') : '-'}
                                   </td>
                                   <td className="status-badge">
-                                    {elem.status === 1 ? (
+                                    {elem.client_status === 0 || elem.client_status === null ? (
                                       <span className="custom-badge status-orange">Pending</span>
-                                    ) : elem.status === 2 ? (
-                                      <span className="custom-badge status-green">Accepted</span>
-                                    ) : elem.status === 3 ? (
-                                      <span className="custom-badge status-pink">Rejected</span>
-                                    ) : elem.status === 4 ? (
-                                      <span className="custom-badge status-purple">Partially</span>
+                                    ) : elem.client_status === 1 ? (
+                                      <span className="custom-badge status-green">{elem.status_type}</span>
                                     ) : null}
                                   </td>
                                   <td className="text-end">
@@ -215,6 +217,14 @@ const MultiPicklingClearance = () => {
                                         <i className="fa fa-ellipsis-v"></i>
                                       </a>
                                       <div className="dropdown-menu dropdown-menu-end">
+                                        <button
+                                          type="button"
+                                          className="dropdown-item"
+                                          onClick={() => navigate('/party/piping-store/view-quality-clearance-pickling', { state: elem })}
+                                        >
+                                          <i className="fa-solid fa-eye m-r-5"></i>
+                                          View
+                                        </button>
                                         <button
                                           type="button"
                                           className="dropdown-item"

@@ -9,7 +9,9 @@ import { Pagination, Search } from '../../Table';
 import DropDown from '../../../../Components/DropDown';
 import { PdfDownloadErp } from '../../../../Components/ErpPdf/PdfDownloadErp';
 import { getClientPipingMultiWeldVisual } from '../../../../Store/Client/Piping/WeldVisual/getClientPipingMultiWeldVisual';
-
+import toast from 'react-hot-toast';
+import axios from 'axios';
+import { V_URL } from '../../../../BaseUrl';
 const useDebounce = (value, delay = 600) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -56,17 +58,39 @@ const QWeldVisualList = () => {
     fetchData();
   };
 
-  const downloadInspection = (elem) => {
-    const bodyFormData = new URLSearchParams();
-    bodyFormData.append('report_no', elem.report_no);
-    bodyFormData.append('report_no_two', elem.report_no_two);
-    bodyFormData.append('print_date', true);
-    PdfDownloadErp({
-      apiMethod: 'post',
-      url: 'download-piping-weld-visual-client',
-      body: bodyFormData,
-    });
-  };
+
+
+   const downloadInspection = async (row) => {
+        try {
+          const toastId = toast.loading('Downloading...');
+          const response = await axios.post(
+            `${V_URL}/party/download-piping-weld-visual-client`,
+            {
+              test_inspect_no: row.test_inspect_no,
+              print_date: true
+            },
+            {
+              headers: {
+                Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+              },
+              responseType: 'blob',
+            }
+          );
+    
+          const file = new Blob([response.data], { type: 'application/pdf' });
+          const fileUrl = window.URL.createObjectURL(file);
+          const link = document.createElement('a');
+          link.href = fileUrl;
+          link.download = `Weld_Visual_${row.test_inspect_no || 'Report'}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          toast.success('Downloaded successfully', { id: toastId });
+        } catch (err) {
+          console.error(err);
+          toast.error('Failed to download PDF');
+        }
+      };
 
   return (
     <>

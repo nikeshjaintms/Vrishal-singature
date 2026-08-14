@@ -43,10 +43,12 @@ import ViewMultiLptClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/Mu
 // fields the RT/MPT/LPT accept-reject action depends on, so there is no
 // accept/reject action here — see the note in party.routes.js.
 import MultiPwhtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPWHT/MultiPwhtClearance';
+import ViewMultiClearPWHT from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPWHT/ViewMultiClearPWHT';
 import MultiFtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiFT/MultiFtClearance';
 import MultiHtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiHT/MultiHtClearance';
 import MultiPmiClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPMI/MultiPmiClearance';
 import MultiPicklingClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPickling/MultiPicklingClearance';
+import ViewMultiClearPickling from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPickling/ViewMultiClearPickling';
 
 /**
  * ClientPipingRoute.jsx — PRUNED to approved scope
@@ -108,6 +110,7 @@ const ClientPipingRoutes = () => {
           <Route path='pwht-offer-management' element={<PlaceholderPage title="PWHT Offering" />} />
           <Route path='manage-pwht-offer' element={<PlaceholderPage title="Manage PWHT Offer" />} />
           <Route path='pwht-clearance-management' element={<MultiPwhtClearance />} />
+          <Route path='view-quality-clearance-pwht' element={<ViewMultiClearPWHT />} />
           <Route path='manage-pwht-clearance' element={<PlaceholderPage title="Manage PWHT Clearance" />} />
           <Route path='ft-offer-management' element={<PlaceholderPage title="FT Offering" />} />
           <Route path='manage-ft-offer' element={<PlaceholderPage title="Manage FT Offer" />} />
@@ -133,6 +136,7 @@ const ClientPipingRoutes = () => {
           <Route path='pickling-passivation-offer-management' element={<PlaceholderPage title="Pickling & Passivation Offering" />} />
           <Route path='manage-pickling-passivation-offer' element={<PlaceholderPage title="Manage Pickling & Passivation Offer" />} />
           <Route path='pickling-passivation-clearance-management' element={<MultiPicklingClearance />} />
+          <Route path='view-quality-clearance-pickling' element={<ViewMultiClearPickling />} />
           <Route path='manage-pickling-passivation-clearance' element={<PlaceholderPage title="Manage Pickling & Passivation Clearance" />} />
           <Route path='line-history-management' element={<PlaceholderPage title="Line History (LHS)" />} />
           <Route path='view-line-history' element={<PlaceholderPage title="View Line History" />} />

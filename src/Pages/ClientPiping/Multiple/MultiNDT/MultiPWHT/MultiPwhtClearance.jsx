@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import Header from '../../../Include/Header';
 import Sidebar from '../../../Include/Sidebar';
 import Footer from '../../../Include/Footer';
@@ -10,10 +11,9 @@ import axios from 'axios';
 import DropDown from '../../../../../Components/DropDown';
 import { V_URL } from '../../../../../BaseUrl';
 import { PdfDownloadErp } from '../../../../../Components/ErpPdf/PdfDownloadErp';
+import { getClientPipingMultiPWHT } from '../../../../../Store/Client/Piping/NDT/getClientPipingMultiPWHT';
+import toast from 'react-hot-toast';
 
-// Read-only: PWHT does not yet have the client_status/status_type fields the
-// RT/MPT/LPT accept-reject action depends on, so there is no accept/reject
-// action here — view + download only (see note in party.routes.js).
 const useDebounce = (value, delay = 600) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -24,45 +24,38 @@ const useDebounce = (value, delay = 600) => {
 };
 
 const MultiPwhtClearance = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
 
-  const [rows, setRows] = useState([]);
-  const [totalItems, setTotalItems] = useState(0);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(false);
   const debouncedSearch = useDebounce(search, 500);
 
-  const projectId = localStorage.getItem('PARTY_PROJECT_ID');
+  const { data: reduxData, loading } = useSelector((state) => state.getClientPipingMultiPWHT);
+  console.log("PWHT reduxData:", reduxData);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(
-        `${V_URL}/party/get-multi-pwht-clearance`,
-        {
-          params: {
-            page,
-            limit,
-            search: debouncedSearch,
-            project: projectId,
-          },
-          headers: {
-            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
-          },
-        }
-      );
-      setRows(res?.data?.data || []);
-      setTotalItems(res?.data?.pagination?.totalItems || 0);
-    } catch (err) {
-      setRows([]);
-      setTotalItems(0);
-    } finally {
-      setLoading(false);
+  let rows = [];
+  if (reduxData) {
+    if (Array.isArray(reduxData)) {
+      rows = reduxData;
+    } else if (reduxData.data) {
+      if (Array.isArray(reduxData.data)) {
+        rows = reduxData.data;
+      } else if (reduxData.data.data && Array.isArray(reduxData.data.data)) {
+        rows = reduxData.data.data;
+      }
     }
+  }
+
+  const totalItems = reduxData?.pagination?.totalItems ||
+    reduxData?.data?.pagination?.totalItems ||
+    rows.length;
+
+  const fetchData = () => {
+    dispatch(getClientPipingMultiPWHT({ page, limit, search: debouncedSearch }));
   };
 
   useEffect(() => {
@@ -79,15 +72,37 @@ const MultiPwhtClearance = () => {
     setPage(1);
   };
 
-  const downloadInspection = (elem) => {
-    const bodyFormData = new URLSearchParams();
-    bodyFormData.append('report_no_two', elem.report_no_two);
-    bodyFormData.append('print_date', true);
-    PdfDownloadErp({
-      apiMethod: 'post',
-      url: 'download-pwht-inspection-pdf',
-      body: bodyFormData,
-    });
+
+  const downloadInspection = async (row) => {
+    try {
+      const toastId = toast.loading('Downloading...');
+      const response = await axios.post(
+        `${V_URL}/party/download-piping-pwht-client`,
+        {
+          test_inspect_no: row.test_inspect_no,
+          print_date: true
+        },
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          },
+          responseType: 'blob',
+        }
+      );
+
+      const file = new Blob([response.data], { type: 'application/pdf' });
+      const fileUrl = window.URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = `PWHT_${row.test_inspect_no || 'Report'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Downloaded successfully', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to download PDF');
+    }
   };
 
   return (
@@ -170,7 +185,6 @@ const MultiPwhtClearance = () => {
                               <tr>
                                 <th>Sr.</th>
                                 <th>Report No.</th>
-                                <th>Off. Report No.</th>
                                 <th>Line No./Drawing No.</th>
                                 <th>Spool No.</th>
                                 <th>Qc. By</th>
@@ -182,7 +196,7 @@ const MultiPwhtClearance = () => {
                             <tbody>
                               {rows.length === 0 && (
                                 <tr>
-                                  <td colSpan="9">
+                                  <td colSpan="8">
                                     <div className="no-table-data">No Data Found!</div>
                                   </td>
                                 </tr>
@@ -190,43 +204,36 @@ const MultiPwhtClearance = () => {
                               {rows.map((elem, i) => (
                                 <tr key={elem._id}>
                                   <td>{(page - 1) * limit + i + 1}</td>
-                                  <td>{elem?.report_no}</td>
                                   <td>{elem?.report_no_two}</td>
                                   <td>
-                                    {elem?.items
-                                      ?.map((e) => e?.drawing_no)
-                                      .filter((value, index, self) => self.indexOf(value) === index)
-                                      .map((value, index) => (
-                                        <span key={index}>
-                                          {value}
-                                          <br />
-                                        </span>
-                                      )) || '-'}
+                                    {[...new Set(elem?.items?.map(item => item?.drawing_no || item?.drawing_id?.drawing_no).filter(Boolean))].map((value, index) => (
+                                      <span key={index}>
+                                        {value}
+                                        <br />
+                                      </span>
+                                    ))}
                                   </td>
                                   <td>
-                                    {elem?.items
-                                      ?.map((e) => e?.spool_no)
-                                      .filter((value, index, self) => self.indexOf(value) === index)
-                                      .map((value, index) => (
-                                        <span key={index}>
-                                          {value}
-                                          <br />
-                                        </span>
-                                      )) || '-'}
+                                    {[...new Set(elem?.items?.map(item => item?.spool_no || item?.spool_id?.sub_spool_no || item?.spool_id?.spool_no || item?.spool_no_id?.spool_no).filter(Boolean))].map((value, index) => (
+                                      <span key={index}>
+                                        {value}
+                                        <br />
+                                      </span>
+                                    ))}
                                   </td>
-                                  <td>{elem?.qc_name || '-'}</td>
+                                  <td>
+                                    {typeof elem?.qc_name === 'object'
+                                      ? elem?.qc_name?.user_name
+                                      : (elem?.qc_name || '-')}
+                                  </td>
                                   <td>
                                     {elem.qc_time ? moment(elem.qc_time).format('DD-MM-YYYY') : '-'}
                                   </td>
                                   <td className="status-badge">
-                                    {elem.status === 1 ? (
+                                    {elem.client_status === 0 || elem.client_status === null ? (
                                       <span className="custom-badge status-orange">Pending</span>
-                                    ) : elem.status === 2 ? (
-                                      <span className="custom-badge status-green">Accepted</span>
-                                    ) : elem.status === 3 ? (
-                                      <span className="custom-badge status-pink">Rejected</span>
-                                    ) : elem.status === 4 ? (
-                                      <span className="custom-badge status-purple">Partially</span>
+                                    ) : elem.client_status === 1 ? (
+                                      <span className="custom-badge status-green">{elem.status_type}</span>
                                     ) : null}
                                   </td>
                                   <td className="text-end">
@@ -239,6 +246,14 @@ const MultiPwhtClearance = () => {
                                         <i className="fa fa-ellipsis-v"></i>
                                       </a>
                                       <div className="dropdown-menu dropdown-menu-end">
+                                        <button
+                                          type="button"
+                                          className="dropdown-item"
+                                          onClick={() => navigate('/party/piping-store/view-quality-clearance-pwht', { state: elem })}
+                                        >
+                                          <i className="fa-solid fa-eye m-r-5"></i>
+                                          View
+                                        </button>
                                         <button
                                           type="button"
                                           className="dropdown-item"

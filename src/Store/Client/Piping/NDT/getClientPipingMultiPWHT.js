@@ -3,9 +3,9 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { V_URL } from "../../../../BaseUrl";
 
-/* ================= GET CLIENT PIPING RT LIST ================= */
-export const getClientPipingMultiRT = createAsyncThunk(
-  "getClientPipingMultiRT",
+/* ================= GET CLIENT PIPING PWHT LIST ================= */
+export const getClientPipingMultiPWHT = createAsyncThunk(
+  "getClientPipingMultiPWHT",
   async (params = {}, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem("PARTY_TOKEN");
@@ -21,15 +21,16 @@ export const getClientPipingMultiRT = createAsyncThunk(
         search = "",
       } = params;
 
-      const myurl = `${V_URL}/party/get-piping-rt-client`;
+      const myurl = `${V_URL}/party/get-piping-pwht-client`;
 
       const response = await axios.post(
         myurl,
         {
-          project_id: projectId || "",
           page,
           limit,
           search,
+          project: projectId || "",
+          project_id: projectId || "",
         },
         {
           headers: {
@@ -58,8 +59,8 @@ export const getClientPipingMultiRT = createAsyncThunk(
 );
 
 /* ================= SLICE ================= */
-const getClientPipingMultiRTSlice = createSlice({
-  name: "getClientPipingMultiRT",
+const getClientPipingMultiPWHTSlice = createSlice({
+  name: "getClientPipingMultiPWHT",
   initialState: {
     data: null,
     loading: false,
@@ -68,16 +69,16 @@ const getClientPipingMultiRTSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(getClientPipingMultiRT.pending, (state) => {
+      .addCase(getClientPipingMultiPWHT.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(getClientPipingMultiRT.fulfilled, (state, action) => {
+      .addCase(getClientPipingMultiPWHT.fulfilled, (state, action) => {
         state.data = action.payload;
         state.loading = false;
         state.error = null;
       })
-      .addCase(getClientPipingMultiRT.rejected, (state, action) => {
+      .addCase(getClientPipingMultiPWHT.rejected, (state, action) => {
         state.data = null;
         state.loading = false;
         state.error = action.payload || action.error.message;
@@ -85,4 +86,4 @@ const getClientPipingMultiRTSlice = createSlice({
   },
 });
 
-export default getClientPipingMultiRTSlice.reducer;
+export default getClientPipingMultiPWHTSlice.reducer;

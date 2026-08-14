@@ -8,12 +8,12 @@ import Sidebar from '../../../Include/Sidebar';
 import Footer from '../../../Include/Footer';
 import { V_URL } from '../../../../../BaseUrl';
 
-const ViewMultiClearRT = () => {
+const ViewMultiClearPWHT = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const data = location.state; // contains RT report object
+  const data = location.state; // contains PWHT report object
 
-  console.log('RT Data:', data);
+  console.log('PWHT Data:', data);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [clientDate, setClientDate] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
@@ -47,9 +47,9 @@ const ViewMultiClearRT = () => {
       }
 
       const res = await axios.post(
-        `${V_URL}/party/download-piping-rt-client`,
+        `${V_URL}/party/download-piping-pwht-client`,
         {
-          report_no_two: data.report_no,
+          report_no_two: data.report_no_two,
           print_date: clientDate,
         },
         {
@@ -83,14 +83,16 @@ const ViewMultiClearRT = () => {
     const items =
       data?.items?.map((item) => ({
         _id: item._id,
-        drawing_no: item?.drawing_no || item?.drawing_id?.drawing_no || '-',
-        spool_no: item?.spool_no || item?.spool_id?.spool_no || item?.spool_id?.sub_spool_no || '-',
-        joint_no: item?.joint_no || item?.joint_id?.joint_no || '-',
-        rt_type: item?.rt_type || '-',
+        drawing_no: item?.drawing_no || '-',
+        spool_no: item?.spool_no || '-',
+        joint_no: item?.joint_no || '-',
+        size: item?.size || '-',
         thickness: item?.thickness?.name || item?.thickness?.value || item?.thickness || '-',
-        rt_location: item?.rt_location || '-',
-        technique: item?.technique || '-',
-        status: item?.status === 1 ? 'Accepted' : item?.status === 2 ? 'Repair' : item?.status === 3 ? 'Re-take' : item?.status === 4 ? 'Re-shoot' : 'Pending',
+        piping_class: item?.piping_class || '-',
+        material_spec: item?.piping_material_specification || '-',
+        soaking_temp: item?.soaking_temp || item?.soakingTemp || '-',
+        soaking_period: item?.soaking_period || item?.soakingPeriod || '-',
+        status: item?.is_accepted === true ? 'Accepted' : item?.is_accepted === false ? 'Rejected' : 'Pending',
         selected: false,
       })) || [];
 
@@ -118,7 +120,7 @@ const ViewMultiClearRT = () => {
   };
 
   /* ================= UPDATE STATUS ================= */
-  const submitRTStatus = async (statusType) => {
+  const submitPWHTStatus = async (statusType) => {
     if (!clientDate) {
       toast.error('Please select date');
       return;
@@ -146,17 +148,17 @@ const ViewMultiClearRT = () => {
         }));
       }
 
-      const res = await axios.post(`${V_URL}/party/update-piping-rt-status`, payload, {
+      const res = await axios.post(`${V_URL}/party/update-piping-pwht-status`, payload, {
         headers: {
           Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
         },
       });
 
       if (res.data.success) {
-        toast.success('RT Clearance updated successfully');
+        toast.success('PWHT Clearance updated successfully');
         setShowRandomItems(false);
         fetchPdf();
-        navigate("/party/piping-store/rt-clearance-management")
+        navigate("/party/piping-store/pwht-clearance-management")
       } else {
         toast.error(res.data.message || 'Update failed');
       }
@@ -181,33 +183,33 @@ const ViewMultiClearRT = () => {
               </li>
               <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
               <li className="breadcrumb-item">
-                <Link to="/party/piping-store/rt-clearance-management">RT Acc / Rej</Link>
+                <Link to="/party/piping-store/pwht-clearance-management">PWHT Acc / Rej</Link>
               </li>
               <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
-              <li className="breadcrumb-item active">View RT Clearance</li>
+              <li className="breadcrumb-item active">View PWHT Clearance</li>
             </ul>
           </div>
 
-          {/* ===== RT Details ===== */}
+          {/* ===== PWHT Details ===== */}
           <div className="card">
             <div className="card-body">
-              <h4 className="mb-3">RT Details</h4>
+              <h4 className="mb-3">PWHT Details</h4>
               <div className="row">
                 <div className="col-md-4">
                   <label>Report No</label>
-                  <input className="form-control" value={data.report_no || '-'} readOnly />
+                  <input className="form-control" value={data.report_no_two || '-'} readOnly />
                 </div>
 
                 <div className="col-md-4">
                   <label>QC By</label>
-                  <input className="form-control" value={data?.qc_by || data?.qc_by?.user_name || '-'} readOnly />
+                  <input className="form-control" value={data?.qc_name || '-'} readOnly />
                 </div>
 
                 <div className="col-md-4">
                   <label>QC Date</label>
                   <input
                     className="form-control"
-                    value={(data.qc_time || data.qc_date) ? moment(data.qc_time || data.qc_date).format('YYYY-MM-DD') : '-'}
+                    value={data.qc_time ? moment(data.qc_time).format('YYYY-MM-DD') : '-'}
                     readOnly
                   />
                 </div>
@@ -234,11 +236,11 @@ const ViewMultiClearRT = () => {
                   </div>
 
                   <div className="mt-3">
-                    <button className="btn btn-primary me-2" onClick={() => submitRTStatus('REVIEWED')}>
+                    <button className="btn btn-primary me-2" onClick={() => submitPWHTStatus('REVIEWED')}>
                       REVIEWED
                     </button>
 
-                    <button className="btn btn-warning me-2" onClick={() => submitRTStatus('WITNESSED')}>
+                    <button className="btn btn-warning me-2" onClick={() => submitPWHTStatus('WITNESSED')}>
                       WITNESSED
                     </button>
 
@@ -256,7 +258,7 @@ const ViewMultiClearRT = () => {
                 <div className="mt-4">
                   <iframe
                     src={pdfUrl}
-                    title="RT Inspection PDF"
+                    title="PWHT Inspection PDF"
                     width="100%"
                     height="700px"
                     style={{ border: '1px solid #ccc' }}
@@ -282,10 +284,12 @@ const ViewMultiClearRT = () => {
                           <th>DRAWING NO</th>
                           <th>SPOOL NO</th>
                           <th>JOINT NO</th>
-                          <th>RT TYPE</th>
+                          <th>SIZE</th>
                           <th>THK</th>
-                          <th>LOCATION</th>
-                          <th>TECHNIQUE</th>
+                          <th>CLASS</th>
+                          <th>MAT SPEC</th>
+                          <th>SOAKING TEMP</th>
+                          <th>SOAKING PERIOD</th>
                           <th>STATUS</th>
                         </tr>
                       </thead>
@@ -304,10 +308,12 @@ const ViewMultiClearRT = () => {
                             <td>{item.drawing_no}</td>
                             <td>{item.spool_no}</td>
                             <td>{item.joint_no}</td>
-                            <td>{item.rt_type}</td>
+                            <td>{item.size}</td>
                             <td>{item.thickness}</td>
-                            <td>{item.rt_location}</td>
-                            <td>{item.technique}</td>
+                            <td>{item.piping_class}</td>
+                            <td>{item.material_spec}</td>
+                            <td>{item.soaking_temp}</td>
+                            <td>{item.soaking_period}</td>
                             <td>{item.status}</td>
                           </tr>
                         ))}
@@ -315,7 +321,7 @@ const ViewMultiClearRT = () => {
                     </table>
                   </div>
 
-                  <button className="btn btn-success mt-2" onClick={() => submitRTStatus('RANDOM WITNESSED')}>
+                  <button className="btn btn-success mt-2" onClick={() => submitPWHTStatus('RANDOM WITNESSED')}>
                     Submit Random Witnessed
                   </button>
                 </div>
@@ -329,4 +335,4 @@ const ViewMultiClearRT = () => {
   );
 };
 
-export default ViewMultiClearRT;
+export default ViewMultiClearPWHT;
