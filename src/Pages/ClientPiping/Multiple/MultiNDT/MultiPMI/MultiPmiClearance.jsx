@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Header from '../../../Include/Header';
 import Sidebar from '../../../Include/Sidebar';
 import Footer from '../../../Include/Footer';
@@ -23,6 +23,7 @@ const useDebounce = (value, delay = 600) => {
 };
 
 const MultiPmiClearance = () => {
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -36,34 +37,86 @@ const MultiPmiClearance = () => {
 
   const projectId = localStorage.getItem('PARTY_PROJECT_ID');
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.post(
-        `${V_URL}/party/get-pmi-offer-piping`,
-        {
-          project_id: projectId,
-          status: '2,3,4',
-          page,
-          limit,
-          search: debouncedSearch,
-        },
-        {
-          headers: {
-            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
-          },
-        }
-      );
-      setRows(res?.data?.data || []);
-      setTotalItems(res?.data?.pagination?.totalItems || 0);
-    } catch (err) {
-      setRows([]);
-      setTotalItems(0);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const fetchData = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const res = await axios.post(
+  //       `${V_URL}/party/get-piping-pmi-client`,
+  //       {
+  //         project_id: projectId,
+  //         status: '2,3,4',
+  //         page,
+  //         limit,
+  //         search: debouncedSearch,
+  //       },
+  //       {
+  //         headers: {
+  //           Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+  //         },
+  //       }
+  //     );
+  //     setRows(res?.data?.data || []);
+  //     setTotalItems(res?.data?.pagination?.totalItems || 0);
+  //   } catch (err) {
+  //     setRows([]);
+  //     setTotalItems(0);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
+  const fetchData = async () => {
+  setLoading(true);
+
+  try {
+    const res = await axios.post(
+      `${V_URL}/party/get-piping-pmi-client`,
+      {
+        project_id: projectId,
+        status: '2,3,4',
+        page,
+        limit,
+        search: debouncedSearch,
+      },
+      {
+        headers: {
+          Authorization:
+            'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+        },
+      }
+    );
+
+    // API response:
+    // {
+    //   data: {
+    //     data: [...],
+    //     totalItems: 13
+    //   }
+    // }
+
+    const responseData = res?.data?.data;
+
+    const data = Array.isArray(responseData)
+      ? responseData
+      : responseData?.data || [];
+
+    const total = Array.isArray(responseData)
+      ? res?.data?.pagination?.totalItems || data.length
+      : responseData?.totalItems || 0;
+
+    setRows(data);
+    setTotalItems(total);
+  } catch (err) {
+    console.error('PMI fetch error:', err);
+
+    setRows([]);
+    setTotalItems(0);
+  } finally {
+    setLoading(false);
+  }
+};
+
+  console.log('rowss====>',rows);
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -78,15 +131,41 @@ const MultiPmiClearance = () => {
     setPage(1);
   };
 
-  const downloadInspection = (elem) => {
-    const bodyFormData = new URLSearchParams();
-    bodyFormData.append('report_no_two', elem.report_no_two);
-    bodyFormData.append('print_date', true);
-    PdfDownloadErp({
-      apiMethod: 'post',
-      url: 'download-pmi-inspection-pdf',
-      body: bodyFormData,
-    });
+  const downloadInspection = async (elem) => {
+    try {
+      const bodyFormData = new URLSearchParams();
+      if (elem?.report_no) bodyFormData.append('report_no', elem.report_no);
+      if (elem?.report_no_two) bodyFormData.append('report_no_two', elem.report_no_two);
+      bodyFormData.append('print_date', 'true');
+
+      const response = await axios.post(
+        `${V_URL}/party/download-piping-pmi-client`,
+        bodyFormData,
+        {
+          responseType: 'blob',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Authorization: `Bearer ${localStorage.getItem('PARTY_TOKEN')}`,
+          },
+        }
+      );
+
+      const blob = new Blob([response.data], {
+        type: 'application/pdf',
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 1000);
+    } catch (error) {
+      console.error(
+        'PMI PDF download error:',
+        error?.response?.data || error
+      );
+    }
   };
 
   return (
@@ -178,14 +257,33 @@ const MultiPmiClearance = () => {
                                   </td>
                                 </tr>
                               )}
-                              {rows.map((elem, i) => (
+                              {/* {rows.map((elem, i) => ( */}
+                              {Array.isArray(rows) &&
+                                rows.map((elem, i) => (
                                 <tr key={elem._id}>
                                   <td>{(page - 1) * limit + i + 1}</td>
                                   <td>{elem?.report_no}</td>
                                   <td>{elem?.report_no_two}</td>
-                                  <td>{elem?.item?.drawing_no || '-'}</td>
-                                  <td>{elem?.item?.spool_no || '-'}</td>
-                                  <td>{elem?.qc_by?.name || '-'}</td>
+                                  <td>
+                                      {[
+                                        ...new Set(
+                                          (elem?.items || [])
+                                            .map((item) => item?.drawing_no)
+                                            .filter(Boolean)
+                                        ),
+                                      ].join(', ') || '-'}
+                                    </td>
+
+                                    <td>
+                                      {[
+                                        ...new Set(
+                                          (elem?.items || [])
+                                            .map((item) => item?.spool_no)
+                                            .filter(Boolean)
+                                        ),
+                                      ].join(', ') || '-'}
+                                    </td>
+                                  <td>{elem?.qc_by?.user_name || '-'}</td>
                                   <td>
                                     {elem.qc_date ? moment(elem.qc_date).format('DD-MM-YYYY') : '-'}
                                   </td>
@@ -210,6 +308,16 @@ const MultiPmiClearance = () => {
                                         <i className="fa fa-ellipsis-v"></i>
                                       </a>
                                       <div className="dropdown-menu dropdown-menu-end">
+                                        <button
+                                          type="button"
+                                          className="dropdown-item"
+                                          onClick={() =>
+                                            navigate('/party/piping-store/view-quality-clearance-pmi', { state: elem })
+                                          }
+                                        >
+                                          <i className="fa-solid fa-eye m-r-5"></i>
+                                          View
+                                        </button>
                                         <button
                                           type="button"
                                           className="dropdown-item"

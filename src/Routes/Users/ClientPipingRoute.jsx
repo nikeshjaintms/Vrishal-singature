@@ -47,6 +47,7 @@ import ViewMultiClearPWHT from '../../Pages/ClientPiping/Multiple/MultiNDT/Multi
 import MultiFtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiFT/MultiFtClearance';
 import MultiHtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiHT/MultiHtClearance';
 import MultiPmiClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPMI/MultiPmiClearance';
+import ViewMultiClearPMI from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPMI/ViewMultiClearPMI';
 import MultiPicklingClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPickling/MultiPicklingClearance';
 import ViewMultiClearPickling from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPickling/ViewMultiClearPickling';
 
@@ -132,6 +133,7 @@ const ClientPipingRoutes = () => {
           <Route path='pmi-offer-management' element={<PlaceholderPage title="PMI Offering" />} />
           <Route path='manage-pmi-offer' element={<PlaceholderPage title="Manage PMI Offer" />} />
           <Route path='pmi-clearance-management' element={<MultiPmiClearance />} />
+          <Route path='view-quality-clearance-pmi' element={<ViewMultiClearPMI />} />
           <Route path='manage-pmi-clearance' element={<PlaceholderPage title="Manage PMI Clearance" />} />
           <Route path='pickling-passivation-offer-management' element={<PlaceholderPage title="Pickling & Passivation Offering" />} />
           <Route path='manage-pickling-passivation-offer' element={<PlaceholderPage title="Manage Pickling & Passivation Offer" />} />
