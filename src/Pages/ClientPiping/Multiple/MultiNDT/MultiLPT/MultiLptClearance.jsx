@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Header from '../../../Include/Header';
 import Sidebar from '../../../Include/Sidebar';
 import Footer from '../../../Include/Footer';
@@ -26,6 +26,7 @@ const useDebounce = (value, delay = 600) => {
 };
 
 const MultiLptClearance = () => {
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -39,10 +40,38 @@ const MultiLptClearance = () => {
 
   const projectId = localStorage.getItem('PARTY_PROJECT_ID');
 
+  // const fetchData = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const res = await axios.post(`${V_URL}/party/get-piping-lpt-client`, {
+  //       params: {
+  //         project: projectId,
+  //         page,
+  //         limit,
+  //         search: debouncedSearch,
+  //       },
+  //       headers: {
+  //         Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+  //       },
+  //     });
+  //     setRows(res?.data?.data || []);
+  //     setTotalItems(res?.data?.pagination?.totalItems || 0);
+  //   } catch (err) {
+  //     setRows([]);
+  //     setTotalItems(0);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`${V_URL}/party/get-multi-lpt-clearance`, {
+  setLoading(true);
+
+  try {
+    const res = await axios.post(
+      `${V_URL}/party/get-piping-lpt-client`,
+      {},
+      {
         params: {
           project: projectId,
           page,
@@ -50,19 +79,26 @@ const MultiLptClearance = () => {
           search: debouncedSearch,
         },
         headers: {
-          Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          Authorization: `Bearer ${localStorage.getItem('PARTY_TOKEN')}`,
         },
-      });
-      setRows(res?.data?.data || []);
-      setTotalItems(res?.data?.pagination?.totalItems || 0);
-    } catch (err) {
+      }
+    );
+
+    if (res?.data?.success) {
+      setRows(res?.data?.data?.data || []);
+      setTotalItems(res?.data?.data?.totalItems || 0);
+    } else {
       setRows([]);
       setTotalItems(0);
-    } finally {
-      setLoading(false);
     }
-  };
-
+  } catch (err) {
+    console.error('LPT API Error:', err?.response?.data || err);
+    setRows([]);
+    setTotalItems(0);
+  } finally {
+    setLoading(false);
+  }
+};
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -77,18 +113,56 @@ const MultiLptClearance = () => {
     setPage(1);
   };
 
-  const downloadInspection = (elem) => {
-    const bodyFormData = new URLSearchParams();
-    bodyFormData.append('report_no', elem.report_no);
-    bodyFormData.append('report_no_two', elem.report_no_two);
-    bodyFormData.append('print_date', true);
-    PdfDownloadErp({
-      apiMethod: 'post',
-      url: 'download-lpt-inspection-pdf',
-      body: bodyFormData,
-    });
-  };
+  // const downloadInspection = (elem) => {
+  //   const bodyFormData = new URLSearchParams();
+  //   bodyFormData.append('report_no', elem.report_no);
+  //   bodyFormData.append('report_no_two', elem.report_no_two);
+  //   bodyFormData.append('print_date', true);
+  //   PdfDownloadErp({
+  //     apiMethod: 'post',
+  //     url: 'download-piping-lpt-client',
+  //     body: bodyFormData,
+  //   });
+  // };
 
+  const downloadInspection = async (elem) => {
+  try {
+    const bodyFormData = new URLSearchParams();
+
+    bodyFormData.append('report_no', elem?.report_no || '');
+    bodyFormData.append('report_no_two', elem?.report_no_two || '');
+    bodyFormData.append('print_date', 'true');
+
+    const response = await axios.post(
+      `${V_URL}/party/download-piping-lpt-client`,
+      bodyFormData,
+      {
+        responseType: 'blob',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: `Bearer ${localStorage.getItem('PARTY_TOKEN')}`,
+        },
+      }
+    );
+
+    const blob = new Blob([response.data], {
+      type: 'application/pdf',
+    });
+
+    const url = window.URL.createObjectURL(blob);
+
+    window.open(url, '_blank');
+
+    setTimeout(() => {
+      window.URL.revokeObjectURL(url);
+    }, 1000);
+  } catch (error) {
+    console.error(
+      'LPT PDF download error:',
+      error?.response?.data || error
+    );
+  }
+};
   return (
     <>
       <div className={`main-wrapper ${isSidebarOpen ? 'slide-nav' : ''}`}>
@@ -183,9 +257,21 @@ const MultiLptClearance = () => {
                                   <td>{(page - 1) * limit + i + 1}</td>
                                   <td>{elem?.report_no}</td>
                                   <td>{elem?.report_no_two}</td>
+                                 <td>
+                                    {[...new Set(
+                                      elem?.items
+                                        ?.map((e) => e?.drawing_id?.drawing_no)
+                                        .filter(Boolean)
+                                    )].map((drawingNo, index) => (
+                                      <span key={index}>
+                                        {drawingNo}
+                                        <br />
+                                      </span>
+                                    ))}
+                                  </td>
                                   <td>
                                     {elem?.items
-                                      ?.map((e) => e?.drawing_no)
+                                      ?.map((e) => e?.spool_no_id?.spool_no)
                                       .filter((value, index, self) => self.indexOf(value) === index)
                                       .map((value, index) => (
                                         <span key={index}>
@@ -194,18 +280,7 @@ const MultiLptClearance = () => {
                                         </span>
                                       )) || '-'}
                                   </td>
-                                  <td>
-                                    {elem?.items
-                                      ?.map((e) => e?.spool_no)
-                                      .filter((value, index, self) => self.indexOf(value) === index)
-                                      .map((value, index) => (
-                                        <span key={index}>
-                                          {value}
-                                          <br />
-                                        </span>
-                                      )) || '-'}
-                                  </td>
-                                  <td>{elem?.qc_name || '-'}</td>
+                                  <td>{elem?.qc_name?.user_name || '-'}</td>
                                   <td>
                                     {elem.qc_time ? moment(elem.qc_time).format('DD-MM-YYYY') : '-'}
                                   </td>
@@ -230,6 +305,16 @@ const MultiLptClearance = () => {
                                         <i className="fa fa-ellipsis-v"></i>
                                       </a>
                                       <div className="dropdown-menu dropdown-menu-end">
+                                        <button
+                                          type="button"
+                                          className="dropdown-item"
+                                          onClick={() =>
+                                            navigate('/party/piping-store/view-quality-clearance-lpt', { state: elem })
+                                          }
+                                        >
+                                          <i className="fa-solid fa-eye m-r-5"></i>
+                                          View
+                                        </button>
                                         <button
                                           type="button"
                                           className="dropdown-item"

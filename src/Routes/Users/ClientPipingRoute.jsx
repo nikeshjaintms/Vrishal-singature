@@ -36,6 +36,7 @@ import MultiRtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiRT
 import ViewMultiClearRT from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiRT/ViewMultiClearRT';
 import MultiMptClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiMPT/MultiMptClearance';
 import MultiLptClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiLPT/MultiLptClearance';
+import ViewMultiLptClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiLPT/ViewMultiLptClearance';
 
 // NDT — PWHT/FT/HT/PMI/Pickling & Passivation: read-only (view + download).
 // These 5 NDT-type models don't yet have the client_status/status_type
@@ -115,6 +116,7 @@ const ClientPipingRoutes = () => {
           <Route path='lpt-offer-management' element={<PlaceholderPage title="LPT Offering" />} />
           <Route path='manage-lpt-offer' element={<PlaceholderPage title="Manage LPT Offer" />} />
           <Route path='lpt-clearance-management' element={<MultiLptClearance />} />
+          <Route path='view-quality-clearance-lpt' element={<ViewMultiLptClearance />} />
           <Route path='manage-lpt-clearance' element={<PlaceholderPage title="LPT Detail" />} />
           <Route path='mpt-offer-management' element={<PlaceholderPage title="MPT Offering" />} />
           <Route path='manage-mpt-offer' element={<PlaceholderPage title="Manage MPT Offer" />} />

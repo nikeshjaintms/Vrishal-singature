@@ -42,7 +42,7 @@ const debouncedSearch = useDebounce(search, 500);
   }, [disable, currentPage, limit, debouncedSearch]);
 
   const getOffer = () => {
-    const myurl = `${V_URL}/party/get-purchase-offer?page=${currentPage}&limit=${limit}&projectId=${projectId}&search=${search}`;
+    const myurl = `${V_URL}/party/get-piping-purchase-offer-client?page=${currentPage}&limit=${limit}&projectId=${projectId}&search=${search}`;
     
     axios({
       method: 'post',

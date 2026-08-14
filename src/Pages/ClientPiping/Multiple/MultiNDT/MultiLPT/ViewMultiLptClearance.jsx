@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import moment from 'moment';
@@ -10,6 +10,7 @@ import { V_URL } from '../../../../../BaseUrl';
 
 const ViewMultiLptClearance = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const data = location.state; // ✅ MAIN SOURCE OF TRUTH
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -26,7 +27,7 @@ const ViewMultiLptClearance = () => {
   useEffect(() => {
     if (data?._id) {
       const show =
-        data?.client_status === 1 && data?.status !== 1 ? false : true;
+        data?.client_status === 1 || data?.client_status > 0 || data?.status_type ? false : true;
       setShowButtons(show);
     }
   }, [data]);
@@ -43,17 +44,11 @@ const ViewMultiLptClearance = () => {
         setPdfUrl("");
       }
 
-      const inspectNo = data?.report_no || data?.test_inspect_no;
-      if (!inspectNo) {
-        toast.error("Report number not found");
-        return;
-      }
-
       const res = await axios.post(
-        `${V_URL}/party/get-lpt-clearance-report-item`,
+        `${V_URL}/party/download-piping-lpt-client`,
         {
-          LPTId: data._id,
-          test_inspect_no: inspectNo,
+          report_no: data?.report_no || "",
+          report_no_two: data?.report_no_two || "",
           print_date: clientDate,
         },
         {
@@ -90,15 +85,11 @@ const ViewMultiLptClearance = () => {
 
     const items = data.items.map((item) => ({
       _id: item._id,
-
-      // ✅ MATCHES PDF
-      drawing_no: item.assembly_no|| "-",
-      sheet_no: item?.drawing_id?.sheet_no || "-",
-      assembly_no: item?.drawing_id?.assembly_no || "-",
-
-      grid_no: item?.grid_item_id?.grid_no || "-",
-      grid_qty: item?.offer_used_grid_qty || 0,
-
+      drawing_no: item?.drawing_id?.drawing_no || item?.drawing_no || "-",
+      sheet_no: item?.drawing_id?.sheet_no || item?.sheet_no || "-",
+      rev: item?.drawing_id?.rev || item?.rev || "-",
+      spool_no: item?.spool_no_id?.spool_no || item?.spool_no || "-",
+      joint_no: item?.joint_spool_item_id?.joint_no || item?.joint_no || "-",
       selected: false,
       remark: item?.remarks || "",
     }));
@@ -133,7 +124,7 @@ const ViewMultiLptClearance = () => {
 
     try {
       const payload = {
-        LPTId: data._id,
+        id: data._id,
         status_type: statusType,
         client_date: clientDate,
         client_user: localStorage.getItem("PARTY_ID"),
@@ -148,7 +139,7 @@ const ViewMultiLptClearance = () => {
       }
 
       const res = await axios.post(
-        `${V_URL}/party/lpt-clearance-report-review-update`,
+        `${V_URL}/party/update-piping-lpt-status`,
         payload,
         {
           headers: {
@@ -160,7 +151,7 @@ const ViewMultiLptClearance = () => {
       if (res.data.success) {
         toast.success("LPT Clearance updated successfully");
         setShowRandomItems(false);
-        fetchPdf();
+        navigate("/party/piping-store/lpt-clearance-management");
       } else {
         toast.error(res.data.message || "Update failed");
       }
@@ -197,7 +188,7 @@ const ViewMultiLptClearance = () => {
                   <label>Report No</label>
                   <input
                     className="form-control"
-                    value={data?.test_inspect_no || "-"}
+                    value={data?.report_no || data?.report_no_two || data?.test_inspect_no || "-"}
                     readOnly
                   />
                 </div>
@@ -206,7 +197,7 @@ const ViewMultiLptClearance = () => {
                   <label>Prepared By</label>
                   <input
                     className="form-control"
-                    value={data?.qc_name?.name || "-"}
+                    value={data?.qc_name?.user_name || data?.qc_name?.name || (typeof data?.qc_name === "string" ? data?.qc_name : "-")}
                     readOnly
                   />
                 </div>
@@ -215,7 +206,7 @@ const ViewMultiLptClearance = () => {
                   <label>Created Date</label>
                   <input
                     className="form-control"
-                    value={moment(data?.createdAt).format("YYYY-MM-DD")}
+                    value={data?.createdAt ? moment(data.createdAt).format("YYYY-MM-DD") : "-"}
                     readOnly
                   />
                 </div>
@@ -295,10 +286,9 @@ const ViewMultiLptClearance = () => {
                         </th>
                         <th>#</th>
                         <th>Drawing</th>
-                        <th>Sheet</th>
-                        <th>Assembly</th>
-                        <th>Grid</th>
-                        <th>Qty</th>
+                        <th>Rev</th>
+                        <th>Spool</th>
+                        <th>Joint</th>
                         <th>Remark</th>
                       </tr>
                     </thead>
@@ -320,10 +310,9 @@ const ViewMultiLptClearance = () => {
                           </td>
                           <td>{i + 1}</td>
                           <td>{item.drawing_no}</td>
-                          <td>{item.sheet_no}</td>
-                          <td>{item.assembly_no}</td>
-                          <td>{item.grid_no}</td>
-                          <td>{item.grid_qty}</td>
+                          <td>{item.rev}</td>
+                          <td>{item.spool_no}</td>
+                          <td>{item.joint_no}</td>
                           <td>
                             <input
                               className="form-control"
