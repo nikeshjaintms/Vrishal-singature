@@ -1,4 +1,8 @@
-import React from 'react';
+
+import React from 'react'
+import ViewReleaseNote from '../../Pages/ClientPiping/Multiple/ReleaseNote/ViewReleaseNote';
+import MultiReleaseNote from '../../Pages/ClientPiping/Multiple/ReleaseNote/MultiReleaseNote';
+
 import { Navigate, Route, Routes } from 'react-router-dom';
 import PartyLayout from './ClientStoreLayout';
 import Dashboard from '../../Pages/ClientPiping/Dashboard/Dashboard';
@@ -55,6 +59,12 @@ import ViewMultiClearPMI from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiP
 import MultiPicklingClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPickling/MultiPicklingClearance';
 import ViewMultiClearPickling from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPickling/ViewMultiClearPickling';
 
+import MultiSurfaceClearance from '../../Pages/ClientPiping/Multiple/Painting/Surface/MultiSurfaceClearance';
+import ViewMultiSurfaceClearance from '../../Pages/ClientPiping/Multiple/Painting/Surface/ViewMultiSurfaceClearance';
+import MultiMioClearance from '../../Pages/ClientPiping/Multiple/Painting/Mio/MultiMioClearance';
+import ViewMultiMioClearance from '../../Pages/ClientPiping/Multiple/Painting/Mio/ViewMultiMioClearance';
+import MultiFinalCoatClearance from '../../Pages/ClientPiping/Multiple/Painting/FinalCoat/MultiFinaloatClearance';
+import ViewMultiFinalCoatClearance from '../../Pages/ClientPiping/Multiple/Painting/FinalCoat/ViewMultiFinalCoatClearance';
 /**
  * ClientPipingRoute.jsx — PRUNED to approved scope
  * ==================================================
@@ -150,17 +160,17 @@ const ClientPipingRoutes = () => {
           <Route path='line-history-management' element={<PlaceholderPage title="Line History (LHS)" />} />
           <Route path='view-line-history' element={<PlaceholderPage title="View Line History" />} />
           <Route path='view-Genline-history' element={<PlaceholderPage title="View General Line History" />} />
-          <Route path='surface-clearance-management' element={<PlaceholderPage title="Surface & Primer Acceptance" />} />
+          <Route path='surface-clearance-management' element={<MultiSurfaceClearance title="Surface & Primer Acceptance" />} />
           <Route path='manage-surface-clearance' element={<PlaceholderPage title="Manage Surface Clearance" />} />
-          <Route path='view-surface-clearance' element={<PlaceholderPage title="View Surface Clearance" />} />
-          <Route path='mio-clearance-management' element={<PlaceholderPage title="MIO Acceptance" />} />
+          <Route path='view-surface-clearance' element={<ViewMultiSurfaceClearance />} />
+          <Route path='mio-clearance-management' element={<MultiMioClearance title="MIO Acceptance" />} />
           <Route path='manage-mio-clearance' element={<PlaceholderPage title="Manage MIO Clearance" />} />
-          <Route path='view-mio-clearance' element={<PlaceholderPage title="View MIO Clearance" />} />
-          <Route path='final-coat-clearance-management' element={<PlaceholderPage title="Final Coat Acceptance" />} />
+          <Route path='view-mio-clearance' element={<ViewMultiMioClearance />} />
+          <Route path='final-coat-clearance-management' element={<MultiFinalCoatClearance title="Final Coat Acceptance" />} />
           <Route path='manage-final-coat-clearance' element={<PlaceholderPage title="Manage Final Coat Clearance" />} />
-          <Route path='view-final-coat-clearance' element={<PlaceholderPage title="View Final Coat Clearance" />} />
-          <Route path='release-note-management' element={<PlaceholderPage title="IRN / Release Note" />} />
-          <Route path='view-release-note' element={<PlaceholderPage title="View Release Note" />} />
+          <Route path='view-final-coat-clearance' element={<ViewMultiFinalCoatClearance />} />
+          <Route path='release-note-management' element={<MultiReleaseNote />} />
+          <Route path='view-release-note' element={<ViewReleaseNote />} />
           <Route path='*' element={<Navigate to='dashboard' />} />
       </Route>
     </Routes>

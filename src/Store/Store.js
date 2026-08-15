@@ -7,11 +7,18 @@ import getClientPipingMultiFDReducer from './Client/Piping/Fitup/getClientPiping
 import getClientPipingMultiRTReducer from './Client/Piping/NDT/getClientPipingMultiRT';
 import getClientPipingMultiPWHTReducer from './Client/Piping/NDT/getClientPipingMultiPWHT';
 import getClientPipingMultiPicklingReducer from './Client/Piping/NDT/getClientPipingMultiPickling';
+<<<<<<< HEAD
 import getClientPipingMultiMPTReducer from './Client/Piping/NDT/getClientPipingMultiMPT';
 import getClientPipingMultiFTReducer from './Client/Piping/NDT/getClientPipingMultiFT';
 import getClientPipingMultiHTReducer from './Client/Piping/NDT/getClientPipingMultiHT';
 import getClientPipingMultiLPTReducer from './Client/Piping/NDT/getClientPipingMultiLPT';
 import getClientPipingMultiPMIReducer from './Client/Piping/NDT/getClientPipingMultiPMI';
+=======
+import getClientPipingMultiSurfaceReducer from './Client/Piping/Painting/Surface/getClientPipingMultiSurface';
+import getClientPipingMultiMioReducer from './Client/Piping/Painting/MIO/getClientPipingMultiMio';
+import getClientPipingMultiFinalCoatReducer from './Client/Piping/Painting/FinalCoat/getClientPipingMultiFinalCoat';
+import getClientPipingMultiReleaseNoteReducer from './Client/Piping/ReleaseNote/getClientPipingMultiReleaseNote';
+>>>>>>> 8c023f05dae8e0cf6f7181c0580587c2653364d7
 // import getCustomersReducer from './slices/customer/Customer';
 import getCustomersReducer from '../../src/Store/Store/Customer/Customer';
 // Admin
@@ -211,7 +218,7 @@ import getUserDrawTrasactionSlice from "../Store/Store/TransactionItem/getDrawTr
 import getUserAdminDrawSlice from "../Store/Erp/Planner/Draw/UserAdminDraw";
 import getUserIssueRequestSlice from "../Store/Store/Issue/IssueRequest";
 import getUserOfferSlice from "../Store/Store/Offer/getUserOffer";
-import getOneIssueSlice from "../Store/Store/Issue/GetOneIssue";
+// import getOneIssueSlice from "../Store/Store/Issue/GetOneIssue";
 import transactionReturnSlice from "../Store/Store/Issue/TransactionReturn";
 
 import getReleseNoteSlice from "../Store/Erp/ReleseNote/ReleseNote";
@@ -525,7 +532,7 @@ import getMultiPackingSummaryPipingSlice from "../Store/Piping/MultiPacking/GetM
 // import manageFitupOffTablePipingSlice from "../Store/Piping/MultiFitupPiping/manageFitupOffTablePiping";
 import getFitupOfferTablePipingSlice from "../Store/Piping/MultiFitupPiping/getFitupOfferTablePiping";
 import getMultiFitupPipingSlice from "../Store/Piping/MultiFitupPiping/getMultiFitupPiping";
-import getDrawingSpoolNoFitUpSlice from "../Store/Piping/MultiFitupPiping/getMultiFitupPiping";
+// import getDrawingSpoolNoFitUpSlice from "../Store/Piping/MultiFitupPiping/getMultiFitupPiping";
 import getDrawingSpoolNoFitUpReducer
   from "../Store/Piping/Drawing/getDrawingSpoolNoFitUp";
 import updateFitupOffTablePipingSlice from "../Store/Piping/MultiFitupPiping/updateFitupOfferTablePiping";
@@ -538,7 +545,7 @@ import getDptOfferSlice from "../Store/Piping/RootDpt/getDptOffer";
 import getMultiDptPipingSlice from "../Store/Piping/RootDpt/getMultiDptPiping";
 
 import getFitUpDrawingDataForWeldVisualSlice from "../Store/Piping/WeldVisual/getFitUpDrawingDataForWeldVisual";
-import { getRootDptDrawingDataForWeldVisual } from "./Piping/WeldVisual/getRootDptDrawingDataForWeldVisual";
+// import { getRootDptDrawingDataForWeldVisual } from "./Piping/WeldVisual/getRootDptDrawingDataForWeldVisual";
 import getMultiWeldVisualPipingSlice from "../Store/Piping/WeldVisual/getMultiWeldVisualPiping";
 import getWelVisualOfferSlice from "../Store/Piping/WeldVisual/getWeldVisualOffer";
 // import areaReducer from "../Store/PoTeam/Area/AreaSlice";
@@ -694,6 +701,9 @@ export default configureStore({
       getClientPipingMultiHT: getClientPipingMultiHTReducer,
       getClientPipingMultiLPT: getClientPipingMultiLPTReducer,
       getClientPipingMultiPMI: getClientPipingMultiPMIReducer,
+      getClientPipingMultiSurface: getClientPipingMultiSurfaceReducer,
+      getClientPipingMultiMio: getClientPipingMultiMioReducer,
+      getClientPipingMultiFinalCoat: getClientPipingMultiFinalCoatReducer,
       getClientFimPackingList: getClientFimPackingListReducer,
     login: adminLoginSlice,
     forgetPassword: adminForgetPasswordSlice,
@@ -1178,7 +1188,7 @@ getUserPaintManufacturePiping:getUserPaintManufacturePipingSlice,
 
     getPipingDispatchNotes: getPipingDispatchNotesSlice,
     getDrawingJointWisePiping: getDrawingJointWisePipingSlice,
-    manageFitupOffTablePiping: manageFitupOffTablePipingSlice,
+//     manageFitupOffTablePiping: manageFitupOffTablePipingSlice,
     updateFitupOffTablePiping: updateFitupOffTablePipingSlice,
     removeFitupOffTablePiping: removeFitupOffTablePipingSlice,
     getFitupOfferTablePiping: getFitupOfferTablePipingSlice,
@@ -1313,7 +1323,7 @@ getUserPaintManufacturePiping:getUserPaintManufacturePipingSlice,
 
 
       //  Area
-    getAreas: areaPiping,
+//     getAreas: areaPiping,
     termsPiping: termsPipingReducer,
 
     getItemCategoryWiseStockReportList: getItemCategoryWiseStockReportListSlice,
@@ -1376,6 +1386,7 @@ getUserPaintManufacturePiping:getUserPaintManufacturePipingSlice,
     getClientSurface: getClientSurfaceSlice,
     getClientMio: getClientMioSlice,
     getClientFinalCoat: getClientFinalCoatSlice,
+    getClientPipingMultiReleaseNote: getClientPipingMultiReleaseNoteReducer,
     getClientInspectSummary: getClientInspectSummarySlice,
     getClientUtClearance: getClientUtClearanceSlice,
     getClientRtClearance: getClientRtClearanceSlice,
