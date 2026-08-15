@@ -1,0 +1,56 @@
+import { M_CON, PAINT, PLAN, PRODUCTION, QA, QC, CENTRAL_PLAN, Procurement, WELD } from "../../../../BaseUrl";
+
+
+export const menuAccessConfigPiping = {
+    Unit: [PLAN, M_CON],
+    Size: [PLAN, M_CON],
+    ItemCategory: [PLAN, M_CON],
+    Transport: [PLAN, M_CON],
+    InventoryLocation: [PLAN, M_CON],
+    JointType: [PLAN, PRODUCTION, QC, WELD, QA],
+    NDT: [PLAN, PRODUCTION, QC, WELD, QA],
+    Contractor: [PLAN, PRODUCTION],
+    PaintManufacturer: [PAINT, QC, QA, PRODUCTION],
+    PaintingRequirement: [PAINT, QC, QA, PRODUCTION],
+    PaintingSystem: [PAINT, QC, QA, PRODUCTION],
+    PWHT: [QA],
+    Hardness: [QA],
+    ProjectLocation: [PLAN],
+    WPS: [PLAN, PRODUCTION, QC, WELD, QA],
+    QualifiedWelder: [PLAN, PRODUCTION, WELD, QA,QC],
+    ProcedureSpecification: [PLAN, PRODUCTION, QC, WELD, QA, PAINT],
+    Party: [PLAN, M_CON, QA, QC],
+    SectionDetails: [PLAN, M_CON, QA],
+    ProjectMaterialStore: [PLAN, M_CON, QC, QA, PRODUCTION],
+    MaterialReceiving: [M_CON, QC],
+    MaterialQC: [PLAN, M_CON, QC, QA],
+    Drawing: [PLAN, QC, QA, PAINT,  WELD, PRODUCTION, ],
+    ExecutionOffer: [PLAN, PRODUCTION],
+    ClearanceQC: [PLAN, QC, QA],
+    NDT_DROP: [PRODUCTION, QA, QC, PLAN],
+    NDT_MASTER: [PRODUCTION, QA, QC, PLAN],
+    NDT_PROCESS: [QC],
+    IRNDispatch_PAINT: [PLAN, PRODUCTION, QA, PAINT, QC],
+    ISR: [PLAN, PRODUCTION, QA, QC],
+    PAINT_DISPATCH: [PLAN, PRODUCTION, QA, PAINT, QC],
+    PAINT_MASTER: [PLAN, PRODUCTION, QA, QC, PAINT],
+
+    IRN_AFTER: [PLAN, PRODUCTION, QA, QC],
+    PRESSURE_TEST: [PLAN, PRODUCTION, QA, QC,],
+
+    BILL: [PLAN],
+    DPR: [PLAN, QC, QA, PRODUCTION],
+    DMR: [PLAN, QC, QA, PRODUCTION],
+    PROJECTFRONTAVAILABILITYSUMMARY: [PLAN, QC, QA, PRODUCTION],
+
+    DMRCATEGORIES: [PLAN],
+    FIM: [PLAN, M_CON, PRODUCTION, QC, QA],
+    PACKING_LIST: [PLAN, QC],
+    MaterialMTO:[CENTRAL_PLAN],
+    ProcurementRequest:[CENTRAL_PLAN],
+    INQUIRY:[Procurement],
+    ORDER:[Procurement],
+    MaterialProcurement:[CENTRAL_PLAN,Procurement],
+    
+
+}

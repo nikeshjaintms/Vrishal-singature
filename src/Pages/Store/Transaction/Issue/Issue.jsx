@@ -1,0 +1,376 @@
+import React, { useEffect, useMemo, useState } from "react";
+import Header from "../../Include/Header";
+import Sidebar from "../../Include/Sidebar";
+import { Link, useNavigate } from "react-router-dom";
+import { M_STORE, V_URL } from "../../../../BaseUrl";
+import axios from "axios";
+import toast from "react-hot-toast";
+import Loader from "../../Include/Loader";
+import { Pagination, Search } from "../../Table";
+import DropDown from "../../../../Components/DropDown";
+import Swal from "sweetalert2";
+import moment from "moment";
+import { useDispatch, useSelector } from "react-redux";
+import { DownloadPdf } from "../../Components/DownloadPdf";
+// import { getOrder } from "../../../../Store/Store/Order/Order";
+import { DownloadXlsx } from "../../Components/DownloadXlsx";
+import FilterComponent from "../FilterComponent";
+import { getIssue } from "../../../../Store/Store/MainStore/Issue/GetIssue";
+
+const Issue = () => {
+  const getAllIssue = useSelector((state => state?.getIssue?.data?.data?.data))
+  const pagination = useSelector((state => state?.getIssue?.data?.data?.pagination))
+  const navigate = useNavigate();
+  const [totalItems, setTotalItems] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [limit, setlimit] = useState(10);
+  const [disable, setDisable] = useState(true);
+  const dispatch = useDispatch();
+  const [filter, setFilter] = useState({
+    date: {
+      start: null,
+      end: null
+    }
+  });
+  const [openFilter, setOpenFilter] = useState(false)
+
+  const fetchData = () => {
+    const bodyFormData = new URLSearchParams();
+    bodyFormData.append("tag_number", 13);
+    bodyFormData.append("search", search);
+    bodyFormData.append("filter", JSON.stringify(filter));
+    bodyFormData.append('firm_id', localStorage.getItem('PAY_USER_FIRM_ID'))
+    bodyFormData.append('year_id', localStorage.getItem('PAY_USER_YEAR_ID'))
+    bodyFormData.append('page', currentPage);
+    bodyFormData.append('limit', limit);
+    dispatch(getIssue({ formData: bodyFormData }));
+    setDisable(false);
+  };
+
+  useEffect(() => {
+    if (localStorage.getItem('PAY_USER_TOKEN') === null) {
+      navigate("/user/login");
+    } else if (localStorage.getItem('VI_PRO') !== `${M_STORE}`) {
+      toast.error('Access Denied. You do not have permission to view this product. Please contact your administrator for assistance.')
+      navigate("/user/login");
+    }
+    fetchData()
+  }, [navigate, disable, filter, search, currentPage, limit]);
+
+  useEffect(() => {
+    if (pagination?.totalItems !== undefined) {
+      setTotalItems(pagination.totalItems);
+    }
+  }, [pagination]);
+
+  const commentsData = useMemo(() => {
+    return getAllIssue;
+  }, [getAllIssue]);
+
+  const handleDelete = (id, title) => {
+    Swal.fire({
+      title: `Are you sure want to delete ${title}?`,
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const myurl = `${V_URL}/user/delete-iss`;
+        var bodyFormData = new URLSearchParams();
+        bodyFormData.append("id", id);
+        axios({
+          method: "PUT",
+          url: myurl,
+          data: bodyFormData,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: "Barrer " + localStorage.getItem("PAY_USER_TOKEN"),
+          },
+        }).then((response) => {
+          if (response.data.success === true) {
+            fetchData()
+            toast.success(response?.data?.message);
+            setDisable(true);
+          } else {
+            toast.error(response?.data?.message);
+          }
+        }).catch((error) => {
+          toast.error("Something went wrong");
+          console?.log("Errors", error);
+        });
+      }
+    });
+  };
+
+  const handleDateChange = (e, type) => {
+    const dateValue = e.target.value;
+    setFilter(prevFilter => {
+      const newFilter = {
+        ...prevFilter,
+        date: {
+          ...prevFilter.date,
+          [type]: dateValue
+        }
+      }
+      return newFilter;
+    });
+  }
+
+  const handleDonwloadPDf = () => {
+    const bodyFormData = new URLSearchParams();
+    bodyFormData.append('print_date', true);
+    bodyFormData.append('search', search);
+    bodyFormData.append('tag_number', 13);
+    bodyFormData.append('filter', JSON.stringify(filter));
+    bodyFormData.append('firm_id', localStorage.getItem('PAY_USER_FIRM_ID'));
+    bodyFormData.append('year_id', localStorage.getItem('PAY_USER_YEAR_ID'));
+    bodyFormData.append('background', true);
+    DownloadPdf({ apiMethod: 'post', url: 'pdf-ms-trans-download', body: bodyFormData });
+  }
+
+  const handleDownloadXlsx = () => {
+    const bodyFormData = new URLSearchParams();
+    bodyFormData.append('print_date', true);
+    bodyFormData.append('search', search);
+    bodyFormData.append('tag_number', 13);
+    bodyFormData.append('filter', JSON.stringify(filter));
+    bodyFormData.append('firm_id', localStorage.getItem('PAY_USER_FIRM_ID'));
+    bodyFormData.append('year_id', localStorage.getItem('PAY_USER_YEAR_ID'));
+    bodyFormData.append('background', true);
+    DownloadXlsx({ apiMethod: 'post', url: 'xlsx-ms-trans-download', body: bodyFormData, fileName: 'Issue_Report' });
+  }
+
+  const handleRefresh = () => {
+    setDisable(true);
+    setSearch('');
+    setFilter({
+      date: {
+        start: null,
+        end: null
+      }
+    })
+  };
+
+  const handleDownloadPdf = (id) => {
+    const bodyFormData = new URLSearchParams();
+    bodyFormData.append('id', id);
+    bodyFormData.append('print_date', true);
+    DownloadPdf({ apiMethod: 'post', url: 'iss-download-pdf', body: bodyFormData })
+  }
+  const handleSDDownloadPdf = (id) => {
+    const bodyFormData = new URLSearchParams();
+    bodyFormData.append('id', id);
+    bodyFormData.append('print_date', true);
+    DownloadPdf({ apiMethod: 'post', url: 'iss-sort-download-pdf', body: bodyFormData })
+  }
+  const handleLDDownloadPdf = (id) => {
+    const bodyFormData = new URLSearchParams();
+    bodyFormData.append('id', id);
+    bodyFormData.append('print_date', true);
+    DownloadPdf({ apiMethod: 'post', url: 'iss-long-download-pdf', body: bodyFormData })
+  }
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const handleOpen = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+
+  return (
+    <div className={`main-wrapper ${isSidebarOpen ? "slide-nav" : ""}`}>
+      <Header handleOpen={handleOpen} />
+      <Sidebar />
+      <div className="page-wrapper">
+        <div className="content">
+          <div className="page-header">
+            <div className="row">
+              <div className="col-sm-12">
+                <ul className="breadcrumb">
+                  <li className="breadcrumb-item">
+                    <Link to="/main-store/user/dashboard">Dashboard </Link>
+                  </li>
+                  <li className="breadcrumb-item">
+                    <i className="feather-chevron-right"></i>
+                  </li>
+                  <li className="breadcrumb-item active">Issue </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          {disable === false ? (
+            <div className="row">
+              <div className="col-sm-12">
+                <div className="card card-table show-entire">
+                  <div className="card-body">
+                    <div className="page-table-header mb-2">
+                      <div className="row align-items-center">
+                        <div className="col">
+                          <div className="doctor-table-blk">
+                            <h3>Issue</h3>
+                            <div className="doctor-search-blk">
+                              <div className="top-nav-search table-search-blk">
+                                <form>
+                                  <Search
+                                    onSearch={(value) => {
+                                      setSearch(value);
+                                      setCurrentPage(1);
+                                    }}
+                                  />
+                                  {/* eslint-disable jsx-a11y/anchor-is-valid */}
+                                  <a className="btn">
+                                    <img
+                                      src="/assets/img/icons/search-normal.svg"
+                                      alt="firm-searchBox"
+                                    />
+                                  </a>
+                                </form>
+                              </div>
+                              <div className="add-group">
+                                <Link
+                                  to="/main-store/user/manage-purchase-issue"
+                                  className="btn btn-primary add-pluss ms-2"
+                                  data-toggle="tooltip"
+                                  data-placement="top"
+                                  title="Add"
+                                >
+                                  <img
+                                    src="/assets/img/icons/plus.svg"
+                                    alt="plus-icon"
+                                  />
+                                </Link>
+                                <button
+                                  type="button"
+                                  onClick={handleRefresh}
+                                  className="btn btn-primary doctor-refresh ms-2"
+                                  data-toggle="tooltip"
+                                  data-placement="top"
+                                  title="Refresh"
+                                >
+                                  <img src="/assets/img/icons/re-fresh.svg" alt="refresh" />
+                                </button>
+                                <button
+                                  className="btn btn-primary doctor-refresh ms-2"
+                                  onClick={() => setOpenFilter(!openFilter)}
+                                  aria-controls="filter-inputs"
+                                  aria-expanded={openFilter}
+                                >
+                                  <i className="fas fa-filter"></i>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="pageDropDown col-auto text-end float-end ms-auto download-grp">
+                          <DropDown limit={limit} onLimitChange={(val) => setlimit(val)} />
+                        </div>
+                        <FilterComponent
+                          handleDateChange={handleDateChange}
+                          handleDownloadPdf={handleDonwloadPDf}
+                          handleDownloadXlsx={handleDownloadXlsx}
+                          openFilter={openFilter}
+                        />
+                      </div>
+                    </div>
+                    <div className="table-responsive">
+                      <table className="table border-0 custom-table comman-table  mb-0">
+                        <thead>
+                          <tr>
+                            <th>Sr No.</th>
+                            <th className="right-align">Issue Date</th>
+                            <th className="right-align" >Issue No.</th>
+                            <th className="right-align" >Bill No.</th>
+                            <th className="right-align" >Get Pass No.</th>
+                            <th className="right-align" >Challan No.</th>
+                            <th>Party Name</th>
+                            {/* <th>Customer Name</th> */}
+                            <th>Project Name </th>
+                            <th className="right-align">Items</th>
+                            <th className="text-end">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {commentsData?.map((elem, i) =>
+                            <tr key={elem?._id}>
+                              <td>{(currentPage - 1) * limit + i + 1}</td>
+                              <td className="right-align">{moment(elem.trans_date).format('YYYY-MM-DD')}</td>
+                              <td className="right-align">{elem.voucher_no}</td>
+                              <td className="right-align">{elem.bill_no}</td>
+                              <td className="right-align">{elem?.get_pass_data?.get_pass_no}</td>
+                              <td className="right-align">{elem.challan_no}</td>
+                              <td>{elem?.party_data?.name || '-'}</td>
+                              {/* <td>{elem?.customer_data?.name || '-'}</td> */}
+                              <td>{elem?.project_data?.name}</td>
+                              <td className="right-align">{elem.item_count}</td>
+                              <td className="text-end">
+                                <div className="dropdown dropdown-action">
+                                  <a href="#" className="action-icon dropdown-toggle"
+                                    data-bs-toggle="dropdown" aria-expanded="false"><i
+                                      className="fa fa-ellipsis-v"></i></a>
+                                  <div className="dropdown-menu dropdown-menu-end">
+                                    <button type='button' className="dropdown-item" onClick={() => navigate(`/main-store/user/view-issue`, { state: elem })}><i
+                                      className="fa-solid fa-eye m-r-5"></i>
+                                      View</button>
+                                    <button type='button' className="dropdown-item" onClick={() => navigate('/main-store/user/edit-issue-manage', { state: elem })}><i
+                                      className="fa-solid fa-pen-to-square m-r-5"></i>
+                                      Edit</button>
+                                    <button type='button' className="dropdown-item" onClick={() => handleDelete(elem?._id, elem?.voucher_no)} ><i
+                                      className="fa fa-trash-alt m-r-5"></i> Delete</button>
+                                    {
+                                      elem?.isexternal === false ? <button type='button' className="dropdown-item" onClick={() => handleDownloadPdf(elem?._id)}><i
+                                        className="fa-solid fa-download m-r-5"></i> Download Report</button> : <>
+                                        <button type='button' className="dropdown-item" onClick={() => handleSDDownloadPdf(elem?._id)}><i
+                                          className="fa-solid fa-download m-r-5"></i> Download S.D Report</button>
+                                        <button type='button' className="dropdown-item" onClick={() => handleLDDownloadPdf(elem?._id)}><i
+                                          className="fa-solid fa-download m-r-5"></i> Download L.D Report</button>
+                                      </>
+                                    }
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                          {commentsData?.length === 0 || commentsData === undefined ? (
+                            <tr>
+                              <td colSpan="999">
+                                <div className="no-table-data">
+                                  No Data Found!
+                                </div>
+                              </td>
+                            </tr>
+                          ) : null}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="row align-center mt-3 mb-2">
+                      <div className="col-sm-12 col-md-6 col-lg-6 col-xxl-6">
+                        <div className="dataTables_info" id="DataTables_Table_0_info" role="status"
+                          aria-live="polite">Showing {Math.min(limit, totalItems)} from {totalItems} data</div>
+                      </div>
+                      <div className="col-sm-12 col-md-6 col-lg-6 col-xxl-6 ">
+                        <div className="dataTables_paginate paging_simple_numbers"
+                          id="DataTables_Table_0_paginate">
+                          <Pagination
+                            total={totalItems}
+                            itemsPerPage={limit}
+                            currentPage={currentPage}
+                            onPageChange={(page) => setCurrentPage(page)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : <Loader />}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default Issue

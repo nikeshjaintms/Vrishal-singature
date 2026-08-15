@@ -1,0 +1,32 @@
+{
+  "data": [
+    {
+      "name": "Payroll System",
+      "id": 1
+    },
+    {
+      "name": "Main Store",
+      "id": 2
+    },
+    {
+      "name": "Project Store",
+      "id": 3
+    },
+    {
+      "name": "Project Fabrication",
+      "id": 4
+    },
+    {
+      "name": "Central Planning",
+      "id": 5
+    },
+    {
+      "name": "Procurement",
+      "id": 6
+    },
+    {
+      "name": "Piping PMS",
+      "id": 7
+    }
+  ]
+}

@@ -1,0 +1,171 @@
+import React, { useEffect, useState } from 'react'
+import { useDispatch } from 'react-redux';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { addPartyGroup } from '../../../../Store/Store/StoreMaster/PartyGroup/ManageParty';
+import Footer from '../../Include/Footer';
+import Header from '../../Include/Header';
+import Sidebar from '../../Include/Sidebar';
+import toast from 'react-hot-toast';
+
+const ManagePartyGroup = () => {
+
+  const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [disable, setDisable] = useState(false);
+  const [error, setError] = useState('');
+  const [partyGroup, setPartyGroup] = useState('');
+  const [selectValue, setSelectValue] = useState('');
+
+  useEffect(() => {
+    if (localStorage.getItem('PAY_USER_TOKEN') === null) {
+      navigate("/user/login");
+    } else if (localStorage.getItem('VI_PRO') !== "Main Store") {
+      toast.error('Access Denied. You do not have permission to view this product. Please contact your administrator for assistance.')
+      navigate("/user/login");
+    }
+  }, [navigate]);
+
+  const data = location.state;
+  // console.log(data, '@@')
+
+  useEffect(() => {
+    if (location.state) {
+      setPartyGroup(location.state.name);
+      setSelectValue(location.state?.status);
+    }
+  }, [location.state]);
+
+  const handleRadioChange = (event) => {
+    setSelectValue(event.target.checked);
+  };
+
+  const handleSubmit = () => {
+    if (validation()) {
+      setDisable(true)
+      const formData = new URLSearchParams();
+
+      formData.append('name', partyGroup);
+      if (data?._id) {
+        formData.append('id', data?._id);
+        formData.append('status', selectValue);
+      }
+
+      dispatch(addPartyGroup(formData))
+        .then((res) => {
+          console.log(res, 'REs');
+
+          if (res.payload.success === true) {
+            navigate('/main-store/user/party-group-management');
+            setPartyGroup('');
+          }
+          setDisable(false)
+        }).catch((error) => {
+          console.log(error, 'Error')
+          setDisable(false)
+        })
+    }
+  }
+
+  const validation = () => {
+    var isValid = true;
+    let err = {};
+
+    if (!partyGroup || !partyGroup?.trim()) {
+      isValid = false;
+      err['partyGroup_err'] = "Please enter party group"
+    }
+
+    setError(err);
+    return isValid;
+
+  }
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const handleOpen = () => {
+    setIsSidebarOpen(!isSidebarOpen)
+  }
+
+
+  return (
+    <div className={`main-wrapper ${isSidebarOpen ? 'slide-nav' : ''}`}>
+
+      <Header handleOpen={handleOpen} />
+      <Sidebar />
+
+      <div className="page-wrapper">
+        <div className="content">
+
+          <div className="page-header">
+            <div className="row">
+              <div className="col-sm-12">
+                <ul className="breadcrumb">
+                  <li className="breadcrumb-item"><Link to="/main-store/user/dashboard">Dashboard </Link></li>
+                  <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
+                  <li className="breadcrumb-item"><Link to="/main-store/user/party-group-management">Party Group List</Link></li>
+                  <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
+                  <li className="breadcrumb-item active">{data?._id ? 'Edit' : 'Add'} Party Group</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="row">
+            <div className="col-sm-12">
+              <div className="card">
+                <div className="card-body">
+                  <form>
+                    <div className="col-12">
+                      <div className="form-heading">
+                        <h4>{data?._id ? 'Edit' : 'Add'} Party Group Details</h4>
+                      </div>
+                    </div>
+
+
+                    <div className="row">
+                      <div className="col-12 col-md-4 col-xl-4">
+                        <div className="input-block local-forms">
+                          <label> Name <span className="login-danger">*</span></label>
+                          <input className="form-control" type="text"
+                            onChange={(e) => setPartyGroup(e.target.value)} value={partyGroup}
+                          />
+                          <div className='error'>{error.partyGroup_err}</div>
+                        </div>
+                      </div>
+
+                      {data?._id ? (
+                        <div className='col-12 col-md-4 col-xl-4'>
+                          <div className="cardNum">
+                            <div className="mb-3">
+                              <label htmlFor="fileUpload" className="form-label">Status</label>
+                              <div className="form-check form-switch">
+                                <input className="form-check-input" type="checkbox" role="switch" onChange={handleRadioChange} checked={selectValue} />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : null}
+
+                    </div>
+                  </form>
+                  <div className="col-12">
+                    <div className="doctor-submit text-end">
+                      <button type="button"
+                        className="btn btn-primary submit-form me-2" onClick={handleSubmit} disabled={disable}>{disable ? "Processing..." : (data?._id ? 'Update' : 'Submit')}</button>
+                      <button type="button"
+                        className="btn btn-primary cancel-form" onClick={() => setPartyGroup('')}>Reset</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <Footer />
+      </div>
+    </div>
+  )
+}
+
+export default ManagePartyGroup

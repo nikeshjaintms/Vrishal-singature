@@ -1,0 +1,60 @@
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { V_URL } from "../../../../BaseUrl";
+
+// Async thunk to fetch RT Test Offer
+export const fetchMPTOfferData = createAsyncThunk(
+  "/user/piping/get-mpt-test-offer",
+  async ({ project_id }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${V_URL}/user/piping/get-mpt-test-offer`,
+        { project: project_id },
+        {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("PAY_USER_TOKEN"),
+          },
+        }
+      );
+
+      if (response.data.success) {
+        return response.data.data; // return only the array of offers
+      } else {
+        toast.error(response.data.message);
+        return rejectWithValue(response.data.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Something went wrong");
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+const MPTOfferSlice = createSlice({
+  name: "MPTOffer",
+  initialState: {
+    offers: [],        // store array of offer objects
+    loading: false,
+    error: null,
+  },
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchMPTOfferData.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchMPTOfferData.fulfilled, (state, action) => {
+        state.offers = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchMPTOfferData.rejected, (state, action) => {
+        state.offers = [];
+        state.loading = false;
+        state.error = action.payload || action.error.message;
+      });
+  },
+});
+
+export default MPTOfferSlice.reducer;
