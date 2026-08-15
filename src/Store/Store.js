@@ -7,18 +7,15 @@ import getClientPipingMultiFDReducer from './Client/Piping/Fitup/getClientPiping
 import getClientPipingMultiRTReducer from './Client/Piping/NDT/getClientPipingMultiRT';
 import getClientPipingMultiPWHTReducer from './Client/Piping/NDT/getClientPipingMultiPWHT';
 import getClientPipingMultiPicklingReducer from './Client/Piping/NDT/getClientPipingMultiPickling';
-<<<<<<< HEAD
 import getClientPipingMultiMPTReducer from './Client/Piping/NDT/getClientPipingMultiMPT';
 import getClientPipingMultiFTReducer from './Client/Piping/NDT/getClientPipingMultiFT';
 import getClientPipingMultiHTReducer from './Client/Piping/NDT/getClientPipingMultiHT';
 import getClientPipingMultiLPTReducer from './Client/Piping/NDT/getClientPipingMultiLPT';
 import getClientPipingMultiPMIReducer from './Client/Piping/NDT/getClientPipingMultiPMI';
-=======
 import getClientPipingMultiSurfaceReducer from './Client/Piping/Painting/Surface/getClientPipingMultiSurface';
 import getClientPipingMultiMioReducer from './Client/Piping/Painting/MIO/getClientPipingMultiMio';
 import getClientPipingMultiFinalCoatReducer from './Client/Piping/Painting/FinalCoat/getClientPipingMultiFinalCoat';
 import getClientPipingMultiReleaseNoteReducer from './Client/Piping/ReleaseNote/getClientPipingMultiReleaseNote';
->>>>>>> 8c023f05dae8e0cf6f7181c0580587c2653364d7
 // import getCustomersReducer from './slices/customer/Customer';
 import getCustomersReducer from '../../src/Store/Store/Customer/Customer';
 // Admin
