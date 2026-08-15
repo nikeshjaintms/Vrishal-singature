@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import Header from '../../../Include/Header';
 import Sidebar from '../../../Include/Sidebar';
 import Footer from '../../../Include/Footer';
@@ -9,7 +10,7 @@ import moment from 'moment';
 import axios from 'axios';
 import DropDown from '../../../../../Components/DropDown';
 import { V_URL } from '../../../../../BaseUrl';
-import { PdfDownloadErp } from '../../../../../Components/ErpPdf/PdfDownloadErp';
+import { getClientPipingMultiPMI } from '../../../../../Store/Client/Piping/NDT/getClientPipingMultiPMI';
 
 // Read-only: PMI does not yet have the client_status/status_type fields the
 // RT/MPT/LPT accept-reject action depends on — view + download only.
@@ -23,57 +24,29 @@ const useDebounce = (value, delay = 600) => {
 };
 
 const MultiPmiClearance = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
 
-  const [rows, setRows] = useState([]);
-  const [totalItems, setTotalItems] = useState(0);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(false);
   const debouncedSearch = useDebounce(search, 500);
 
-  const projectId = localStorage.getItem('PARTY_PROJECT_ID');
+  const { data: reduxData, loading } = useSelector((state) => state.getClientPipingMultiPMI);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.post(
-        `${V_URL}/party/get-piping-pmi-client`,
-        {
-          project_id: projectId,
-          page,
-          limit,
-          search: debouncedSearch,
-        },
-        {
-          headers: {
-            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
-          },
-        }
-      );
+  const responseData = reduxData?.data;
+  const rows = Array.isArray(responseData)
+    ? responseData
+    : responseData?.data || [];
 
-      const responseData = res?.data?.data;
+  const totalItems = Array.isArray(responseData)
+    ? reduxData?.pagination?.totalItems || rows.length
+    : responseData?.totalItems || 0;
 
-      const data = Array.isArray(responseData)
-        ? responseData
-        : responseData?.data || [];
-
-      const total = Array.isArray(responseData)
-        ? res?.data?.pagination?.totalItems || data.length
-        : responseData?.totalItems || 0;
-
-      setRows(data);
-      setTotalItems(total);
-    } catch (err) {
-      console.error('PMI fetch error:', err);
-      setRows([]);
-      setTotalItems(0);
-    } finally {
-      setLoading(false);
-    }
+  const fetchData = () => {
+    dispatch(getClientPipingMultiPMI({ page, limit, search: debouncedSearch }));
   };
 
   useEffect(() => {

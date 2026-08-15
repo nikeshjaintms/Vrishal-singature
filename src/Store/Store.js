@@ -3,9 +3,15 @@ import getClientFimPackingListReducer from './Client/Structural/FIM/getClientFim
 import getClientPipingFimPackingListReducer from './Client/Piping/FIM/getClientPipingFimPackingList';
 import getClientPipingMultiFitupReducer from './Client/Piping/Fitup/getClientPipingMultiFitup';
 import getClientPipingMultiWeldVisualReducer from './Client/Piping/WeldVisual/getClientPipingMultiWeldVisual';
+import getClientPipingMultiFDReducer from './Client/Piping/Fitup/getClientPipingMultiFD';
 import getClientPipingMultiRTReducer from './Client/Piping/NDT/getClientPipingMultiRT';
 import getClientPipingMultiPWHTReducer from './Client/Piping/NDT/getClientPipingMultiPWHT';
 import getClientPipingMultiPicklingReducer from './Client/Piping/NDT/getClientPipingMultiPickling';
+import getClientPipingMultiMPTReducer from './Client/Piping/NDT/getClientPipingMultiMPT';
+import getClientPipingMultiFTReducer from './Client/Piping/NDT/getClientPipingMultiFT';
+import getClientPipingMultiHTReducer from './Client/Piping/NDT/getClientPipingMultiHT';
+import getClientPipingMultiLPTReducer from './Client/Piping/NDT/getClientPipingMultiLPT';
+import getClientPipingMultiPMIReducer from './Client/Piping/NDT/getClientPipingMultiPMI';
 // import getCustomersReducer from './slices/customer/Customer';
 import getCustomersReducer from '../../src/Store/Store/Customer/Customer';
 // Admin
@@ -679,9 +685,15 @@ export default configureStore({
       getClientPipingFimPackingList: getClientPipingFimPackingListReducer,
       getClientPipingMultiFitup: getClientPipingMultiFitupReducer,
       getClientPipingMultiWeldVisual: getClientPipingMultiWeldVisualReducer,
+      getClientPipingMultiFD: getClientPipingMultiFDReducer,
       getClientPipingMultiRT: getClientPipingMultiRTReducer,
       getClientPipingMultiPWHT: getClientPipingMultiPWHTReducer,
       getClientPipingMultiPickling: getClientPipingMultiPicklingReducer,
+      getClientPipingMultiMPT: getClientPipingMultiMPTReducer,
+      getClientPipingMultiFT: getClientPipingMultiFTReducer,
+      getClientPipingMultiHT: getClientPipingMultiHTReducer,
+      getClientPipingMultiLPT: getClientPipingMultiLPTReducer,
+      getClientPipingMultiPMI: getClientPipingMultiPMIReducer,
       getClientFimPackingList: getClientFimPackingListReducer,
     login: adminLoginSlice,
     forgetPassword: adminForgetPasswordSlice,

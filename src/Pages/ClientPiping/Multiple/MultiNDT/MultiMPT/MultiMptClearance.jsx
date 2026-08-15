@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import Header from '../../../Include/Header';
 import Sidebar from '../../../Include/Sidebar';
 import Footer from '../../../Include/Footer';
@@ -9,16 +10,9 @@ import moment from 'moment';
 import axios from 'axios';
 import DropDown from '../../../../../Components/DropDown';
 import { V_URL } from '../../../../../BaseUrl';
-import { PdfDownloadErp } from '../../../../../Components/ErpPdf/PdfDownloadErp';
+import { getClientPipingMultiMPT } from '../../../../../Store/Client/Piping/NDT/getClientPipingMultiMPT';
+import toast from 'react-hot-toast';
 
-// Read-only, built against the getMptInspectionPiping endpoint added this
-// session — this is genuinely new backend code with no prior staff usage,
-// so treat this page as needing real QA before relying on it in production.
-//
-// IMPORTANT: this model's status enum is 0-based
-// (0:Pending 1:Accepted 2:Rejected 3:Partially), unlike every other NDT
-// type built earlier (which use 1-based). Do not copy the 1/2/3/4 badge
-// logic from those files here.
 const useDebounce = (value, delay = 600) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -29,42 +23,23 @@ const useDebounce = (value, delay = 600) => {
 };
 
 const MultiMptClearance = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
 
-  const [rows, setRows] = useState([]);
-  const [totalItems, setTotalItems] = useState(0);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(false);
   const debouncedSearch = useDebounce(search, 500);
 
-  const projectId = localStorage.getItem('PARTY_PROJECT_ID');
+  const { data: reduxData, loading } = useSelector((state) => state.getClientPipingMultiMPT);
+  const rows = reduxData?.data || [];
+  const totalItems = reduxData?.pagination?.totalItems || 0;
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`${V_URL}/party/get-multi-mpt-clearance`, {
-        params: {
-          project: projectId,
-          status: '1,2,3', // Accepted, Rejected, Partially (0-based enum)
-          page,
-          limit,
-          search: debouncedSearch,
-        },
-        headers: {
-          Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
-        },
-      });
-      setRows(res?.data?.data || []);
-      setTotalItems(res?.data?.pagination?.totalItems || 0);
-    } catch (err) {
-      setRows([]);
-      setTotalItems(0);
-    } finally {
-      setLoading(false);
-    }
+  const fetchData = () => {
+    dispatch(getClientPipingMultiMPT({ page, limit, search: debouncedSearch }));
   };
 
   useEffect(() => {
@@ -81,17 +56,37 @@ const MultiMptClearance = () => {
     setPage(1);
   };
 
-  const downloadInspection = (elem) => {
-    const bodyFormData = new URLSearchParams();
-    bodyFormData.append('inspection_id', elem._id);
-    bodyFormData.append('print_date', true);
-    PdfDownloadErp({
-      apiMethod: 'post',
-      url: 'download-mpt-inspection-pdf',
-      body: bodyFormData,
-    });
-  };
+  const downloadInspection = async (row) => {
+    try {
+      const toastId = toast.loading('Downloading...');
+      const response = await axios.post(
+        `${V_URL}/party/download-piping-mpt-client`,
+        {
+          report_no_two: row.report_no_two,
+          print_date: true
+        },
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          },
+          responseType: 'blob',
+        }
+      );
 
+      const file = new Blob([response.data], { type: 'application/pdf' });
+      const fileUrl = window.URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = `FT_${row.report_no_two || 'Report'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Downloaded successfully', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to download PDF');
+    }
+  };
   return (
     <>
       <div className={`main-wrapper ${isSidebarOpen ? 'slide-nav' : ''}`}>
@@ -183,40 +178,46 @@ const MultiMptClearance = () => {
                               {rows.map((elem, i) => (
                                 <tr key={elem._id}>
                                   <td>{(page - 1) * limit + i + 1}</td>
-                                  <td>{elem?.report_no}</td>
+                                  <td>{elem?.report_no_two || elem?.report_no}</td>
                                   <td>
-                                    {(elem?.drawing_no || [])
-                                      .filter((value, index, self) => value && self.indexOf(value) === index)
-                                      .map((value, index) => (
-                                        <span key={index}>
-                                          {value}
-                                          <br />
-                                        </span>
-                                      )) || '-'}
+                                    {elem?.items
+                                      ? [...new Set(elem.items.map(item => item?.drawing_no || item?.drawing_id?.drawing_no).filter(Boolean))].map((value, index) => (
+                                          <span key={index}>
+                                            {value}
+                                            <br />
+                                          </span>
+                                        ))
+                                      : (Array.isArray(elem?.drawing_no) ? elem?.drawing_no : [elem?.drawing_no]).filter(Boolean).map((value, index) => (
+                                          <span key={index}>
+                                            {value}
+                                            <br />
+                                          </span>
+                                        ))}
                                   </td>
                                   <td>
-                                    {(elem?.spool_no || [])
-                                      .filter((value, index, self) => value && self.indexOf(value) === index)
-                                      .map((value, index) => (
-                                        <span key={index}>
-                                          {value}
-                                          <br />
-                                        </span>
-                                      )) || '-'}
+                                    {elem?.items
+                                      ? [...new Set(elem.items.map(item => item?.spool_no).filter(Boolean))].map((value, index) => (
+                                          <span key={index}>
+                                            {value}
+                                            <br />
+                                          </span>
+                                        ))
+                                      : (Array.isArray(elem?.spool_no) ? elem?.spool_no : [elem?.spool_no]).filter(Boolean).map((value, index) => (
+                                          <span key={index}>
+                                            {value}
+                                            <br />
+                                          </span>
+                                        ))}
                                   </td>
-                                  <td>{elem?.qc_by?.name || '-'}</td>
+                                  <td>{elem?.qc_by?.name || elem?.qc_by?.user_name || (typeof elem?.qc_by === 'string' ? elem?.qc_by : null) || elem?.qc_name || '-'}</td>
                                   <td>
-                                    {elem.qc_date ? moment(elem.qc_date).format('DD-MM-YYYY') : '-'}
+                                    {(elem.qc_time || elem.qc_date || elem.report_date) ? moment(elem.qc_time || elem.qc_date || elem.report_date).format('DD-MM-YYYY') : '-'}
                                   </td>
                                   <td className="status-badge">
-                                    {elem.status === 0 ? (
+                                    {elem.client_status === 0 || elem.client_status === null ? (
                                       <span className="custom-badge status-orange">Pending</span>
-                                    ) : elem.status === 1 ? (
-                                      <span className="custom-badge status-green">Accepted</span>
-                                    ) : elem.status === 2 ? (
-                                      <span className="custom-badge status-pink">Rejected</span>
-                                    ) : elem.status === 3 ? (
-                                      <span className="custom-badge status-purple">Partially</span>
+                                    ) : elem.client_status === 1 ? (
+                                      <span className="custom-badge status-green">{elem.status_type}</span>
                                     ) : null}
                                   </td>
                                   <td className="text-end">
@@ -229,6 +230,14 @@ const MultiMptClearance = () => {
                                         <i className="fa fa-ellipsis-v"></i>
                                       </a>
                                       <div className="dropdown-menu dropdown-menu-end">
+                                        <button
+                                          type="button"
+                                          className="dropdown-item"
+                                          onClick={() => navigate('/party/piping-store/view-quality-clearance-mpt', { state: elem })}
+                                        >
+                                          <i className="fa-solid fa-eye m-r-5"></i>
+                                          View
+                                        </button>
                                         <button
                                           type="button"
                                           className="dropdown-item"
@@ -248,7 +257,7 @@ const MultiMptClearance = () => {
                         <div className="row align-center mt-3 mb-2">
                           <div className="col-sm-12 col-md-6 col-lg-6 col-xxl-6">
                             <div className="dataTables_info" role="status" aria-live="polite">
-                              Showing {Math.min(limit, totalItems)} from {totalItems} data
+                              Showing {totalItems === 0 ? 0 : (page - 1) * limit + 1} to {Math.min(page * limit, totalItems)} of {totalItems} data
                             </div>
                           </div>
                           <div className="col-sm-12 col-md-6 col-lg-6 col-xxl-6">

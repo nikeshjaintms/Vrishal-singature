@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import Header from '../../../Include/Header';
 import Sidebar from '../../../Include/Sidebar';
 import Footer from '../../../Include/Footer';
@@ -9,10 +10,9 @@ import moment from 'moment';
 import axios from 'axios';
 import DropDown from '../../../../../Components/DropDown';
 import { V_URL } from '../../../../../BaseUrl';
-import { PdfDownloadErp } from '../../../../../Components/ErpPdf/PdfDownloadErp';
+import { getClientPipingMultiFT } from '../../../../../Store/Client/Piping/NDT/getClientPipingMultiFT';
+import toast from 'react-hot-toast';
 
-// Read-only: FT does not yet have the client_status/status_type fields the
-// RT/MPT/LPT accept-reject action depends on — view + download only.
 const useDebounce = (value, delay = 600) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -23,41 +23,22 @@ const useDebounce = (value, delay = 600) => {
 };
 
 const MultiFtClearance = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
 
-  const [rows, setRows] = useState([]);
-  const [totalItems, setTotalItems] = useState(0);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(false);
   const debouncedSearch = useDebounce(search, 500);
 
-  const projectId = localStorage.getItem('PARTY_PROJECT_ID');
+  const { data: reduxData, loading } = useSelector((state) => state.getClientPipingMultiFT);
+  const rows = reduxData?.data || [];
+  const totalItems = reduxData?.pagination?.totalItems || 0;
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`${V_URL}/party/get-multi-ft-clearance`, {
-        params: {
-          project_id: projectId,
-          page,
-          limit,
-          search: debouncedSearch,
-        },
-        headers: {
-          Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
-        },
-      });
-      setRows(res?.data?.data || []);
-      setTotalItems(res?.data?.pagination?.totalItems || 0);
-    } catch (err) {
-      setRows([]);
-      setTotalItems(0);
-    } finally {
-      setLoading(false);
-    }
+  const fetchData = () => {
+    dispatch(getClientPipingMultiFT({ page, limit, search: debouncedSearch }));
   };
 
   useEffect(() => {
@@ -74,17 +55,37 @@ const MultiFtClearance = () => {
     setPage(1);
   };
 
-  const downloadInspection = (elem) => {
-    const bodyFormData = new URLSearchParams();
-    bodyFormData.append('report_no_two', elem.report_no_two);
-    bodyFormData.append('print_date', true);
-    PdfDownloadErp({
-      apiMethod: 'post',
-      url: 'download-ft-inspection-pdf',
-      body: bodyFormData,
-    });
-  };
+  const downloadInspection = async (row) => {
+    try {
+      const toastId = toast.loading('Downloading...');
+      const response = await axios.post(
+        `${V_URL}/party/download-piping-ft-client`,
+        {
+          report_no_two: row.report_no_two,
+          print_date: true
+        },
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          },
+          responseType: 'blob',
+        }
+      );
 
+      const file = new Blob([response.data], { type: 'application/pdf' });
+      const fileUrl = window.URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = `FT_${row.report_no_two || 'Report'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Downloaded successfully', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to download PDF');
+    }
+  };
   return (
     <>
       <div className={`main-wrapper ${isSidebarOpen ? 'slide-nav' : ''}`}>
@@ -157,8 +158,7 @@ const MultiFtClearance = () => {
                               <tr>
                                 <th>Sr.</th>
                                 <th>Report No.</th>
-                                <th>Off. Report No.</th>
-                                <th>Line No./Drawing No.</th>
+                                <th>Line Drawing No.</th>
                                 <th>Spool No.</th>
                                 <th>Qc. By</th>
                                 <th>Date</th>
@@ -177,23 +177,36 @@ const MultiFtClearance = () => {
                               {rows.map((elem, i) => (
                                 <tr key={elem._id}>
                                   <td>{(page - 1) * limit + i + 1}</td>
-                                  <td>{elem?.report_no}</td>
                                   <td>{elem?.report_no_two}</td>
-                                  <td>{elem?.drawing_no || '-'}</td>
-                                  <td>{elem?.spool_no || '-'}</td>
-                                  <td>{elem?.qc_by || '-'}</td>
+                                  <td>
+                                    {elem?.items
+                                      ? [...new Set(elem.items.map(item => item?.drawing_no || item?.drawing_id?.drawing_no).filter(Boolean))].map((value, index) => (
+                                        <span key={index}>
+                                          {value}
+                                          <br />
+                                        </span>
+                                      ))
+                                      : elem?.drawing_no || '-'}
+                                  </td>
+                                  <td>
+                                    {elem?.items
+                                      ? [...new Set(elem.items.map(item => item?.spool_no).filter(Boolean))].map((value, index) => (
+                                        <span key={index}>
+                                          {value}
+                                          <br />
+                                        </span>
+                                      ))
+                                      : elem?.spool_no || '-'}
+                                  </td>
+                                  <td>{elem?.qc_by?.name || elem?.qc_by?.user_name || (typeof elem?.qc_by === 'string' ? elem?.qc_by : null) || elem?.qc_name || '-'}</td>
                                   <td>
                                     {elem.qc_date ? moment(elem.qc_date).format('DD-MM-YYYY') : '-'}
                                   </td>
                                   <td className="status-badge">
-                                    {elem.status === 1 ? (
+                                    {elem.client_status === 0 || elem.client_status === null ? (
                                       <span className="custom-badge status-orange">Pending</span>
-                                    ) : elem.status === 2 ? (
-                                      <span className="custom-badge status-green">Accepted</span>
-                                    ) : elem.status === 3 ? (
-                                      <span className="custom-badge status-pink">Rejected</span>
-                                    ) : elem.status === 4 ? (
-                                      <span className="custom-badge status-purple">Partially</span>
+                                    ) : elem.client_status === 1 ? (
+                                      <span className="custom-badge status-green">{elem.status_type}</span>
                                     ) : null}
                                   </td>
                                   <td className="text-end">
@@ -206,6 +219,14 @@ const MultiFtClearance = () => {
                                         <i className="fa fa-ellipsis-v"></i>
                                       </a>
                                       <div className="dropdown-menu dropdown-menu-end">
+                                        <button
+                                          type="button"
+                                          className="dropdown-item"
+                                          onClick={() => navigate('/party/piping-store/view-quality-clearance-ft', { state: elem })}
+                                        >
+                                          <i className="fa-solid fa-eye m-r-5"></i>
+                                          View
+                                        </button>
                                         <button
                                           type="button"
                                           className="dropdown-item"
@@ -225,7 +246,7 @@ const MultiFtClearance = () => {
                         <div className="row align-center mt-3 mb-2">
                           <div className="col-sm-12 col-md-6 col-lg-6 col-xxl-6">
                             <div className="dataTables_info" role="status" aria-live="polite">
-                              Showing {Math.min(limit, totalItems)} from {totalItems} data
+                              Showing {totalItems === 0 ? 0 : (page - 1) * limit + 1} to {Math.min(page * limit, totalItems)} of {totalItems} data
                             </div>
                           </div>
                           <div className="col-sm-12 col-md-6 col-lg-6 col-xxl-6">

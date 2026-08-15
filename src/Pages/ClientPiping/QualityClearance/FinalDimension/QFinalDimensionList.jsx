@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import Header from '../../Include/Header';
 import Sidebar from '../../Include/Sidebar';
 import Footer from '../../Include/Footer';
@@ -8,11 +9,9 @@ import { Pagination, Search } from '../../Table';
 import axios from 'axios';
 import DropDown from '../../../../Components/DropDown';
 import { V_URL } from '../../../../BaseUrl';
-import { PdfDownloadErp } from '../../../../Components/ErpPdf/PdfDownloadErp';
+import { getClientPipingMultiFD } from '../../../../Store/Client/Piping/Fitup/getClientPipingMultiFD';
+import toast from 'react-hot-toast';
 
-// Read-only: Final Dimension's real piping collection does not have the
-// client_status/status_type fields the RT/MPT accept-reject action depends
-// on — view + download only.
 const useDebounce = (value, delay = 600) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -23,42 +22,23 @@ const useDebounce = (value, delay = 600) => {
 };
 
 const QFinalDimensionList = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
 
-  const [rows, setRows] = useState([]);
-  const [totalItems, setTotalItems] = useState(0);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(false);
   const debouncedSearch = useDebounce(search, 500);
 
-  const projectId = localStorage.getItem('PARTY_PROJECT_ID');
+  const { data: reduxData, loading } = useSelector((state) => state.getClientPipingMultiFD);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`${V_URL}/party/get-multi-fd`, {
-        params: {
-          project: projectId,
-          status: '2,3,4',
-          page,
-          limit,
-          search: debouncedSearch,
-        },
-        headers: {
-          Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
-        },
-      });
-      setRows(res?.data?.data || []);
-      setTotalItems(res?.data?.pagination?.total || 0);
-    } catch (err) {
-      setRows([]);
-      setTotalItems(0);
-    } finally {
-      setLoading(false);
-    }
+  const rows = reduxData?.data || [];
+  const totalItems = reduxData?.pagination?.total || 0;
+
+  const fetchData = () => {
+    dispatch(getClientPipingMultiFD({ page, limit, search: debouncedSearch }));
   };
 
   useEffect(() => {
@@ -75,16 +55,37 @@ const QFinalDimensionList = () => {
     setPage(1);
   };
 
-  const downloadInspection = (elem) => {
-    const bodyFormData = new URLSearchParams();
-    bodyFormData.append('report_no', elem.report_no);
-    bodyFormData.append('report_no_two', elem.report_no_two);
-    bodyFormData.append('print_date', true);
-    PdfDownloadErp({
-      apiMethod: 'post',
-      url: 'download-fd-inspection-pdf',
-      body: bodyFormData,
-    });
+  const downloadInspection = async (row) => {
+    try {
+      const toastId = toast.loading('Downloading...');
+      const response = await axios.post(
+        `${V_URL}/party/download-piping-fd-master-client`,
+        {
+          report_no: row.report_no,
+          report_no_two: row.report_no_two,
+          print_date: true
+        },
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          },
+          responseType: 'blob',
+        }
+      );
+
+      const file = new Blob([response.data], { type: 'application/pdf' });
+      const fileUrl = window.URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = `Final_Dimension_${row.report_no_two || 'Report'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Downloaded successfully', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to download PDF');
+    }
   };
 
   return (
@@ -181,35 +182,55 @@ const QFinalDimensionList = () => {
                                   <td>{elem?.report_no_two}</td>
                                   <td>
                                     {elem?.items
-                                      ?.map((e) => e?.drawing_no)
-                                      .filter((value, index, self) => value && self.indexOf(value) === index)
-                                      .map((value, index) => (
-                                        <span key={index}>
-                                          {value}
-                                          <br />
-                                        </span>
-                                      )) || '-'}
+                                      ? (() => {
+                                        const drawingMap = {};
+                                        elem.items.forEach(item => {
+                                          if (item?.drawing_no) {
+                                            if (!drawingMap[item.drawing_no]) {
+                                              drawingMap[item.drawing_no] = new Set();
+                                            }
+                                            if (item.spool_no) {
+                                              drawingMap[item.drawing_no].add(item.spool_no);
+                                            }
+                                          }
+                                        });
+                                        const keys = Object.keys(drawingMap);
+                                        return keys.length > 0 ? keys.map((drawing_no, idx) => (
+                                          <div key={idx} style={{ minHeight: '24px' }}>
+                                            {drawing_no}
+                                          </div>
+                                        )) : '-';
+                                      })()
+                                      : '-'}
                                   </td>
                                   <td>
                                     {elem?.items
-                                      ?.map((e) => e?.spool_no)
-                                      .filter((value, index, self) => value && self.indexOf(value) === index)
-                                      .map((value, index) => (
-                                        <span key={index}>
-                                          {value}
-                                          <br />
-                                        </span>
-                                      )) || '-'}
+                                      ? (() => {
+                                        const drawingMap = {};
+                                        elem.items.forEach(item => {
+                                          if (item?.drawing_no) {
+                                            if (!drawingMap[item.drawing_no]) {
+                                              drawingMap[item.drawing_no] = new Set();
+                                            }
+                                            if (item.spool_no) {
+                                              drawingMap[item.drawing_no].add(item.spool_no);
+                                            }
+                                          }
+                                        });
+                                        const keys = Object.keys(drawingMap);
+                                        return keys.length > 0 ? keys.map((drawing_no, idx) => (
+                                          <div key={idx} style={{ minHeight: '24px' }}>
+                                            {[...drawingMap[drawing_no]].join(', ') || '-'}
+                                          </div>
+                                        )) : '-';
+                                      })()
+                                      : '-'}
                                   </td>
                                   <td className="status-badge">
-                                    {elem.status === 1 ? (
+                                    {elem.client_status === 0 || elem.client_status === null ? (
                                       <span className="custom-badge status-orange">Pending</span>
-                                    ) : elem.status === 2 ? (
-                                      <span className="custom-badge status-green">Accepted</span>
-                                    ) : elem.status === 3 ? (
-                                      <span className="custom-badge status-pink">Rejected</span>
-                                    ) : elem.status === 4 ? (
-                                      <span className="custom-badge status-purple">Partially</span>
+                                    ) : elem.client_status === 1 ? (
+                                      <span className="custom-badge status-green">{elem.status_type}</span>
                                     ) : null}
                                   </td>
                                   <td className="text-end">
@@ -222,6 +243,16 @@ const QFinalDimensionList = () => {
                                         <i className="fa fa-ellipsis-v"></i>
                                       </a>
                                       <div className="dropdown-menu dropdown-menu-end">
+                                        <button
+                                          type="button"
+                                          className="dropdown-item"
+                                          onClick={() =>
+                                            navigate('/party/piping-store/view-quality-clearance-final-dimension', { state: elem })
+                                          }
+                                        >
+                                          <i className="fa-solid fa-eye m-r-5"></i>
+                                          View
+                                        </button>
                                         <button
                                           type="button"
                                           className="dropdown-item"

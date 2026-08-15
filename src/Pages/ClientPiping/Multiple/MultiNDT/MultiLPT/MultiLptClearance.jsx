@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import Header from '../../../Include/Header';
 import Sidebar from '../../../Include/Sidebar';
 import Footer from '../../../Include/Footer';
@@ -9,13 +10,8 @@ import moment from 'moment';
 import axios from 'axios';
 import DropDown from '../../../../../Components/DropDown';
 import { V_URL } from '../../../../../BaseUrl';
-import { PdfDownloadErp } from '../../../../../Components/ErpPdf/PdfDownloadErp';
+import { getClientPipingMultiLPT } from '../../../../../Store/Client/Piping/NDT/getClientPipingMultiLPT';
 
-// Read-only: LPT's real piping collection (piping-lpt-ndt-inspection) does
-// not have the client_status/status_type fields the RT/MPT accept-reject
-// action depends on — view + download only. (The earlier version of this
-// file was built against the wrong ERP-side model which did have those
-// fields; that model doesn't hold the real piping LPT data.)
 const useDebounce = (value, delay = 600) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -26,79 +22,25 @@ const useDebounce = (value, delay = 600) => {
 };
 
 const MultiLptClearance = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
 
-  const [rows, setRows] = useState([]);
-  const [totalItems, setTotalItems] = useState(0);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(false);
   const debouncedSearch = useDebounce(search, 500);
 
-  const projectId = localStorage.getItem('PARTY_PROJECT_ID');
+  const { data: reduxData, loading } = useSelector((state) => state.getClientPipingMultiLPT);
 
-  // const fetchData = async () => {
-  //   setLoading(true);
-  //   try {
-  //     const res = await axios.post(`${V_URL}/party/get-piping-lpt-client`, {
-  //       params: {
-  //         project: projectId,
-  //         page,
-  //         limit,
-  //         search: debouncedSearch,
-  //       },
-  //       headers: {
-  //         Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
-  //       },
-  //     });
-  //     setRows(res?.data?.data || []);
-  //     setTotalItems(res?.data?.pagination?.totalItems || 0);
-  //   } catch (err) {
-  //     setRows([]);
-  //     setTotalItems(0);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  const rows = reduxData?.data?.data || [];
+  const totalItems = reduxData?.data?.totalItems || 0;
 
-  const fetchData = async () => {
-  setLoading(true);
+  const fetchData = () => {
+    dispatch(getClientPipingMultiLPT({ page, limit, search: debouncedSearch }));
+  };
 
-  try {
-    const res = await axios.post(
-      `${V_URL}/party/get-piping-lpt-client`,
-      {},
-      {
-        params: {
-          project: projectId,
-          page,
-          limit,
-          search: debouncedSearch,
-        },
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('PARTY_TOKEN')}`,
-        },
-      }
-    );
-
-    if (res?.data?.success) {
-      setRows(res?.data?.data?.data || []);
-      setTotalItems(res?.data?.data?.totalItems || 0);
-    } else {
-      setRows([]);
-      setTotalItems(0);
-    }
-  } catch (err) {
-    console.error('LPT API Error:', err?.response?.data || err);
-    setRows([]);
-    setTotalItems(0);
-  } finally {
-    setLoading(false);
-  }
-};
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -126,43 +68,43 @@ const MultiLptClearance = () => {
   // };
 
   const downloadInspection = async (elem) => {
-  try {
-    const bodyFormData = new URLSearchParams();
+    try {
+      const bodyFormData = new URLSearchParams();
 
-    bodyFormData.append('report_no', elem?.report_no || '');
-    bodyFormData.append('report_no_two', elem?.report_no_two || '');
-    bodyFormData.append('print_date', 'true');
+      bodyFormData.append('report_no', elem?.report_no || '');
+      bodyFormData.append('report_no_two', elem?.report_no_two || '');
+      bodyFormData.append('print_date', 'true');
 
-    const response = await axios.post(
-      `${V_URL}/party/download-piping-lpt-client`,
-      bodyFormData,
-      {
-        responseType: 'blob',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: `Bearer ${localStorage.getItem('PARTY_TOKEN')}`,
-        },
-      }
-    );
+      const response = await axios.post(
+        `${V_URL}/party/download-piping-lpt-client`,
+        bodyFormData,
+        {
+          responseType: 'blob',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Authorization: `Bearer ${localStorage.getItem('PARTY_TOKEN')}`,
+          },
+        }
+      );
 
-    const blob = new Blob([response.data], {
-      type: 'application/pdf',
-    });
+      const blob = new Blob([response.data], {
+        type: 'application/pdf',
+      });
 
-    const url = window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(blob);
 
-    window.open(url, '_blank');
+      window.open(url, '_blank');
 
-    setTimeout(() => {
-      window.URL.revokeObjectURL(url);
-    }, 1000);
-  } catch (error) {
-    console.error(
-      'LPT PDF download error:',
-      error?.response?.data || error
-    );
-  }
-};
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 1000);
+    } catch (error) {
+      console.error(
+        'LPT PDF download error:',
+        error?.response?.data || error
+      );
+    }
+  };
   return (
     <>
       <div className={`main-wrapper ${isSidebarOpen ? 'slide-nav' : ''}`}>
@@ -257,7 +199,7 @@ const MultiLptClearance = () => {
                                   <td>{(page - 1) * limit + i + 1}</td>
                                   <td>{elem?.report_no}</td>
                                   <td>{elem?.report_no_two}</td>
-                                 <td>
+                                  <td>
                                     {[...new Set(
                                       elem?.items
                                         ?.map((e) => e?.drawing_id?.drawing_no)

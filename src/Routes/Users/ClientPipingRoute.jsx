@@ -23,6 +23,7 @@ import ViewMultiClearWeldVisual from '../../Pages/ClientPiping/QualityClearance/
 
 // Final Dimension Acceptance
 import QFinalDimensionList from '../../Pages/ClientPiping/QualityClearance/FinalDimension/QFinalDimensionList';
+import ViewMultiClearFD from '../../Pages/ClientPiping/QualityClearance/FinalDimension/ViewMultiClearFD';
 
 // NDT — RT/MPT/LPT: Clearance (Acc/Rej) only. Offer creation is a staff-only
 // workflow (selecting drawing items to submit for testing), not client-facing,
@@ -35,6 +36,7 @@ import QFinalDimensionList from '../../Pages/ClientPiping/QualityClearance/Final
 import MultiRtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiRT/MultiRtClearance';
 import ViewMultiClearRT from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiRT/ViewMultiClearRT';
 import MultiMptClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiMPT/MultiMptClearance';
+import ViewMultiClearMPT from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiMPT/ViewMultiClearMPT';
 import MultiLptClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiLPT/MultiLptClearance';
 import ViewMultiLptClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiLPT/ViewMultiLptClearance';
 
@@ -45,6 +47,7 @@ import ViewMultiLptClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/Mu
 import MultiPwhtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPWHT/MultiPwhtClearance';
 import ViewMultiClearPWHT from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPWHT/ViewMultiClearPWHT';
 import MultiFtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiFT/MultiFtClearance';
+import ViewMultiClearFT from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiFT/ViewMultiClearFT';
 import MultiHtClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiHT/MultiHtClearance';
 import ViewMultiClearHT from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiHT/ViewMultiClearHT';
 import MultiPmiClearance from '../../Pages/ClientPiping/Multiple/MultiNDT/MultiPMI/MultiPmiClearance';
@@ -104,7 +107,7 @@ const ClientPipingRoutes = () => {
           <Route path='weld-visual-clearance-management' element={<QWeldVisualList />} />
           <Route path='view-quality-clearance-weldvisual' element={<ViewMultiClearWeldVisual />} />
           <Route path='final-dimension-clearance-management' element={<QFinalDimensionList />} />
-          <Route path='view-quality-clearance-final-dimension' element={<PlaceholderPage title="Final Dimension Detail" />} />
+          <Route path='view-quality-clearance-final-dimension' element={<ViewMultiClearFD />} />
           <Route path='rt-offer-management' element={<PlaceholderPage title="RT Offering" />} />
           <Route path='manage-rt-offer' element={<PlaceholderPage title="Manage RT Offer" />} />
           <Route path='rt-clearance-management' element={<MultiRtClearance />} />
@@ -117,6 +120,7 @@ const ClientPipingRoutes = () => {
           <Route path='ft-offer-management' element={<PlaceholderPage title="FT Offering" />} />
           <Route path='manage-ft-offer' element={<PlaceholderPage title="Manage FT Offer" />} />
           <Route path='ft-clearance-management' element={<MultiFtClearance />} />
+          <Route path='view-quality-clearance-ft' element={<ViewMultiClearFT />} />
           <Route path='manage-ft-clearance' element={<PlaceholderPage title="Manage FT Clearance" />} />
           <Route path='lpt-offer-management' element={<PlaceholderPage title="LPT Offering" />} />
           <Route path='manage-lpt-offer' element={<PlaceholderPage title="Manage LPT Offer" />} />
@@ -126,6 +130,7 @@ const ClientPipingRoutes = () => {
           <Route path='mpt-offer-management' element={<PlaceholderPage title="MPT Offering" />} />
           <Route path='manage-mpt-offer' element={<PlaceholderPage title="Manage MPT Offer" />} />
           <Route path='mpt-clearance-management' element={<MultiMptClearance />} />
+          <Route path='view-quality-clearance-mpt' element={<ViewMultiClearMPT />} />
           <Route path='manage-mpt-clearance' element={<PlaceholderPage title="MPT Detail" />} />
           <Route path='ht-offer-management' element={<PlaceholderPage title="Hardness Testing Offering" />} />
           <Route path='manage-ht-offer' element={<PlaceholderPage title="Manage Hardness Testing Offer" />} />
