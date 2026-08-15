@@ -1,0 +1,242 @@
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { getClientPipingMultiReleaseNote } from '../../../../Store/Client/Piping/ReleaseNote/getClientPipingMultiReleaseNote';
+import Header from '../../Include/Header';
+import Sidebar from '../../Include/Sidebar';
+import Footer from '../../Include/Footer';
+import { Pagination, Search } from '../../Table';
+import DropDown from '../../../../Components/DropDown';
+import Loader from '../../Include/Loader';
+import moment from 'moment';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import { V_URL } from '../../../../BaseUrl';
+
+const useDebounce = (value, delay = 600) => {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedValue(value), delay);
+        return () => clearTimeout(timer);
+    }, [value, delay]);
+    return debouncedValue;
+};
+
+const MultiReleaseNote = () => {
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+
+    const { data: reduxData, loading } = useSelector((state) => state.getClientPipingMultiReleaseNote);
+
+    const [search, setSearch] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [limit, setlimit] = useState(10);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    const debouncedSearch = useDebounce(search, 500);
+
+    const fetchData = () => {
+        dispatch(getClientPipingMultiReleaseNote({ page: currentPage, limit, search: debouncedSearch }));
+    };
+
+    useEffect(() => {
+        fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentPage, limit, debouncedSearch, dispatch]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [debouncedSearch]);
+
+    const payloadData = reduxData?.data || {};
+    const rows = Array.isArray(payloadData) ? payloadData : (payloadData?.data || []);
+    const totalItems = payloadData?.pagination?.total || payloadData?.totalItems || reduxData?.totalItems || 0;
+
+    const handleDownloadIns = async (elem) => {
+        try {
+            const bodyFormData = new URLSearchParams();
+            bodyFormData.append('report_no', elem?.report_no || '');
+            bodyFormData.append('report_no_two', elem?.report_no_two || '');
+            bodyFormData.append('print_date', 'true');
+
+            const response = await axios.post(
+                `${V_URL}/party/download-release-note-client`,
+                bodyFormData,
+                {
+                    responseType: 'blob',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        Authorization: `Bearer ${localStorage.getItem('PARTY_TOKEN')}`,
+                    },
+                }
+            );
+
+            const blob = new Blob([response.data], {
+                type: 'application/pdf',
+            });
+
+            const url = window.URL.createObjectURL(blob);
+            window.open(url, '_blank');
+
+            setTimeout(() => {
+                window.URL.revokeObjectURL(url);
+            }, 1000);
+        } catch (error) {
+            console.error('Release Note PDF download error:', error?.response?.data || error);
+            toast.error('Failed to download PDF');
+        }
+    };
+
+    const handleRefresh = () => {
+        setSearch("");
+        setCurrentPage(1);
+    };
+
+    const handleOpen = () => {
+        setIsSidebarOpen(!isSidebarOpen);
+    };
+
+    return (
+        <div className={`main-wrapper ${isSidebarOpen ? "slide-nav" : ""}`}>
+            <Header handleOpen={handleOpen} />
+            <Sidebar />
+
+            <div className="page-wrapper">
+                <div className="content">
+                    <div className="page-header">
+                        <div className="row">
+                            <div className="col-sm-12">
+                                <ul className="breadcrumb">
+                                    <li className="breadcrumb-item"><Link to="/party/piping-store/dashboard">Dashboard </Link></li>
+                                    <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
+                                    <li className="breadcrumb-item active">Release Note & Primer Clearance List</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="row">
+                        <div className="col-sm-12">
+                            <div className="card card-table show-entire">
+                                <div className="card-body">
+                                    <div className="page-table-header mb-2">
+                                        <div className="row align-items-center">
+                                            <div className="col">
+                                                <div className="doctor-table-blk">
+                                                    <h3>Release Note & Primer Clearance List</h3>
+                                                    <div className="doctor-search-blk">
+                                                        <div className="top-nav-search table-search-blk">
+                                                            <form>
+                                                                <Search
+                                                                    onSearch={(value) => {
+                                                                        setSearch(value);
+                                                                        setCurrentPage(1);
+                                                                    }} />
+                                                                {/* eslint-disable jsx-a11y/anchor-is-valid */}
+                                                                <a className="btn"><img src="/assets/img/icons/search-normal.svg"
+                                                                    alt="search" /></a>
+                                                            </form>
+                                                        </div>
+                                                        <div className="add-group">
+                                                            <button type='button' onClick={handleRefresh}
+                                                                className="btn btn-primary doctor-refresh ms-2" data-toggle="tooltip" data-placement="top" title="Refresh"><img
+                                                                    src="/assets/img/icons/re-fresh.svg" alt="refresh" /></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="pageDropDown col-auto text-end float-end ms-auto download-grp">
+                                                <DropDown limit={limit} onLimitChange={(val) => setlimit(val)} />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {loading ? (
+                                        <Loader />
+                                    ) : (
+                                        <>
+                                            <div className="table-responsive">
+                                                <table className="table border-0 custom-table comman-table  mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Sr.</th>
+                                                            <th>Project Code</th>
+                                                            <th>Report No.</th>
+                                                            <th>Date</th>
+                                                            <th>Status</th>
+                                                            <th className="text-end">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {rows?.map((elem, i) =>
+                                                            <tr key={elem._id || i}>
+                                                                <td>{(currentPage - 1) * limit + i + 1}</td>
+                                                                <td>{elem.project_details?.name || ''}</td>
+                                                                <td>{elem.report_no || ''}</td>
+                                                                <td>{elem.release_date ? moment(elem.release_date).format('DD-MM-YYYY') : '-'}</td>
+                                                                <td className='status-badge'>
+                                                                    {elem.client_status === 0 || elem.client_status === null ? (
+                                                                        <span className="custom-badge status-orange">Pending</span>
+                                                                    ) : elem.client_status === 1 ? (
+                                                                        <span className="custom-badge status-green">{elem.status_type}</span>
+                                                                    ) : null}
+                                                                </td>
+                                                                <td className="text-end">
+                                                                    <div className="dropdown dropdown-action">
+                                                                        <a href="#" className="action-icon dropdown-toggle"
+                                                                            data-bs-toggle="dropdown" aria-expanded="false"><i
+                                                                                className="fa fa-ellipsis-v"></i></a>
+                                                                        <div className="dropdown-menu dropdown-menu-end">
+                                                                            <button type='button' className="dropdown-item" onClick={() => navigate('/party/piping-store/view-release-note', { state: elem })}>
+                                                                                <i className="fa-solid fa-eye m-r-5"></i>
+                                                                                View</button>
+                                                                            <button type='button' className="dropdown-item" onClick={() => handleDownloadIns(elem)} >
+                                                                                <i className="fa-solid fa-download  m-r-5"></i> Download Inspection</button>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        )}
+                                                        {rows?.length === 0 ? (
+                                                            <tr>
+                                                                <td colSpan="999">
+                                                                    <div className="no-table-data">
+                                                                        No Data Found!
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ) : null}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div className="row align-center mt-3 mb-2">
+                                                <div className="col-sm-12 col-md-6 col-lg-6 col-xxl-6">
+                                                    <div className="dataTables_info" id="DataTables_Table_0_info" role="status"
+                                                        aria-live="polite">Showing {Math.min(limit, totalItems)} from {totalItems} data</div>
+                                                </div>
+                                                <div className="col-sm-12 col-md-6 col-lg-6 col-xxl-6 ">
+                                                    <div className="dataTables_paginate paging_simple_numbers"
+                                                        id="DataTables_Table_0_paginate">
+                                                        <Pagination
+                                                            total={totalItems}
+                                                            itemsPerPage={limit}
+                                                            currentPage={currentPage}
+                                                            onPageChange={(page) => setCurrentPage(page)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <Footer />
+            </div>
+        </div>
+    )
+}
+
+export default MultiReleaseNote;
