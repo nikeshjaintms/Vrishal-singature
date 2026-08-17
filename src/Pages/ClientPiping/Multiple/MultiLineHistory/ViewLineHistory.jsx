@@ -1,395 +1,321 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
+import moment from 'moment';
 import Header from '../../Include/Header';
 import Sidebar from '../../Include/Sidebar';
 import Footer from '../../Include/Footer';
-import PageHeader from '../Components/Breadcrumbs/PageHeader';
-import { Search } from '../../Table';
-const moment = require("moment");
+import { downloadLHSForClient, updateLHSClientStatus } from '../../../../Store/Client/Piping/getClientPipingMultiLHS';
+
 const ViewLineHistory = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [search, setSearch] = useState('');
-    const [limit, setlimit] = useState(10)
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalItems, setTotalItems] = useState(0);
-    const [tableData, setTableData] = useState([]);
-    const data = location.state;
-useEffect(() => {
-    if (data) {
-        setTableData([data]);   // wrap object into array
-    }
-}, [data]);
-  const commentsData = useMemo(() => {
-    if (!tableData?.length) return [];
-
-    const drawing = tableData[0]; 
-
-    let rows = [];
-
-    drawing?.spool_wise?.forEach((spool) => {
-        spool?.material_items?.forEach((joint) => {
-            rows.push({
-                drawing_no: drawing?.drawing_no,
-                rev: drawing?.rev,
-                sheet_no: joint?.sheet_no,
-                piping_material_spec:
-                drawing?.service_data?.PipingMaterialSpecification,
-                spool_no: spool?.spool_no,
-                joint_no: joint?.joint_no,
-                size: joint?.selected_size?.name,
-                thickness: joint?.selected_thickness?.name,
-                joint_type: joint?.joint_type?.name,
-                fit_up_report_no_two:joint?.fit_up_report_no_two,
-                fit_up_qc_time:joint?.fit_up_qc_time,
-                wps_no: joint?.wps_no,
-                 root_dpt_report_no_two:joint?.root_dpt_report_no_two,
-                root_dpt_qc_time:joint?.root_dpt_qc_time,
-                welder_no: joint?.welder_no,
-                weld_visual_report_no_two:joint?.weld_visual_report_no_two,
-                weld_visual_qc_time:joint?.weld_visual_qc_time,
-                   ferrite_report_no_two:joint?.ferrite_report_no_two,
-                ferrite_qc_time:joint?.ferrite_qc_time,
-                 pwht_report_no_two:joint?.pwht_report_no_two,
-                pwht_qc_time:joint?.pwht_qc_time,
-                
-                bsrrt_report_no_two:joint?.bsrrt_report_no_two,
-                bsrrt_qc_time:joint?.bsrrt_qc_time,
-
-                asrrt_report_no_two:joint?.asrrt_report_no_two,
-                asrrt_qc_time:joint?.asrrt_qc_time,
-
-                 rt_percentage:joint?.rt_percentage,
-                rt_lot_number:joint?.rt_lot_number,
-                rt_report_no_two:joint?.rt_report_no_two,
-                rt_qc_time:joint?.rt_qc_time,
-
-                 mpt_percentage:joint?.mpt_percentage,
-                mpt_lot_number:joint?.mpt_lot_number,
-                mpt_report_no_two:joint?.mpt_report_no_two,
-                mpt_qc_time:joint?.mpt_qc_time,
-
-                lpt_percentage:joint?.lpt_percentage,
-                lpt_lot_number:joint?.lpt_lot_number,
-                lpt_report_no_two:joint?.lpt_report_no_two,
-                lpt_qc_time:joint?.lpt_qc_time,
-
-                   ht_report_no_two:joint?.ht_report_no_two,
-                ht_qc_time:joint?.ht_qc_time,
-
-                   pmi_report_no_two:joint?.pmi_report_no_two,
-                pmi_qc_time:joint?.pmi_qc_time,
-
-                   pickling_report_no_two:joint?.pickling_report_no_two,
-                pickling_qc_time:joint?.pickling_qc_time,
-
-                fd_report_no_two:joint?.fd_report_no_two,
-                fd_qc_time:joint?.fd_qc_time,
-                remarks: drawing?.remarks || "-"
-            });
-        });
-    });
-
-    if (search) {
-        rows = rows.filter((row) =>
-            row?.drawing_no?.toLowerCase().includes(search.toLowerCase())
-        );
-    }
-
-    setTotalItems(rows.length);
-    return rows;
-}, [tableData, search]);
+    const dispatch = useDispatch();
+    const data = location.state; // contains LHS object
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [clientDate, setClientDate] = useState('');
+    const [pdfUrl, setPdfUrl] = useState('');
+    const [showButtons, setShowButtons] = useState(true);
+
+    // Random Witness State
+    const [randomItems, setRandomItems] = useState([]);
+    const [selectAll, setSelectAll] = useState(false);
+    const [showRandomItems, setShowRandomItems] = useState(false);
+
+    const { downloadLoading, updateStatusLoading } = useSelector((state) => state.getClientPipingMultiLHS);
+
+    useEffect(() => {
+        if (data) {
+            const show = data?.client_status === 1 && data?.status_type !== null ? false : true;
+            setShowButtons(show);
+        }
+    }, [data]);
+
     const handleOpen = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };
 
+    /* ================= FETCH PDF ================= */
+    const fetchPdf = async () => {
+        if (!data) return;
+        try {
+            setPdfUrl('');
+
+            const resultAction = await dispatch(
+                downloadLHSForClient({
+                    report_no: data.report_no || '',
+                    print_date: clientDate,
+                })
+            );
+
+            if (downloadLHSForClient.fulfilled.match(resultAction)) {
+                const fileUrl = resultAction.payload?.data?.file || resultAction.payload?.file || '';
+                setPdfUrl(fileUrl);
+            } else {
+                toast.error('Failed to load PDF');
+            }
+        } catch (err) {
+            toast.error('Failed to load PDF');
+        }
+    };
+
+    /* ================= AUTO LOAD PDF ================= */
+    useEffect(() => {
+        if (data?.report_no || data?.drawing_no) {
+            fetchPdf();
+        }
+    }, [data]);
+
+    /* ================= RANDOM WITNESSED PREP ================= */
+    const prepareRandomWitnessedItems = () => {
+        let jointsList = [];
+
+        // In LHS data, drawings are nested. Inside drawings we have spools, then joints
+        if (Array.isArray(data?.drawings)) {
+            data.drawings.forEach((drawing) => {
+                if (Array.isArray(drawing?.spools)) {
+                    drawing.spools.forEach((spool) => {
+                        if (Array.isArray(spool?.joints)) {
+                            spool.joints.forEach((joint) => {
+                                jointsList.push({
+                                    _id: joint?.joint_spool_item_id || joint?._id,
+                                    drawing_no: drawing?.drawing_no || data?.report_no || '-',
+                                    spool_no: spool?.spool_no || '-',
+                                    joint_no: joint?.joint_no || '-',
+                                    fitup_report: joint?.fitup?.report_no || '-',
+                                    weld_visual_report: joint?.weld_visual?.report_no || '-',
+                                    selected: false,
+                                });
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        setRandomItems(jointsList);
+        setSelectAll(false);
+        setShowRandomItems(true);
+    };
+
+    /* ================= SELECT / DESELECT ================= */
+    const handleItemChange = (index, field, value) => {
+        const updatedItems = [...randomItems];
+        updatedItems[index][field] = value;
+        setRandomItems(updatedItems);
+
+        if (field === 'selected') {
+            const allChecked = updatedItems.every((item) => item.selected);
+            setSelectAll(allChecked);
+        }
+    };
+
+    const handleSelectAll = (checked) => {
+        setSelectAll(checked);
+        const updatedItems = randomItems.map((item) => ({ ...item, selected: checked }));
+        setRandomItems(updatedItems);
+    };
+
+    /* ================= UPDATE STATUS ================= */
+    const submitLHSStatus = async (statusType) => {
+        if (!clientDate) {
+            toast.error('Please select date');
+            return;
+        }
+
+        try {
+            const payload = {
+                lhsId: data._id,
+                status_type: statusType,
+                client_date: clientDate,
+                client_user: localStorage.getItem('PARTY_ID'),
+            };
+
+            // RANDOM WITNESSED requires drawings/items
+            if (statusType === 'RANDOM WITNESSED') {
+                if (randomItems.length === 0) {
+                    prepareRandomWitnessedItems();
+                    toast.error('Please select items for Random Witnessed');
+                    return;
+                }
+
+                payload.drawings = randomItems.map((item) => ({
+                    _id: item._id,
+                    selected: item.selected === true,
+                }));
+            }
+
+            const resultAction = await dispatch(updateLHSClientStatus(payload));
+
+            if (updateLHSClientStatus.fulfilled.match(resultAction)) {
+                toast.success('Line History Sheet Clearance updated successfully');
+                setShowRandomItems(false);
+                navigate("/party/piping-store/line-history-management");
+            } else {
+                toast.error('Update failed');
+            }
+        } catch (error) {
+            toast.error('Something went wrong');
+        }
+    };
+
     return (
-        <div className={`main-wrapper ${isSidebarOpen ? "slide-nav" : ""}`}>
+        <div className={`main-wrapper ${isSidebarOpen ? 'slide-nav' : ''}`}>
             <Header handleOpen={handleOpen} />
             <Sidebar />
 
             <div className="page-wrapper">
                 <div className="content">
-                    <PageHeader breadcrumbs={[
-                        { name: "Dashboard", link: "/party/piping-store/dashboard", active: false },
-                        { name: "Line History Sheet List", link: "/party/piping-store/line-history-management", active: false },
-                        { name: `View Line History Sheet Details`, active: true }
-                    ]} />
+                    {/* ===== Breadcrumb ===== */}
+                    <div className="page-header">
+                        <ul className="breadcrumb">
+                            <li className="breadcrumb-item">
+                                <Link to="/party/piping-store/dashboard">Dashboard</Link>
+                            </li>
+                            <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
+                            <li className="breadcrumb-item">
+                                <Link to="/party/piping-store/line-history-management">Line History Sheet List</Link>
+                            </li>
+                            <li className="breadcrumb-item"><i className="feather-chevron-right"></i></li>
+                            <li className="breadcrumb-item active">View Line History Sheet Details</li>
+                        </ul>
+                    </div>
 
-                    <div className="row">
-                        <div className="col-sm-12">
-                            <div className="card">
-                                <div className="card-body">
-                                    <form>
-                                        <div className="col-12">
-                                            <div className="form-heading">
-                                                <h4>View Line History Sheet Details</h4>
-                                            </div>
-                                        </div>
-                                        <div className='row'>
-                                            <div className="col-12 col-md-6 col-xl-6">
-                                                <div className="input-block local-forms custom-select-wpr">
-                                                    <label>View Line History Sheet List <span className="login-danger">*</span></label>
-                                                    <input value={data?.drawing_no} className='form-control' readOnly />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </form>
+                    {/* ===== LHS Details ===== */}
+                    <div className="card">
+                        <div className="card-body">
+                            <h4 className="mb-3">Line History Details</h4>
+                            <div className="row">
+                                <div className="col-md-4">
+                                    <label>Report No</label>
+                                    <input className="form-control" value={data?.report_no || '-'} readOnly />
+                                </div>
+
+                                <div className="col-md-4">
+                                    <label>Work Order No</label>
+                                    <input className="form-control" value={data?.project_details?.work_order_no || '-'} readOnly />
+                                </div>
+
+                                <div className="col-md-4">
+                                    <label>Summary Date</label>
+                                    <input
+                                        className="form-control"
+                                        value={data?.summary_date ? moment(data.summary_date).format('YYYY-MM-DD') : '-'}
+                                        readOnly
+                                    />
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className='row'>
-                        <div className="col-sm-12">
-                            <div className="card card-table show-entire">
-                                <div className="card-body">
-
-                                    <div className="page-table-header mb-2">
-                                        <div className="row align-items-center">
-                                            <div className="col">
-                                                <div className="doctor-table-blk">
-                                                    <h3>View Line History Sheet List</h3>
-                                                    <div className="doctor-search-blk">
-                                                        <div className="top-nav-search table-search-blk">
-                                                            <form>
-                                                                <Search onSearch={(value) => {
-                                                                    setSearch(value);
-                                                                    setCurrentPage(1);
-                                                                }} />
-                                                                <a className="btn"><img src="/assets/img/icons/search-normal.svg"
-                                                                    alt="search" /></a>
-                                                            </form>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            {/* <div className="pageDropDown col-auto text-end float-end ms-auto download-grp">
-                                                <DropDown limit={limit} onLimitChange={(val) => setlimit(val)} />
-                                            </div> */}
-                                        </div>
+                    {/* ===== Client Review ===== */}
+                    <div className="card mt-3">
+                        <div className="card-body">
+                            <h4 className="mb-3">Client Review</h4>
+                            {showButtons && (
+                                <>
+                                    <div className="col-md-4 mb-3">
+                                        <label>
+                                            Date <span className="text-danger">*</span>
+                                        </label>
+                                        <input
+                                            type="date"
+                                            className="form-control"
+                                            value={clientDate}
+                                            onChange={(e) => setClientDate(e.target.value)}
+                                        />
                                     </div>
 
-                                    <div className="table-responsive mt-2">
-                                        <table className="table border-0 custom-table comman-table  mb-0">
+                                    <div className="mt-3">
+                                        <button className="btn btn-primary me-2" onClick={() => submitLHSStatus('REVIEWED')} disabled={updateStatusLoading}>
+                                            REVIEWED
+                                        </button>
+
+                                        <button className="btn btn-warning me-2" onClick={() => submitLHSStatus('WITNESSED')} disabled={updateStatusLoading}>
+                                            WITNESSED
+                                        </button>
+
+                                        <button className="btn btn-success" onClick={prepareRandomWitnessedItems} disabled={updateStatusLoading}>
+                                            RANDOM WITNESSED
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* ===== PDF VIEW ===== */}
+                            {downloadLoading && <div className="mt-4 alert alert-info">Loading PDF...</div>}
+
+                            {pdfUrl && !downloadLoading && (
+                                <div className="mt-4">
+                                    <iframe
+                                        src={pdfUrl}
+                                        title="Line History Sheet PDF"
+                                        width="100%"
+                                        height="700px"
+                                        style={{ border: '1px solid #ccc' }}
+                                    />
+                                </div>
+                            )}
+
+                            {/* ===== RANDOM WITNESSED TABLE ===== */}
+                            {showRandomItems && randomItems.length > 0 && (
+                                <div className="mt-3">
+                                    <div style={{ overflowX: 'auto', border: '1px solid #ddd', padding: '5px', borderRadius: '6px' }}>
+                                        <table className="table table-bordered table-striped">
                                             <thead>
                                                 <tr>
-                                                    <th>Sr.</th>
-                                                    <th>Line No. / Drawing No.</th>
-                                                    <th>Rev No.</th>
-                                                    <th>Sheet No.</th>
-                                                    <th>Piping Material Specification</th>
-                                                    <th>Spool No.</th>
-                                                    <th>Joint No.</th>
-                                                    <th>Size</th>
-                                                    <th>Thickness</th>
-                                                    <th>Joint Type</th>
-                                                    <th>Fit-up Report</th>
-                                                    <th>Fit-up Date</th>
-                                                    <th>WPS No.</th>
-                                                     <th>Root Dpt Report</th>
-                                                    <th>Root Dpt Date</th>
-                                                    <th>Welder No.</th>
-                                                    <th>Weld Visual Report</th>
-                                                    <th>Weld Visual Date</th>
-                                                    <th>BSR Report</th>
-                                                    <th>BSR Date</th>
-                                                    <th>Ferrite Report</th>
-                                                    <th>Ferrite Date</th>
-                                                    <th>PWHT Report</th>
-                                                    <th>PWHT Date</th>
-                                                      <th>ASR Report</th>
-                                                    <th>ASR Date</th>
-                                                    <th>RT Lot No.</th>
-                                                    <th>RT %</th>
-                                                    <th>RT Report</th>
-                                                    <th>RT Date</th>
-                                                   
-                                                    <th>MPT Lot No.</th>
-                                                    <th>MPT %</th>
-                                                    <th>MPT Report</th>
-                                                    <th>MPT Date</th>
-                                                     <th>LPT Lot No.</th>
-                                                    <th>LPT %</th>
-                                                    <th>LPT Report</th>
-                                                    <th>LPT Date</th>
-                                                    <th>Hardness Report</th>
-                                                    <th>Hardness Date</th>
-                                                    <th>PMI Report</th>
-                                                    <th>PMI Date</th>
-                                                    <th>Pickling Report</th>
-                                                    <th>Pickling Date</th>
-                                                    <th>Final Dimension Report</th>
-                                                    <th>Final Dimension Date</th>
-                                                    <th>Remarks</th>
+                                                    <th>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectAll}
+                                                            onChange={(e) => handleSelectAll(e.target.checked)}
+                                                        />
+                                                    </th>
+                                                    <th>SR NO</th>
+                                                    <th>DRAWING NO</th>
+                                                    <th>SPOOL NO</th>
+                                                    <th>JOINT NO</th>
+                                                    <th>FITUP REPORT</th>
+                                                    <th>WELD VISUAL REPORT</th>
                                                 </tr>
                                             </thead>
+
                                             <tbody>
-                                                { commentsData?.map((elem, i) => (
-                                                        <tr key={i}>
-                                                            <td>{(currentPage - 1) * limit + i + 1}</td>
-                                                           <td>{elem?.drawing_no}</td>
-        <td>{elem?.rev}</td>
-        <td>{elem?.sheet_no}</td>
-        <td>{elem?.piping_material_spec}</td>
-        <td>{elem?.spool_no}</td>
-        <td>{elem?.joint_no}</td>
-        <td>{elem?.size}</td>
-        <td>{elem?.thickness}</td>
-        <td>{elem?.joint_type}</td>
-       
-        <td>{elem?.fit_up_report_no_two}</td>
-        <td>
-  {elem?.fit_up_qc_time
-    ? moment(elem.fit_up_qc_time).format("DD/MM/YYYY hh:mm A")
-    : ""}
-</td>
-  <td>{elem?.wps_no}</td>
-    <td>{elem?.root_dpt_report_no_two}</td>
-        <td>
-  {elem?.root_dpt_qc_time
-    ? moment(elem.root_dpt_qc_time).format("DD/MM/YYYY hh:mm A")
-    : ""}
-</td>
-        <td>{elem?.welder_no}</td>
-  <td>{elem?.weld_visual_report_no_two}</td>
-        <td>
-  {elem?.weld_visual_qc_time
-    ? moment(elem.weld_visual_qc_time).format("DD/MM/YYYY hh:mm A")
-    : ""}
-</td>
-   <td>{elem?.bsrrt_report_no_two}</td>
-        <td>
-  {elem?.bsrrt_qc_time
-    ? moment(elem.bsrrt_qc_time).format("DD/MM/YYYY hh:mm A")
-    : ""}
-</td>
-         <td>{elem?.ferrite_report_no_two}</td>
-        <td>
-  {elem?.ferrite_qc_time
-    ? moment(elem.ferrite_qc_time).format("DD/MM/YYYY hh:mm A")
-    : ""}
-</td>
-  <td>{elem?.pwht_report_no_two}</td>
-        <td>
-  {elem?.pwht_qc_time
-    ? moment(elem.pwht_qc_time).format("DD/MM/YYYY hh:mm A")
-    : ""}
-</td>
-
- <td>{elem?.asrrt_report_no_two}</td>
-        <td>
-  {elem?.asrrt_qc_time
-    ? moment(elem.assrt_qc_time).format("DD/MM/YYYY hh:mm A")
-    : ""}
-</td>
-
- <td>{elem?.rt_lot_number}</td>
-          <td>{elem?.rt_percentage}</td>
-         
-  <td>{elem?.rt_report_no_two}</td>
-        <td>
-  {elem?.rt_qc_time
-    ? moment(elem.rt_qc_time).format("DD/MM/YYYY hh:mm A")
-    : ""}
-</td>
-
- <td>{elem?.mpt_lot_number}</td>
-          <td>{elem?.mpt_percentage}</td>
-         
-  <td>{elem?.mpt_report_no_two}</td>
-        <td>
-  {elem?.mpt_qc_time
-    ? moment(elem.mpt_qc_time).format("DD/MM/YYYY hh:mm A")
-    : ""}
-</td>
-        <td>{elem?.lpt_lot_number}</td>
-          <td>{elem?.lpt_percentage}</td>
-         
-  <td>{elem?.lpt_report_no_two}</td>
-        <td>
-  {elem?.lpt_qc_time
-    ? moment(elem.lpt_qc_time).format("DD/MM/YYYY hh:mm A")
-    : ""}
-</td>
-
- <td>{elem?.ht_report_no_two}</td>
-        <td>
-  {elem?.ht_qc_time
-    ? moment(elem.ht_qc_time).format("DD/MM/YYYY hh:mm A")
-    : ""}
-</td>
-        <td>{elem?.pmi_report_no_two}</td>
-        <td>
-  {elem?.pmi_qc_time
-    ? moment(elem.pmi_qc_time).format("DD/MM/YYYY hh:mm A")
-    : ""}
-</td>
-          <td>{elem?.pickling_report_no_two}</td>
-        <td>
-  {elem?.pickling_qc_time
-    ? moment(elem.pickling_qc_time).format("DD/MM/YYYY hh:mm A")
-    : ""}
-</td>
-      
-  <td>{elem?.fd_report_no_two}</td>
-        <td>
-  {elem?.fd_qc_time
-    ? moment(elem.fd_qc_time).format("DD/MM/YYYY hh:mm A")
-    : ""}
-</td>
-
-                                                            <td>{elem?.remarks || "-"}</td>
-                                                        </tr>
-                                                    
+                                                {randomItems.map((item, index) => (
+                                                    <tr key={item._id || index}>
+                                                        <td>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={item.selected}
+                                                                onChange={(e) => handleItemChange(index, 'selected', e.target.checked)}
+                                                            />
+                                                        </td>
+                                                        <td>{index + 1}</td>
+                                                        <td>{item.drawing_no}</td>
+                                                        <td>{item.spool_no}</td>
+                                                        <td>{item.joint_no}</td>
+                                                        <td>{item.fitup_report}</td>
+                                                        <td>{item.weld_visual_report}</td>
+                                                    </tr>
                                                 ))}
-                                                
                                             </tbody>
                                         </table>
                                     </div>
-                                    {/* <div className="row align-center mt-3 mb-2">
-                                        <div className="col-sm-12 col-md-6 col-lg-6 col-xxl-6">
-                                            <div className="dataTables_info" id="DataTables_Table_0_info" role="status"
-                                                aria-live="polite">Showing {Math.min(limit, totalItems)} from {totalItems} data</div>
-                                        </div>
-                                        <div className="col-sm-12 col-md-6 col-lg-6 col-xxl-6 ">
-                                            <div className="dataTables_paginate paging_simple_numbers"
-                                                id="DataTables_Table_0_paginate">
-                                                <Pagination
-                                                    total={totalItems}
-                                                    itemsPerPage={limit}
-                                                    currentPage={currentPage}
-                                                    onPageChange={(page) => setCurrentPage(page)}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div> */}
 
+                                    <button className="btn btn-success mt-2" onClick={() => submitLHSStatus('RANDOM WITNESSED')}>
+                                        Submit Random Witnessed
+                                    </button>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='row'>
-                        <div className="col-sm-12">
-                            <div className="card">
-                                <div className="card-body">
-                                    <div className="col-12 text-end">
-                                        <div className="doctor-submit text-end">
-                                            <button type="button"
-                                                className="btn btn-primary submit-form me-2" onClick={() => navigate('/party/piping-store/line-history-management')}>Back</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     </div>
                 </div>
                 <Footer />
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default ViewLineHistory
+export default ViewLineHistory;

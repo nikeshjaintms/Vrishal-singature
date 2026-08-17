@@ -2,6 +2,8 @@
 import React from 'react'
 import ViewReleaseNote from '../../Pages/ClientPiping/Multiple/ReleaseNote/ViewReleaseNote';
 import MultiReleaseNote from '../../Pages/ClientPiping/Multiple/ReleaseNote/MultiReleaseNote';
+import MultiLineHistory from '../../Pages/ClientPiping/Multiple/MultiLineHistory/MultiLineHistory';
+import ViewLineHistory from '../../Pages/ClientPiping/Multiple/MultiLineHistory/ViewLineHistory';
 
 import { Navigate, Route, Routes } from 'react-router-dom';
 import PartyLayout from './ClientStoreLayout';
@@ -157,8 +159,8 @@ const ClientPipingRoutes = () => {
           <Route path='pickling-passivation-clearance-management' element={<MultiPicklingClearance />} />
           <Route path='view-quality-clearance-pickling' element={<ViewMultiClearPickling />} />
           <Route path='manage-pickling-passivation-clearance' element={<PlaceholderPage title="Manage Pickling & Passivation Clearance" />} />
-          <Route path='line-history-management' element={<PlaceholderPage title="Line History (LHS)" />} />
-          <Route path='view-line-history' element={<PlaceholderPage title="View Line History" />} />
+          <Route path='line-history-management' element={<MultiLineHistory />} />
+          <Route path='view-line-history' element={<ViewLineHistory />} />
           <Route path='view-Genline-history' element={<PlaceholderPage title="View General Line History" />} />
           <Route path='surface-clearance-management' element={<MultiSurfaceClearance title="Surface & Primer Acceptance" />} />
           <Route path='manage-surface-clearance' element={<PlaceholderPage title="Manage Surface Clearance" />} />

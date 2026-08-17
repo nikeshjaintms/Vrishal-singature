@@ -16,6 +16,7 @@ import getClientPipingMultiSurfaceReducer from './Client/Piping/Painting/Surface
 import getClientPipingMultiMioReducer from './Client/Piping/Painting/MIO/getClientPipingMultiMio';
 import getClientPipingMultiFinalCoatReducer from './Client/Piping/Painting/FinalCoat/getClientPipingMultiFinalCoat';
 import getClientPipingMultiReleaseNoteReducer from './Client/Piping/ReleaseNote/getClientPipingMultiReleaseNote';
+import getClientPipingMultiLHSReducer from './Client/Piping/getClientPipingMultiLHS';
 // import getCustomersReducer from './slices/customer/Customer';
 import getCustomersReducer from '../../src/Store/Store/Customer/Customer';
 // Admin
@@ -1384,6 +1385,7 @@ getUserPaintManufacturePiping:getUserPaintManufacturePipingSlice,
     getClientMio: getClientMioSlice,
     getClientFinalCoat: getClientFinalCoatSlice,
     getClientPipingMultiReleaseNote: getClientPipingMultiReleaseNoteReducer,
+    getClientPipingMultiLHS: getClientPipingMultiLHSReducer,
     getClientInspectSummary: getClientInspectSummarySlice,
     getClientUtClearance: getClientUtClearanceSlice,
     getClientRtClearance: getClientRtClearanceSlice,

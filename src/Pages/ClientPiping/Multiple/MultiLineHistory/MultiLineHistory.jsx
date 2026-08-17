@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useDispatch, useSelector } from 'react-redux';
 import Header from '../../Include/Header';
 import Sidebar from '../../Include/Sidebar';
 import Footer from '../../Include/Footer';
 import Loader from '../../Include/Loader';
 import { Pagination } from '../../Table';
 import DropDown from '../../../../Components/DropDown';
+import { getPartyLHSClient } from '../../../../Store/Client/Piping/getClientPipingMultiLHS';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 import { V_URL } from '../../../../BaseUrl';
 
-// Read-only view of the Line History Sheet (LHS) list for a party's project.
 const useDebounce = (value, delay = 500) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -21,44 +23,37 @@ const useDebounce = (value, delay = 500) => {
 
 const MultiLineHistory = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const handleOpen = () => setIsSidebarOpen(!isSidebarOpen);
 
-  const [rows, setRows] = useState([]);
-  const [totalItems, setTotalItems] = useState(0);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(false);
   const debouncedSearch = useDebounce(search, 500);
 
   const projectId = localStorage.getItem('PARTY_PROJECT_ID');
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.post(
-        `${V_URL}/party/get-line-history-sheet-piping`,
-        {
-          page,
-          limit,
-          search: debouncedSearch,
-          project: projectId,
-        },
-        {
-          headers: {
-            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
-          },
-        }
-      );
-      setRows(res?.data?.data || []);
-      setTotalItems(res?.data?.pagination?.totalRecords || 0);
-    } catch (err) {
-      setRows([]);
-      setTotalItems(0);
-    } finally {
-      setLoading(false);
-    }
+  const { data, loading } = useSelector((state) => state.getClientPipingMultiLHS);
+
+  // The API response might have success: true, and data inside data.data or directly in data
+  const rows = data?.success && Array.isArray(data?.data)
+    ? data.data
+    : (data?.data?.data && Array.isArray(data.data.data)
+      ? data.data.data
+      : (Array.isArray(data) ? data : (data?.data || [])));
+
+  const totalItems = data?.pagination?.totalRecords || data?.data?.pagination?.totalRecords || rows.length || 0;
+
+  const fetchData = () => {
+    dispatch(
+      getPartyLHSClient({
+        page,
+        limit,
+        search: debouncedSearch,
+        project: projectId,
+      })
+    );
   };
 
   useEffect(() => {
@@ -73,6 +68,41 @@ const MultiLineHistory = () => {
   const handleRefresh = () => {
     setSearch('');
     setPage(1);
+  };
+
+  const downloadInspection = async (elem) => {
+    try {
+      const toastId = toast.loading('Downloading...');
+      const response = await axios.post(
+        `${V_URL}/party/download-lhs-client`,
+        {
+          report_no: elem.report_no || '',
+          print_date: ''
+        },
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('PARTY_TOKEN'),
+          }
+        }
+      );
+
+      const fileUrl = response.data?.data?.file || response.data?.file || '';
+      if (fileUrl) {
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = `Line_History_${elem.report_no || 'Report'}.pdf`;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        toast.success('Downloaded successfully', { id: toastId });
+      } else {
+        toast.error('Failed to get download URL', { id: toastId });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to download PDF');
+    }
   };
 
   return (
@@ -154,16 +184,17 @@ const MultiLineHistory = () => {
                                 <th className="text-start" style={{ width: '35px' }}>
                                   Sr.
                                 </th>
-                                <th>Line No. / Drawing No.</th>
-                                <th>Rev No.</th>
-                                <th>Spool No.</th>
+                                <th>Report No.</th>
+                                <th>Summary Date</th>
+                                <th>Drawings</th>
+                                <th>Status</th>
                                 <th className="text-end">Action</th>
                               </tr>
                             </thead>
                             <tbody>
                               {rows.length === 0 && (
                                 <tr>
-                                  <td colSpan="5">
+                                  <td colSpan="6">
                                     <div className="no-table-data">No Data Found!</div>
                                   </td>
                                 </tr>
@@ -173,13 +204,20 @@ const MultiLineHistory = () => {
                                   <td className="text-start">
                                     {(page - 1) * limit + i + 1}
                                   </td>
-                                  <td>{elem?.drawing_no || '-'}</td>
-                                  <td>{elem?.rev || '-'}</td>
+                                  <td>{elem?.report_no || '-'}</td>
+                                  <td>{elem?.summary_date ? new Date(elem.summary_date).toLocaleDateString() : '-'}</td>
                                   <td>
-                                    {elem?.spool_wise
-                                      ?.map((e) => e?.spool_no)
+                                    {elem?.drawings
+                                      ?.map((d) => d?.drawing_no || d?.drawing_id?.drawing_no || d?.drawing_id || '-')
                                       .filter((value, index, self) => self.indexOf(value) === index)
                                       .join(', ') || '-'}
+                                  </td>
+                                  <td className="status-badge">
+                                    {elem.client_status === 0 || elem.client_status === null ? (
+                                      <span className="custom-badge status-orange">Pending</span>
+                                    ) : elem.client_status === 1 ? (
+                                      <span className="custom-badge status-green">{elem.status_type}</span>
+                                    ) : null}
                                   </td>
                                   <td className="text-end">
                                     <div className="dropdown dropdown-action">
@@ -201,6 +239,13 @@ const MultiLineHistory = () => {
                                           }
                                         >
                                           <i className="fa-solid fa-eye m-r-5"></i> View
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className="dropdown-item"
+                                          onClick={() => downloadInspection(elem)}
+                                        >
+                                          <i className="fa-solid fa-download m-r-5"></i> Download
                                         </button>
                                       </div>
                                     </div>
