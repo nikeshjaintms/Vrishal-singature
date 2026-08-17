@@ -88,7 +88,7 @@ const ViewMultiSurfaceClearance = () => {
         _id: item._id,
         drawing_no: item?.drawing_no || item?.drawing_id?.drawing_no || '-',
         rev: item?.rev || item?.drawing_id?.rev || '-',
-        spool_no: item?.item_name || item?.item_id?.item_name || item?.spool_id?.sub_spool_no || item?.spool_no || '-',
+        spool_no: item?.item_name || item?.item_id?.item_name || item?.spool_id?.spool_no || item?.spool_no || '-',
         remarks: item?.remarks || '-',
         selected: false,
       })) || [];
