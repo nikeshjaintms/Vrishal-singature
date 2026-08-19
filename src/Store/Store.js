@@ -17,6 +17,7 @@ import getClientPipingMultiMioReducer from './Client/Piping/Painting/MIO/getClie
 import getClientPipingMultiFinalCoatReducer from './Client/Piping/Painting/FinalCoat/getClientPipingMultiFinalCoat';
 import getClientPipingMultiReleaseNoteReducer from './Client/Piping/ReleaseNote/getClientPipingMultiReleaseNote';
 import getClientPipingMultiLHSReducer from './Client/Piping/getClientPipingMultiLHS';
+import getClientPipingMaterialReceivingReducer from './Client/Piping/MaterialReceiving/getClientPipingMaterialReceiving';
 // import getCustomersReducer from './slices/customer/Customer';
 import getCustomersReducer from '../../src/Store/Store/Customer/Customer';
 // Admin
@@ -702,6 +703,7 @@ export default configureStore({
       getClientPipingMultiSurface: getClientPipingMultiSurfaceReducer,
       getClientPipingMultiMio: getClientPipingMultiMioReducer,
       getClientPipingMultiFinalCoat: getClientPipingMultiFinalCoatReducer,
+      getClientPipingMaterialReceiving: getClientPipingMaterialReceivingReducer,
       getClientFimPackingList: getClientFimPackingListReducer,
     login: adminLoginSlice,
     forgetPassword: adminForgetPasswordSlice,
